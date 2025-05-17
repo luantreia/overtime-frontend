@@ -87,12 +87,11 @@ const styles = {
   overlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    height: '90dvh',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
-    padding: '10px',
+    zIndex: 1000
+    margin: '20px',
   },
   modal: {
     backgroundColor: 'var(--color-fondo)',
