@@ -87,11 +87,14 @@ const styles = {
   overlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    height: '60dvh',
+    height: '100dvh',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000
+    zIndex: 1000,
+    padding: '10px', // espacio alrededor
+    boxSizing: 'border-box',
+    overflowY: 'auto',
   },
   modal: {
     backgroundColor: 'var(--color-fondo)',
@@ -99,7 +102,7 @@ const styles = {
     borderRadius: '16px',
     maxWidth: '800px',
     width: '90%',
-    maxHeight: '90vh',
+    maxHeight: 'calc(100dvh - 20px)',
     overflowY: 'auto',
     position: 'relative',
     boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
