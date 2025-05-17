@@ -13,7 +13,7 @@ const AgregarJugador = () => {
   useEffect(() => {
     const fetchEquipos = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/equipos');
+        const response = await fetch('https://overtime-ddyl.onrender.com/api/equipos');
         const data = await response.json();
         setEquipos(data);
       } catch (error) {
