@@ -1,0 +1,136 @@
+:root {
+  --color-primario: #0F172A;     /* Azul muy oscuro: fondo general o navbar */
+  --color-secundario: #2563EB;   /* Azul vibrante: botones, links activos */
+  --color-fondo: #F8FAFC;        /* Gris azulado muy claro: fondo de secciones */
+  --color-tarjeta: #FFFFFF;      /* Tarjetas y contenedores */
+  --color-texto: #1E293B;        /* Texto principal: muy legible sobre claros y oscuros */
+  --color-texto-secundario: #64748B; /* Texto más suave o etiquetas */
+  --color-acento: #F472B6;       /* Rosa suave: para destacar jugadores o roles clave */
+  --color-exito: #16A34A;        /* Verde deportivo: para acciones exitosas */
+  --color-error: #DC2626;        /* Rojo alerta: errores, validaciones */
+  --color-advertencia: #FACC15;  /* Amarillo intenso: advertencias, alertas */
+  --color-borde: #E2E8F0;        /* Bordes sutiles en tarjetas/formularios */
+  --color-hover: #E0F2FE;
+  --color-fondo-secundario: #e7e7e7;        /* Hover en botones o listas */
+}
+.App {
+  font-family: 'Segoe UI', sans-serif;
+  color: var(--color-texto);
+  min-height: 100vh;
+}
+
+.App-logo {
+  height: 40px;
+  width: auto;
+  margin-right: 20px;
+}
+
+.navbar {
+  display: flex;
+  gap: 15px; /* Espacio entre los botones */
+}
+.navbar .button {
+  font-size: 18px; /* Aumentar el tamaño de la fuente para que se vea mejor */
+}
+
+body {
+  background-color: var(--color-fondo);
+
+}
+
+.App-header {
+  background-color: #141414; /* Un color oscuro y elegante */
+  padding: 20px 40px; /* Mayor espacio alrededor */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente moderna */
+  color: white;
+}
+.App-link {
+  color: #61dafb;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.form {
+  background: #1e1e2f;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  color: white;
+}
+
+.form input {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  
+}
+.form  select{
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  color: var(--color-texto-secundario);
+}
+
+.form button {
+  padding: 0.75rem;
+  background-color: var(--color-secundario);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+}
+
+.button {
+  padding: 12px 24px;
+  margin: 5px;
+  border-radius: 11px;
+  border: none;
+  background-color: var(--color-detalle);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background-color: #45a049; /* Un verde ligeramente más oscuro */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.button-submit:hover {
+  background-color: #0056b3;
+}
+.button:focus {
+  outline: none;
+}
+
+/* Mensajes de error y éxito */
+.message {
+  text-align: center;
+  color: var(--color-text);
+}
+
+.message.error {
+  color: var(--color-error);
+}
+
+.message.success {
+  color: var(--color-primary);
+}
