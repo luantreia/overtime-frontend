@@ -1,3 +1,5 @@
+import React from "react";
+
 const TarjetaLiga = ({ liga, equipos }) => {
     return (
       <div style={styles.card}>
@@ -8,7 +10,7 @@ const TarjetaLiga = ({ liga, equipos }) => {
               <div key={id} style={styles.minicard}>
                 <img
                   src={equipo?.foto}
-                  alt={equipo?.nombre}
+                  alt={"escudo"}
                 />
                 
               </div>

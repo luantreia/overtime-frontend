@@ -51,9 +51,9 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
 
               <div style={styles.seccion}>
                 <h3>Estadísticas</h3>
-                <p>🏆 Copas: {equipo.copas || 0}</p>
-                <p>💥 Puntos: {equipo.puntos || 0}</p>
-                <p>🔥 Racha: {equipo.racha || 'N/A'}</p>
+                <p><span role="img" aria-label="copas">🏆</span> Copas: {equipo.copas || 0}</p>
+                <p><span role="img" aria-label="puntos">💥</span> Puntos: {equipo.puntos || 0}</p>
+                <p><span role="img" aria-label="fuego">🔥</span> Racha: {equipo.racha || 'N/A'}</p>
               </div>
 
               <div style={styles.seccion}>
