@@ -11,7 +11,7 @@ const Minigame = () => {
   const paddleHeight = 20;
   const ballSize = 20;
   const paddleSpeed = 5;
-  const ballSpeed = 6;
+  const ballSpeed = 12;
   const cooldownTime = 500; // ms
 
   const player1Ref = useRef({ x: width / 2 - paddleWidth / 2, lastShot: 0 });
