@@ -12,7 +12,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
     setLoading(true);
     setError(null);
 
-    fetch(`/api/equipos?nombre=${encodeURIComponent(equipoProp.nombre)}`)
+    fetch(`https://overtime-ddyl.onrender.com/api/equipos?nombre=${encodeURIComponent(equipoProp.nombre)}`)
       .then(res => {
         if (!res.ok) throw new Error('Error al cargar datos');
         return res.json();
