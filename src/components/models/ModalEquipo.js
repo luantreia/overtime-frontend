@@ -13,7 +13,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
 
     setLoadingJugadores(true);
 
-    fetch(`http://localhost:4000/jugadores?equipoId=${equipo._id}`)
+    fetch(`https://overtime-ddyl.onrender.com/api/jugadores?equipoId=${equipo._id}`)
       .then(res => {
         if (!res.ok) throw new Error('Error al cargar jugadores');
         return res.json();
