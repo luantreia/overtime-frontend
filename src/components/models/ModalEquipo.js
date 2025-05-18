@@ -1,20 +1,61 @@
-import React, { useState } from 'react';
-import jugadores from '../../data/jugadores';
+import React, { useState, useEffect } from 'react';
 import TarjetaJugador from './tarjetajugador';
 import EditarEquipo from './EditarEquipo';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modoEdicion, setModoEdicion] = useState(false);
-  const [equipo, setEquipo] = useState(equipoProp);
+  const [equipo, setEquipo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const jugadoresDelEquipo = jugadores.filter(j =>
-    j.equipo?.trim().toLowerCase() === equipo.nombre?.trim().toLowerCase()
-  );
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    fetch(`/api/equipos?nombre=${encodeURIComponent(equipoProp.nombre)}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Error al cargar datos');
+        return res.json();
+      })
+      .then(data => {
+        setEquipo(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [equipoProp.nombre]);
 
   const handleGuardar = (equipoActualizado) => {
     setEquipo(equipoActualizado);
     setModoEdicion(false);
   };
+
+  if (loading) {
+    return (
+      <div style={styles.overlay} onClick={onClose}>
+        <div style={styles.modal} onClick={e => e.stopPropagation()}>
+          <p>Cargando equipo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={styles.overlay} onClick={onClose}>
+        <div style={styles.modal} onClick={e => e.stopPropagation()}>
+          <p>Error: {error}</p>
+          <button onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!equipo) return null;
+
+  const jugadoresDelEquipo = equipo.jugadores || [];
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -92,7 +133,7 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
-    padding: '10px', // espacio alrededor
+    padding: '10px',
     boxSizing: 'border-box',
     overflowY: 'auto',
   },
