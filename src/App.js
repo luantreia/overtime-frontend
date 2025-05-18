@@ -4,7 +4,7 @@ import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
 import Jugadores from './pages/Jugadores';
-import AgregarJugador from './components/models/AgregarJugador';
+import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
 import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
 import Login from './components/user/Login';
 import Equipos from './pages/Equipos';
