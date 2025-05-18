@@ -11,6 +11,7 @@ import AgregarJugador from './components/models/AgregarJugador';
 import AgregarEquipo from './components/models/AgregarEquipo';
 import Login from './components/user/Login';
 import Registro from './components/user/Registro';
+import Minigame from './components/Minigame';
 
 function App() {
   const [activo, setActivo] = useState('jugadores');
@@ -59,6 +60,7 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
 
         <div>
+          <button className="button" onClick={() => setActivo('Minigame')}>Minigame</button>
           <button className="button" onClick={() => setActivo('jugadores')}>Jugadores</button>
           <button className="button" onClick={() => setActivo('partidos')}>Partidos</button>
           <button className="button" onClick={() => setActivo('equipos')}>Equipos</button>
