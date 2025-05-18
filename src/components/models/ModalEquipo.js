@@ -82,7 +82,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
                   <div style={styles.jugadoresGrid}>
                     {jugadoresDelEquipo.map((jugador, i) => (
                       <TarjetaJugador
-                        key={jugador._id || i}
+                        key={i}
                         jugador={jugador}
                         nombre={jugador.nombre}
                         equipo={jugador.equipo}
