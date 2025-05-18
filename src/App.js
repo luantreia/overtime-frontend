@@ -3,15 +3,15 @@ import './App.css';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
-import Partidos from './pages/Partidos';
 import Jugadores from './pages/Jugadores';
-import Equipos from './pages/Equipos';
-import Ligas from './pages/Ligas';
 import AgregarJugador from './components/models/AgregarJugador';
 import AgregarEquipo from './components/models/AgregarEquipo';
 import Login from './components/user/Login';
+import Equipos from './pages/Equipos';
 import Registro from './components/user/Registro';
-import Minigame from './components/Minigame';
+{/*import Minigame from './components/Minigame';
+  import Partidos from './pages/Partidos';
+  import Ligas from './pages/Ligas';*/}
 
 function App() {
   const [activo, setActivo] = useState('jugadores');
@@ -60,11 +60,12 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
 
         <div>
-          <button className="button" onClick={() => setActivo('Minigame')}>Minigame</button>
-          <button className="button" onClick={() => setActivo('jugadores')}>Jugadores</button>
+          {/*<button className="button" onClick={() => setActivo('Minigame')}>Minigame</button>
           <button className="button" onClick={() => setActivo('partidos')}>Partidos</button>
-          <button className="button" onClick={() => setActivo('equipos')}>Equipos</button>
           <button className="button" onClick={() => setActivo('ligas')}>Ligas</button>
+          */}
+          <button className="button" onClick={() => setActivo('jugadores')}>Jugadores</button>
+          <button className="button" onClick={() => setActivo('equipos')}>Equipos</button>
 
           {/* Mostrar botón solo si el usuario está autenticado */}
           {user && (
@@ -93,14 +94,14 @@ function App() {
       <div>
 
       {activo === 'jugadores' && <Jugadores />}
-      {activo === 'partidos' && <Partidos />}
       {activo === 'equipos' && <Equipos />}
-      {activo === 'ligas' && <Ligas />}
       {activo === 'AgregarJugador' && <AgregarJugador />}
       {activo === 'AgregarEquipo' && <AgregarEquipo />}
       {activo === 'login' && <Login />}
       {activo === 'registro' && <Registro />}
-      {activo === "Minigame" && <Minigame/>}
+      {/*{activo === "Minigame" && <Minigame/>}
+      {activo === 'ligas' && <Ligas />}
+      {activo === 'partidos' && <Partidos />}*/}
       </div>
     </div>
   );
