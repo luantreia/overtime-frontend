@@ -4,58 +4,35 @@ import EditarEquipo from './EditarEquipo';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modoEdicion, setModoEdicion] = useState(false);
-  const [equipo, setEquipo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [equipo, setEquipo] = useState(equipoProp);
+  const [jugadoresDelEquipo, setJugadoresDelEquipo] = useState([]);
+  const [loadingJugadores, setLoadingJugadores] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    if (!equipo._id) return;
 
-    fetch(`https://overtime-ddyl.onrender.com/api/equipos?nombre=${encodeURIComponent(equipoProp.nombre)}`)
+    setLoadingJugadores(true);
+
+    fetch(`http://localhost:4000/jugadores?equipoId=${equipo._id}`)
       .then(res => {
-        if (!res.ok) throw new Error('Error al cargar datos');
+        if (!res.ok) throw new Error('Error al cargar jugadores');
         return res.json();
       })
       .then(data => {
-        setEquipo(data);
-        setLoading(false);
+        setJugadoresDelEquipo(data);
+        setLoadingJugadores(false);
       })
       .catch(err => {
-        setError(err.message);
-        setLoading(false);
+        console.error(err);
+        setJugadoresDelEquipo([]);
+        setLoadingJugadores(false);
       });
-  }, [equipoProp.nombre]);
+  }, [equipo._id]);
 
   const handleGuardar = (equipoActualizado) => {
     setEquipo(equipoActualizado);
     setModoEdicion(false);
   };
-
-  if (loading) {
-    return (
-      <div style={styles.overlay} onClick={onClose}>
-        <div style={styles.modal} onClick={e => e.stopPropagation()}>
-          <p>Cargando equipo...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={styles.overlay} onClick={onClose}>
-        <div style={styles.modal} onClick={e => e.stopPropagation()}>
-          <p>Error: {error}</p>
-          <button onClick={onClose}>Cerrar</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!equipo) return null;
-
-  const jugadoresDelEquipo = equipo.jugadores || [];
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -99,11 +76,13 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
 
               <div style={styles.seccion}>
                 <h3>Jugadores</h3>
-                {jugadoresDelEquipo.length > 0 ? (
+                {loadingJugadores ? (
+                  <p>Cargando jugadores...</p>
+                ) : jugadoresDelEquipo.length > 0 ? (
                   <div style={styles.jugadoresGrid}>
                     {jugadoresDelEquipo.map((jugador, i) => (
                       <TarjetaJugador
-                        key={i}
+                        key={jugador._id || i}
                         jugador={jugador}
                         nombre={jugador.nombre}
                         equipo={jugador.equipo}
