@@ -1,4 +1,5 @@
 import './App.css';
+import logo from './logo.png';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
@@ -9,7 +10,6 @@ import Login from './components/user/Login';
 import Equipos from './pages/Equipos';
 import Registro from './components/user/Registro';
 {/*import Minigame from './components/Minigame';
-  import logo from './logo.png';
   import Partidos from './pages/Partidos';
   import Ligas from './pages/Ligas';*/}
 
