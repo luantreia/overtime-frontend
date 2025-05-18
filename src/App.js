@@ -100,6 +100,7 @@ function App() {
       {activo === 'AgregarEquipo' && <AgregarEquipo />}
       {activo === 'login' && <Login />}
       {activo === 'registro' && <Registro />}
+      {activo === "Minigame" && <Minigame/>}
       </div>
     </div>
   );
