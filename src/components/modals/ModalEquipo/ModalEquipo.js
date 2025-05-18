@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import TarjetaJugador from './tarjetajugador';
+import TarjetaJugador from '../../common/tarjetajugador';
 import EditarEquipo from './EditarEquipo';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {

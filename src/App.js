@@ -5,7 +5,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
 import Jugadores from './pages/Jugadores';
 import AgregarJugador from './components/models/AgregarJugador';
-import AgregarEquipo from './components/models/AgregarEquipo';
+import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
 import Login from './components/user/Login';
 import Equipos from './pages/Equipos';
 import Registro from './components/user/Registro';

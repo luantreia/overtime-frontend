@@ -1,7 +1,7 @@
 // ListaJugadores.js
 import React from 'react';
 import { useState, useEffect } from 'react';
-import TarjetaJugador from '../components/models/tarjetajugador'; // o './Jugador' si se llama así tu archivo
+import TarjetaJugador from '../components/common/tarjetajugador'; // o './Jugador' si se llama así tu archivo
 
 
 

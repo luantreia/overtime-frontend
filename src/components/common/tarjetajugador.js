@@ -26,10 +26,11 @@ function TarjetaJugador({ nombre, equipo, posicion, edad, foto }) {
         {expandida && (
           <div>
             <p><strong>Equipo:</strong> {equipo}</p>
-            {/* Aquí mostramos información adicional cuando está expandida */}
+            {/* Aquí mostramos información adicional cuando está expandida 
             <p><strong>Posición:</strong> {posicion}</p>
             <p><strong>Edad:</strong> {edad}</p>
             <p><strong>Descripción:</strong> Jugador clave con gran desempeño.</p>
+              */}
           </div>
         )}
       </div>

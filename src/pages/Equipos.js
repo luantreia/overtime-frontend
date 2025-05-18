@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import TarjetaEquipo from '../components/models/tarjetaequipo.js';
-import ModalEquipo from '../components/models/ModalEquipo.js';
+import TarjetaEquipo from '../components/common/tarjetaequipo.js';
+import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
 
 function Equipos() {
   const [equipos, setEquipos] = useState([]);
