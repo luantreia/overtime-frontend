@@ -1,14 +1,6 @@
 import React from 'react';
-import { useAuth} from '../../context/Authcontext';
-import { useUserRole } from '../../hooks/useUserRole';
-
 function BotonEditar({ onClick }) {
-  const { rol } = useAuth();
-  const { isAdmin } = useUserRole(rol);
-
-  if (!isAdmin) return null;
-
-  return <button onClick={onClick}>✎ Editar</button>;
+  <button onClick={onClick}>✎ Editar</button>;
 }
 
 const styles = {
