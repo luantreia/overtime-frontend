@@ -34,13 +34,12 @@ function App() {
 
           {user && (
             <>
-              {rol === 'admin' && (
-                <>
-                  <button className="button" onClick={() => setActivo('AgregarJugador')}>Anotar Jugador</button>
-                  <button className="button" onClick={() => setActivo('AgregarJugadoresMultiple')}>Anotar jugadores</button>
-                  <button className="button" onClick={() => setActivo('AgregarEquipo')}>Anotar Equipo</button>
-                </>
-              )}
+              
+              <button className="button" onClick={() => setActivo('AgregarJugador')}>Anotar Jugador</button>
+              <button className="button" onClick={() => setActivo('AgregarJugadoresMultiple')}>Anotar jugadores</button>
+              <button className="button" onClick={() => setActivo('AgregarEquipo')}>Anotar Equipo</button>
+                
+              
               <button className="button" onClick={handleLogout}>Cerrar sesión</button>
             </>
           )}
