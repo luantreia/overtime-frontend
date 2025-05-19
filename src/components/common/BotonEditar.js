@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth} from '../context/AuthContext';
+import { useAuth} from '../../context/Authcontext';
 import { useUserRole } from '../../hooks/useUserRole';
 
 function BotonEditar({ onClick }) {
