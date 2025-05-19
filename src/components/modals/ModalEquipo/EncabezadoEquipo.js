@@ -1,6 +1,5 @@
 // components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
-import BotonEditar from '../../common/BotonEditar';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
 
