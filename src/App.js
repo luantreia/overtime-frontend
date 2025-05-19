@@ -11,6 +11,7 @@ import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
 import Login from './components/user/Login';
 import Equipos from './pages/Equipos';
 import Registro from './components/user/Registro';
+import AgregarJugadoresMultiple from './components/modals/ModalJugador/AgregarJugadoresMultiples';
 
 function App() {
   const [activo, setActivo] = useState('jugadores');
@@ -36,6 +37,7 @@ function App() {
               {rol === 'admin' && (
                 <>
                   <button className="button" onClick={() => setActivo('AgregarJugador')}>Anotar Jugador</button>
+                  <button className="button" onClick={() => setActivo('AgregarJugadoresMultiple')}>Anotar jugadores</button>
                   <button className="button" onClick={() => setActivo('AgregarEquipo')}>Anotar Equipo</button>
                 </>
               )}
@@ -53,6 +55,7 @@ function App() {
       </header>
 
       <div>
+        {activo === 'AgregarJugadoresMultiple' && <AgregarJugadoresMultiple />}
         {activo === 'jugadores' && <Jugadores />}
         {activo === 'equipos' && <Equipos />}
         {activo === 'AgregarJugador' && <AgregarJugador />}

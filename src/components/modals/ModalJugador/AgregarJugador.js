@@ -1,5 +1,8 @@
 // ./src/components/users/AgregarJugador.js
 import React, { useEffect, useState } from 'react';
+import Button from '../../common/FormComponents/Button';
+import InputText from '../../common/FormComponents/InputText';
+import SelectDropdown from '../../common/FormComponents/SelectDropdown';
 
 const AgregarJugador = () => {
   const [nombre, setNombre] = useState('');
@@ -61,39 +64,41 @@ const AgregarJugador = () => {
     <div className="container">
       <form className='form' onSubmit={handleSubmit} >
       <h2>Agregar Jugador</h2> 
-          <input
-            type="text"
-            placeholder='Nombre'
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+          <InputText
+          name="nombre"
+          placeholder="Nombre"
+          value={nombre}
+          onChange={e => setNombre(e.target.value)}
           />
-          <input
-            type="text"
-            placeholder='Posicion'
-            value={posicion}
-            onChange={(e) => setPosicion(e.target.value)}
+          <InputText
+          name="posicion"
+          placeholder="Posicion"
+          value={posicion}
+          onChange={e => setPosicion(e.target.value)}
           />
-          <select value={equipoId} onChange={(e) => setEquipoId(e.target.value)}>
-          <option value="">Equipo</option>
-          {equipos.map((equipo) => (
-            <option key={equipo._id} value={equipo._id}>
-              {equipo.nombre}
-            </option>
-          ))}
-        </select>
-          <input
+          <SelectDropdown
+            name={`equipo`}
+            value={equipoId}
+            onChange={e => setEquipoId( 'equipoId', e.target.value)}
+            options={equipos.map(eq => ({ value: eq._id, label: eq.nombre }))}
+            placeholder="Equipo"
+          />
+          <InputText
+            name="edad"
             type="number"
             placeholder='Edad'
             value={edad}
-            onChange={(e) => setEdad(e.target.value)}
+            onChange={e => setEdad(e.target.value)}
           />
-          <input
-            type="text"
-            placeholder='Foto URL'
+          <InputText
+            placeholder="URL Foto"
+            name="foto"
             value={foto}
-            onChange={(e) => setFoto(e.target.value)}
+            onChange={e => setFoto(e.target.value)}
           />
-        <button className='button' type="submit">Agregar Jugador</button>
+          <Button type="submit" variant="success" disabled={false}>
+            Agregar Jugador
+          </Button>
       </form>
     </div>
   );
