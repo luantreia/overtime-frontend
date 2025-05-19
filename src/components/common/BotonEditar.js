@@ -1,15 +1,14 @@
-// src/components/common/BotonEditar.js
 import React from 'react';
-import { useAuth } from '../../context/Authcontext';
+import { useAuth} from '../context/AuthContext';
+import { useUserRole } from '../../hooks/useUserRole';
 
 function BotonEditar({ onClick }) {
   const { rol } = useAuth();
+  const { isAdmin } = useUserRole(rol);
 
-  if (rol !== 'admin') return null;  // Solo admins ven el botón
+  if (!isAdmin) return null;
 
-  return (
-    <button onClick={onClick} style={styles.botonEditar}>✎ Editar</button>
-  );
+  return <button onClick={onClick}>✎ Editar</button>;
 }
 
 const styles = {

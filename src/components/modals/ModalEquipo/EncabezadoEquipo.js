@@ -1,9 +1,13 @@
 // components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
 import BotonEditar from '../../common/BotonEditar';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
+import { useUserRole } from '../../hooks/useUserRole';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
+  const { rol } = useAuth();
+  const { isAdmin } = useUserRole(rol);
+
   return (
     <div style={styles.encabezado}>
       <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
@@ -27,13 +31,4 @@ const styles = {
     borderRadius: '50%',
     objectFit: 'cover',
   },
-  botonEditar: {
-    padding: '6px 12px',
-    backgroundColor: '#eee',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    color: '#333'
-  }
 };

@@ -4,7 +4,8 @@ import EncabezadoEquipo from './EncabezadoEquipo';
 import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
-import BotonEditar from '../../common/BotonEditar';
+import { useAuth } from '../../context/AuthContext';
+
 
 function ModalEquipo({ equipo: equipoProp, onClose, isAdmin }) {
   const [modoEdicion, setModoEdicion] = useState(false);
