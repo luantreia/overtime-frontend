@@ -4,10 +4,9 @@ import EncabezadoEquipo from './EncabezadoEquipo';
 import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
-import { useAuth } from '../../context/AuthContext';
 
 
-function ModalEquipo({ equipo: equipoProp, onClose, isAdmin }) {
+function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [equipo, setEquipo] = useState(equipoProp);
   const [jugadoresDelEquipo, setJugadoresDelEquipo] = useState([]);
