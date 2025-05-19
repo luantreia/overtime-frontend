@@ -90,7 +90,7 @@ export default function AgregarJugadoresMultiple() {
             <SelectDropdown
               name={`equipo-${i}`}
               value={j.equipoId}
-              onChange={e => setEquipos(i, 'equipoId', e.target.value)}
+              onChange={e => handleChange(i, 'equipoId', e.target.value)}
               options={equipos.map(eq => ({ value: eq._id, label: eq.nombre }))}
               placeholder="Equipo"
             />

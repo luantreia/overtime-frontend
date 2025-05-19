@@ -79,7 +79,7 @@ const AgregarJugador = () => {
           <SelectDropdown
             name={`equipo`}
             value={equipoId}
-            onChange={e => setEquipoId( 'equipoId', e.target.value)}
+            onChange={e => setEquipoId(e.target.value)}
             options={equipos.map(eq => ({ value: eq._id, label: eq.nombre }))}
             placeholder="Equipo"
           />
