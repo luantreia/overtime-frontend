@@ -8,7 +8,7 @@ export default function EncabezadoEquipo({ equipo, onEditar }) {
     <div style={styles.encabezado}>
       <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
       <h2>{equipo.nombre}</h2>
-      <BotonEditar onClick={onEditar} />
+      <button onClick={onClick}>✎ Editar</button>
     </div>
   );
 }

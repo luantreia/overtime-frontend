@@ -6,15 +6,4 @@ export default function BotonEditar({ onClick }) {
     );
 };
 
-const styles = {
-  botonEditar: {
-    padding: '6px 12px',
-    backgroundColor: '#eee',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    color: '#333',
-  }
-};
 
