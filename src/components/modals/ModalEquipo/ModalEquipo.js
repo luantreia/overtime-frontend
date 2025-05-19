@@ -4,8 +4,9 @@ import EncabezadoEquipo from './EncabezadoEquipo';
 import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
+import BotonEditar from '../../common/BotonEditar';
 
-function ModalEquipo({ equipo: equipoProp, onClose }) {
+function ModalEquipo({ equipo: equipoProp, onClose, isAdmin }) {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [equipo, setEquipo] = useState(equipoProp);
   const [jugadoresDelEquipo, setJugadoresDelEquipo] = useState([]);
@@ -50,7 +51,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
           />
         ) : (
           <>
-            <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} />
+            <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} isAdmin={isAdmin} />
             <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
 
             <div style={styles.secciones}>
