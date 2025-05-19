@@ -1,6 +1,7 @@
 // components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
 import BotonEditar from '../../common/BotonEditar';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
   return (
