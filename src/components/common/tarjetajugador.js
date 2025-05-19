@@ -1,4 +1,4 @@
-// src/components/common/TarjetaJugador.js
+// src/components/common/Tarjetaugador.js
 import React from 'react';
 
 export default function TarjetaJugador({
@@ -27,18 +27,8 @@ export default function TarjetaJugador({
         </div>
       )}
 
-      <div style={styles.overlay} onClick={e => e.stopPropagation()}>
+      <div style={styles.overlay}>
         <h3>{nombre}</h3>
-        {expandido && (
-          <>
-            <p><strong>Equipo:</strong> {equipo}</p>
-            <p><strong>Posición:</strong> {posicion}</p>
-            <p><strong>Edad:</strong> {edad}</p>
-            <button onClick={onEditar} style={styles.botonEditar}>
-              mas
-            </button>
-          </>
-        )}
       </div>
     </div>
   );
