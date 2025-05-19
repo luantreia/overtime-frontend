@@ -1,5 +1,6 @@
 // components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
+import Button from '../../common/FormComponents/Button';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
 
@@ -7,7 +8,7 @@ export default function EncabezadoEquipo({ equipo, onEditar }) {
     <div style={styles.encabezado}>
       <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
       <h2>{equipo.nombre}</h2>
-      <button onClick={onEditar}>✎ Editar</button>
+      <Button type="button" color="secondary" onClick={onEditar}>✎ Editar</Button>
     </div>
   );
 }
