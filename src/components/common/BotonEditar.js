@@ -4,7 +4,7 @@ export default function BotonEditar({ onClick }) {
     return(
         <button onClick={onClick}>✎ Editar</button>
     );
-}
+};
 
 const styles = {
   botonEditar: {
