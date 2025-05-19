@@ -3,7 +3,7 @@ import logo from './logo.png';
 import React, { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/Authcontext'; 
 
 import Jugadores from './pages/Jugadores';
 import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
