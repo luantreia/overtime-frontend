@@ -44,15 +44,16 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
         <button onClick={onClose} style={styles.cerrar}>✖</button>
 
         {modoEdicion ? (
-          <EditarEquipo
-            equipo={equipo}
-            onGuardar={handleGuardar}
-            onCancelar={() => setModoEdicion(false)}
-          />
-        ) : (
-          <>
-            <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} isAdmin={isAdmin} />
-            <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
+            <EditarEquipo
+              equipo={equipo}
+              onGuardar={handleGuardar}
+              onCancelar={() => setModoEdicion(false)}
+            />
+          ) : (
+            <>
+              <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} />
+              <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
+
 
             <div style={styles.secciones}>
               <SeccionResultados resultados={equipo.resultados} />
