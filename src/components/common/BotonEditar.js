@@ -1,6 +1,6 @@
 // src/components/common/BotonEditar.js
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/Authcontext';
 
 function BotonEditar({ onClick }) {
   const { rol } = useAuth();
