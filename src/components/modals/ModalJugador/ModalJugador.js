@@ -118,15 +118,15 @@ const styles = {
     alignItems: 'flex-start',
   },
   foto: {
-    width: '220px',
-    height: '440px',
-    borderRadius: '5%',
+    width: '200px',
+    height: '360px',
+    borderRadius: '10px',
     objectFit: 'cover',
   },
   infoBasica: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '2px',
   },
   seccion: {
     backgroundColor: 'var(--color-secundario)',
