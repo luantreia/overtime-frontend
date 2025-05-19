@@ -10,15 +10,13 @@ export default function TarjetaJugador({
   foto,
   expandido,
   onExpand,
-  onEditar
+  onEditar,
+  onClick
 }) {
   const tieneFoto = foto && foto.trim() !== '';
 
   return (
-    <div
-      style={{ ...styles.card, ...(expandido ? styles.expanded : {}) }}
-      onClick={onEditar}
-    >
+    <div style={styles.card} onClick={onClick}>
       {tieneFoto ? (
         <img src={foto} alt={nombre} style={styles.imagen} />
       ) : (

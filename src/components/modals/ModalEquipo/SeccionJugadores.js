@@ -2,7 +2,7 @@
 import React from 'react';
 import TarjetaJugador from '../../common/tarjetajugador';
 
-export default function SeccionJugadores({ loading, jugadores }) {
+export default function SeccionJugadores({ loading, jugadores, setModalJugador }) {
   return (
     <div style={styles.seccion}>
       <h3>Jugadores</h3>
@@ -18,6 +18,7 @@ export default function SeccionJugadores({ loading, jugadores }) {
               equipo={jugador.equipo}
               posicion={jugador.posicion}
               foto={jugador.foto}
+              onClick={() => setModalJugador(jugador)}
             />
           ))}
         </div>

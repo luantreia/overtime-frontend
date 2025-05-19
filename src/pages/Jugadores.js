@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import TarjetaJugador from '../components/common/tarjetajugador';
 import ModalJugador from '../components/modals/ModalJugador/ModalJugador';
 
+
 export default function Jugadores() {
   const [jugadores, setJugadores] = useState([]);
   const [jugadorActivo, setJugadorActivo] = useState(null);
@@ -87,9 +88,8 @@ export default function Jugadores() {
             posicion={Array.isArray(j.posicion) ? j.posicion.join(', ') : j.posicion}
             edad={j.edad}
             foto={j.foto}
-            expandido={jugadorActivo === j._id}
-            onExpand={() => setJugadorActivo(jugadorActivo === j._id ? null : j._id)}
-            onEditar={() => setModalJugador(j)}
+            onClick={() => setModalJugador(j)}
+            onJugadorClick={j => setModalJugador(j)}
           />
         ))}
       </div>

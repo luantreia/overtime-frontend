@@ -4,12 +4,14 @@ import EncabezadoEquipo from './EncabezadoEquipo';
 import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
+import ModalJugador from '../ModalJugador/ModalJugador';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [equipo, setEquipo] = useState(equipoProp);
   const [jugadoresDelEquipo, setJugadoresDelEquipo] = useState([]);
   const [loadingJugadores, setLoadingJugadores] = useState(true);
+  const [modalJugador, setModalJugador] = useState(null); // <- importante
 
   useEffect(() => {
     setEquipo(equipoProp);
@@ -19,7 +21,6 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
     if (!equipo || !equipo._id) return;
 
     const controller = new AbortController();
-
     setLoadingJugadores(true);
 
     fetch(`https://overtime-ddyl.onrender.com/api/jugadores?equipoId=${equipo._id}`, {
@@ -79,8 +80,27 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
                 puntos={equipo.puntos}
                 racha={equipo.racha}
               />
-              <SeccionJugadores loading={loadingJugadores} jugadores={jugadoresDelEquipo} />
+              <SeccionJugadores
+                loading={loadingJugadores}
+                jugadores={jugadoresDelEquipo}
+                setModalJugador={setModalJugador} // <- CORRECTO
+              />
             </div>
+
+            {modalJugador && (
+              <ModalJugador
+                jugador={modalJugador}
+                onClose={() => setModalJugador(null)}
+                onJugadorActualizado={actualizado => {
+                  if (actualizado) {
+                    setJugadoresDelEquipo(js =>
+                      js.map(j => j._id === actualizado._id ? actualizado : j)
+                    );
+                  }
+                  setModalJugador(null);
+                }}
+              />
+            )}
           </>
         )}
       </div>
@@ -100,6 +120,7 @@ const styles = {
     padding: '10px',
     boxSizing: 'border-box',
     overflowY: 'auto',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modal: {
     backgroundColor: 'var(--color-fondo)',
