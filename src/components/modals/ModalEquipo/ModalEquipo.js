@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import TarjetaJugador from '../../common/tarjetajugador';
 import EditarEquipo from './EditarEquipo';
+import EncabezadoEquipo from './EncabezadoEquipo';
+import SeccionResultados from './SeccionResultados';
+import SeccionEstadisticas from './SeccionEstadisticas';
+import SeccionJugadores from './SeccionJugadores';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -47,54 +50,17 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
           />
         ) : (
           <>
-            <div style={styles.encabezado}>
-              <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
-              <h2>{equipo.nombre}</h2>
-              <button onClick={() => setModoEdicion(true)} style={styles.botonEditar}>✎ Editar</button>
-            </div>
-
+            <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} />
             <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
 
             <div style={styles.secciones}>
-              <div style={styles.seccion}>
-                <h3>Últimos Resultados</h3>
-                <ul>
-                  {equipo.resultados?.length > 0 ? (
-                    equipo.resultados.map((r, i) => <li key={i}>{r}</li>)
-                  ) : (
-                    <li>Sin datos</li>
-                  )}
-                </ul>
-              </div>
-
-              <div style={styles.seccion}>
-                <h3>Estadísticas</h3>
-                <p><span role="img" aria-label="copas">🏆</span> Copas: {equipo.copas || 0}</p>
-                <p><span role="img" aria-label="puntos">💥</span> Puntos: {equipo.puntos || 0}</p>
-                <p><span role="img" aria-label="fuego">🔥</span> Racha: {equipo.racha || 'N/A'}</p>
-              </div>
-
-              <div style={styles.seccion}>
-                <h3>Jugadores</h3>
-                {loadingJugadores ? (
-                  <p>Cargando jugadores...</p>
-                ) : jugadoresDelEquipo.length > 0 ? (
-                  <div style={styles.jugadoresGrid}>
-                    {jugadoresDelEquipo.map((jugador, i) => (
-                      <TarjetaJugador
-                        key={i}
-                        jugador={jugador}
-                        nombre={jugador.nombre}
-                        equipo={jugador.equipo}
-                        posicion={jugador.posicion}
-                        foto={jugador.foto}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p>Sin jugadores asignados</p>
-                )}
-              </div>
+              <SeccionResultados resultados={equipo.resultados} />
+              <SeccionEstadisticas
+                copas={equipo.copas}
+                puntos={equipo.puntos}
+                racha={equipo.racha}
+              />
+              <SeccionJugadores loading={loadingJugadores} jugadores={jugadoresDelEquipo} />
             </div>
           </>
         )}
@@ -138,19 +104,6 @@ const styles = {
     cursor: 'pointer',
     transition: 'color 0.2s',
   },
-  encabezado: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '15px',
-    marginBottom: '15px',
-  },
-  escudo: {
-    width: '60px',
-    height: '60px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-  },
   banner: {
     width: '100%',
     maxHeight: '300px',
@@ -163,28 +116,6 @@ const styles = {
     flexWrap: 'wrap',
     gap: '20px',
     justifyContent: 'space-between',
-  },
-  seccion: {
-    flex: '1 1 250px',
-    backgroundColor: "var(--color-fondo-secundario)",
-    padding: '10px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-  },
-  jugadoresGrid: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '16px',
-    justifyContent: 'center',
-  },
-  botonEditar: {
-    padding: '6px 12px',
-    backgroundColor: '#eee',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    color: '#333'
   }
 };
 
