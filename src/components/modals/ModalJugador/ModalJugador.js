@@ -118,8 +118,8 @@ const styles = {
     alignItems: 'flex-start',
   },
   foto: {
-    width: '240px',
-    height: '460px',
+    width: '220px',
+    height: '440px',
     borderRadius: '5%',
     objectFit: 'cover',
   },
