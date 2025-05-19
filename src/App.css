@@ -25,14 +25,66 @@
   margin-right: 20px;
 }
 
-.navbar {
-  display: flex;
-  gap: 15px; /* Espacio entre los botones */
-}
-.navbar .button {
-  font-size: 18px; /* Aumentar el tamaño de la fuente para que se vea mejor */
+.menu-icon {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 25px;
+  height: 20px;
+  cursor: pointer;
+  z-index: 1001;
 }
 
+/* Animación para icono hamburguesa a cruz */
+.menu-icon .bar {
+  height: 3px;
+  width: 100%;
+  background-color: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.menu-icon .bar1 {
+  transform: rotate(45deg) translate(5px, 7px);
+}
+
+.menu-icon .bar2 {
+  opacity: 0;
+}
+
+.menu-icon .bar3 {
+  transform: rotate(-45deg) translate(5px, -7px);
+}
+
+@media (max-width: 768px) {
+  .menu-icon {
+    display: flex;
+  }
+  .navbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background-color: var(--color-primario);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    z-index: 1000;
+  }
+
+  .navbar.open {
+    padding: 20px 0;
+    max-height: 400px; /* suficiente para mostrar todos los botones */
+  }
+}
+  .navbar .button {
+    font-size: 18px; /* Aumentar el tamaño de la fuente para que se vea mejor */
+  }
 body {
   background-color: var(--color-fondo);
 

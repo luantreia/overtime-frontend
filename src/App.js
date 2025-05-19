@@ -1,57 +1,26 @@
+// src/App.js
 import './App.css';
-import logo from './logo.png';
 import React, { useState } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from './firebase';
+
 import { useAuth } from './context/Authcontext'; 
 
+import NavBar from './components/layout/Navbar';
+
 import Jugadores from './pages/Jugadores';
+import Equipos from './pages/Equipos';
 import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
+import AgregarJugadoresMultiple from './components/modals/ModalJugador/AgregarJugadoresMultiples';
 import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
 import Login from './components/user/Login';
-import Equipos from './pages/Equipos';
 import Registro from './components/user/Registro';
-import AgregarJugadoresMultiple from './components/modals/ModalJugador/AgregarJugadoresMultiples';
 
 function App() {
   const [activo, setActivo] = useState('jugadores');
-  const { user, rol } = useAuth();
-
-  const handleLogout = () => {
-    signOut(auth)
-      .then(() => console.log('Usuario desconectado'))
-      .catch((error) => console.error('Error al desconectar', error));
-  };
+  const { user } = useAuth();
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-
-        <div>
-          <button className="button" onClick={() => setActivo('jugadores')}>Jugadores</button>
-          <button className="button" onClick={() => setActivo('equipos')}>Equipos</button>
-
-          {user && (
-            <>
-              
-              <button className="button" onClick={() => setActivo('AgregarJugador')}>Anotar Jugador</button>
-              <button className="button" onClick={() => setActivo('AgregarJugadoresMultiple')}>Anotar jugadores</button>
-              <button className="button" onClick={() => setActivo('AgregarEquipo')}>Anotar Equipo</button>
-                
-              
-              <button className="button" onClick={handleLogout}>Cerrar sesión</button>
-            </>
-          )}
-
-          {!user && (
-            <div>
-              <button className="button" onClick={() => setActivo('login')}>Iniciar sesión</button>
-              <button className="button" onClick={() => setActivo('registro')}>Registrarse</button>
-            </div>
-          )}
-        </div>
-      </header>
+      <NavBar setActivo={setActivo} />
 
       <div>
         {activo === 'AgregarJugadoresMultiple' && <AgregarJugadoresMultiple />}
