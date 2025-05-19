@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth'; // Importa las funciones necesarias para obtener el token
+import Button from '../../common/FormComponents/Button';
+import InputText from '../../common/FormComponents/InputText';
+import SelectDropdown from '../../common/FormComponents/SelectDropdown';
+
 
 const AgregarEquipo = () => {
   const [nombre, setNombre] = useState('');
@@ -74,26 +78,27 @@ const AgregarEquipo = () => {
     <div className="container">
       <form className='form' onSubmit={handleSubmit}>
         <h2>Agregar Equipo</h2>
-        <input
-          type="text"
+        <InputText
+          name="nombre"
           placeholder="Nombre"
           value={nombre}
           onChange={e => setNombre(e.target.value)}
-          required
         />
-        <input
-          type="text"
-          placeholder="URL del escudo"
+        <InputText
+          placeholder="URL Escudo"
+          name="foto"
           value={escudo}
-          onChange={e => setEscudo(e.target.value)}
+          onChange={e => setFoto(e.target.value)}
         />
-        <input
-          type="text"
-          placeholder="URL de la foto del equipo"
+        <InputText
+          placeholder="URL Foto"
+          name="foto"
           value={foto}
           onChange={e => setFoto(e.target.value)}
         />
-        <button type="submit">Agregar Equipo</button>
+        <Button type="submit" variant="success" disabled={false}>
+                    Agregar Equipo
+        </Button>
       </form>
     </div>
   );

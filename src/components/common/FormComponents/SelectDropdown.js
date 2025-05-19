@@ -53,7 +53,7 @@ const styles = {
     padding: '8px',
     fontSize: '14px',
     borderRadius: '4px',
-    border: '1px solid #ccc',
+    border: '0px solid #ccc',
     outline: 'none',
     transition: 'border-color 0.2s'
   },

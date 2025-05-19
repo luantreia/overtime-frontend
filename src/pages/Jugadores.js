@@ -61,6 +61,7 @@ export default function Jugadores() {
 
 const styles = {
   lista: {
+    justifyContent: "center",
     display: 'flex',
     flexWrap: 'wrap',
     gap: 10,

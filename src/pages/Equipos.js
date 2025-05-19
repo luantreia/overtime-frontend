@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TarjetaEquipo from '../components/common/tarjetaequipo.js';
 import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
 
-function Equipos() {
+export default function Equipos() {
   const [equipos, setEquipos] = useState([]);
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
 
@@ -50,5 +50,4 @@ const styles = {
   }
 };
 
-export default Equipos;
 

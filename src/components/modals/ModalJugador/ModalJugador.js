@@ -22,21 +22,23 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
             onCancelar={() => setModoEdicion(false)}
           />
         ) : (
-          <div>
-            <h2>{jugador.nombre}</h2>
-            <p>
-              <strong>Equipo:</strong>{' '}
-              {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}
-            </p>
-            <p><strong>Posición:</strong> {jugador.posicion}</p>
-            <p><strong>Edad:</strong> {jugador.edad}</p>
-            <button
-              onClick={() => setModoEdicion(true)}
-              style={styles.botonEditar}
-            >
-              ✎ Editar
-            </button>
-          </div>
+            <div style={styles.secciones}>
+            <div style={styles.encabezado}>
+                <h2>{jugador.nombre}</h2>
+                <p>
+                <strong>Equipo:</strong>{' '}
+                {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}
+                </p>
+                <p><strong>Posición:</strong> {jugador.posicion}</p>
+                <p><strong>Edad:</strong> {jugador.edad}</p>
+                </div>
+                <button
+                onClick={() => setModoEdicion(true)}
+                style={styles.botonEditar}
+                >
+                ✎ Editar
+                </button>
+            </div>
         )}
       </div>
     </div>
@@ -47,17 +49,26 @@ const styles = {
   overlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    height: '100dvh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 1000,
+    padding: '10px',
+    boxSizing: 'border-box',
+    overflowY: 'auto',
   },
   modal: {
-    background: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    maxWidth: 400,
-    width: '90%',
+    backgroundColor: 'var(--color-fondo)',
+    padding: '20px 10px',
+    borderRadius: '16px',
+    maxWidth: '800px',
+    minWidth: "300px",
+    width: 'auto',
+    maxHeight: 'calc(100dvh - 20px)',
+    overflowY: 'auto',
     position: 'relative',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
   },
   cerrar: {
     position: 'absolute', top: 10, right: 10,
@@ -71,5 +82,10 @@ const styles = {
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',
+  },
+  encabezado: {
+    justifyContent: 'space-between',
+    gap: '15px',
+    marginBottom: '15px',
   },
 };

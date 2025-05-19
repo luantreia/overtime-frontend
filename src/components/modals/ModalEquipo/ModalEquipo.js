@@ -106,7 +106,7 @@ const styles = {
     padding: '20px 10px',
     borderRadius: '16px',
     maxWidth: '800px',
-    width: '90%',
+    width: 'auto',
     maxHeight: 'calc(100dvh - 20px)',
     overflowY: 'auto',
     position: 'relative',

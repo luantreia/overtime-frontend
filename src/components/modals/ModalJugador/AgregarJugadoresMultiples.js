@@ -125,7 +125,7 @@ export default function AgregarJugadoresMultiple() {
             onClick={addRow}
             disabled={loading}
           >
-            + Agregar otra fila
+            + Agregar otro
           </Button>
           <Button
             type="submit"
