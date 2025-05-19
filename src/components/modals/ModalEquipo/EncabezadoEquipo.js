@@ -1,18 +1,14 @@
 // components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
 import BotonEditar from '../../common/BotonEditar';
-import { useAuth } from '../../../context/Authcontext';
-import { useUserRole } from '../../../hooks/useUserRole';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
-  const { rol } = useAuth();
-  const { isAdmin } = useUserRole(rol);
 
   return (
     <div style={styles.encabezado}>
       <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
       <h2>{equipo.nombre}</h2>
-      {isAdmin && <BotonEditar onClick={onEditar} />}
+      <BotonEditar onClick={onEditar} />
     </div>
   );
 }
