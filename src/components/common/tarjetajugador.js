@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function TarjetaJugador({ nombre, equipo, posicion, edad, foto, expandido, onExpand }) {
+function TarjetaJugador({ nombre, equipo, posicion, edad, foto, expandida, onExpand }) {
 
   const tieneFoto = foto && foto.trim() !== '';
   
