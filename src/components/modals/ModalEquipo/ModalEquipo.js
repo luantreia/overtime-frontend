@@ -5,7 +5,6 @@ import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
 
-
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [equipo, setEquipo] = useState(equipoProp);
@@ -13,11 +12,19 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [loadingJugadores, setLoadingJugadores] = useState(true);
 
   useEffect(() => {
-    if (!equipo._id) return;
+    setEquipo(equipoProp);
+  }, [equipoProp]);
+
+  useEffect(() => {
+    if (!equipo || !equipo._id) return;
+
+    const controller = new AbortController();
 
     setLoadingJugadores(true);
 
-    fetch(`https://overtime-ddyl.onrender.com/api/jugadores?equipoId=${equipo._id}`)
+    fetch(`https://overtime-ddyl.onrender.com/api/jugadores?equipoId=${equipo._id}`, {
+      signal: controller.signal,
+    })
       .then(res => {
         if (!res.ok) throw new Error('Error al cargar jugadores');
         return res.json();
@@ -27,11 +34,14 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
         setLoadingJugadores(false);
       })
       .catch(err => {
+        if (err.name === 'AbortError') return;
         console.error(err);
         setJugadoresDelEquipo([]);
         setLoadingJugadores(false);
       });
-  }, [equipo._id]);
+
+    return () => controller.abort();
+  }, [equipo?._id]);
 
   const handleGuardar = (equipoActualizado) => {
     setEquipo(equipoActualizado);
@@ -41,19 +51,26 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={styles.cerrar}>✖</button>
+        <button
+          onClick={onClose}
+          style={styles.cerrar}
+          aria-label="Cerrar modal"
+          onMouseEnter={e => e.currentTarget.style.color = '#000'}
+          onMouseLeave={e => e.currentTarget.style.color = '#555'}
+        >
+          ✖
+        </button>
 
         {modoEdicion ? (
-            <EditarEquipo
-              equipo={equipo}
-              onGuardar={handleGuardar}
-              onCancelar={() => setModoEdicion(false)}
-            />
-          ) : (
-            <>
-              <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} />
-              <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
-
+          <EditarEquipo
+            equipo={equipo}
+            onGuardar={handleGuardar}
+            onCancelar={() => setModoEdicion(false)}
+          />
+        ) : (
+          <>
+            <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} />
+            <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
 
             <div style={styles.secciones}>
               <SeccionResultados resultados={equipo.resultados} />

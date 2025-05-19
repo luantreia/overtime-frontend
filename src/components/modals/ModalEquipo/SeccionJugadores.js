@@ -10,9 +10,9 @@ export default function SeccionJugadores({ loading, jugadores }) {
         <p>Cargando jugadores...</p>
       ) : jugadores.length > 0 ? (
         <div style={styles.jugadoresGrid}>
-          {jugadores.map((jugador, i) => (
+          {jugadores.map((jugador) => (
             <TarjetaJugador
-              key={i}
+              key={jugador._id || jugador.nombre}
               jugador={jugador}
               nombre={jugador.nombre}
               equipo={jugador.equipo}
