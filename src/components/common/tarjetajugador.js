@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 
-function TarjetaJugador({ nombre, equipo, posicion, edad, foto }) {
-  // Establecemos el estado para controlar la expansión
-  const [expandida, setExpandida] = useState(false);
+function TarjetaJugador({ nombre, equipo, posicion, edad, foto, expandido, onExpand }) {
+
   const tieneFoto = foto && foto.trim() !== '';
-  // Función para alternar la expansión
-  const toggleExpandida = () => {
-    setExpandida(!expandida);
-  };
+  
 
   return (
     <div
       style={{ ...styles.card, ...(expandida ? styles.expanded : {}) }} // Si está expandida, cambiamos el estilo
-      onClick={toggleExpandida} // Al hacer clic, alternamos el estado
+      onClick={enExpand} // Al hacer clic, alternamos el estado
     >
       {tieneFoto ? (
         <img src={foto} alt={nombre} style={styles.imagen}  />
