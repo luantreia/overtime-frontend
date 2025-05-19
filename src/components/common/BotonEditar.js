@@ -1,6 +1,9 @@
 import React from 'react';
-function BotonEditar({ onClick }) {
-  <button onClick={onClick}>✎ Editar</button>;
+
+export default function BotonEditar({ onClick }) {
+    return(
+        <button onClick={onClick}>✎ Editar</button>
+    );
 }
 
 const styles = {
@@ -15,4 +18,3 @@ const styles = {
   }
 };
 
-export default BotonEditar;
