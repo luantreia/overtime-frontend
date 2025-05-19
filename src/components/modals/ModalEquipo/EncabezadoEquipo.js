@@ -1,8 +1,8 @@
 // components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
 import BotonEditar from '../../common/BotonEditar';
-import { useAuth } from '../../context/AuthContext';
-import { useUserRole } from '../../hooks/useUserRole';
+import { useAuth } from '../../../context/Authcontext';
+import { useUserRole } from '../../../hooks/useUserRole';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
   const { rol } = useAuth();
