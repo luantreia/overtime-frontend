@@ -36,7 +36,6 @@ const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: '12px',
   },
   label: {
     marginBottom: '4px',

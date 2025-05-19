@@ -42,11 +42,11 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
                 style={styles.foto} 
               />
               <div style={styles.infoBasica}>
-                <h2>{jugador.nombre}</h2>
-                <p><strong>Equipo actual:</strong> {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}</p>
-                <p><strong>Posición:</strong> {jugador.posicion || 'N/A'}</p>
-                <p><strong>Fecha nacimiento:</strong> {jugador.fechaNacimiento || 'N/A'}</p>
-                <p><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
+                <h2 style={styles.data}>{jugador.nombre}</h2>
+                <p style={styles.data}><strong>Equipo actual:</strong> {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}</p>
+                <p style={styles.data}><strong>Posición:</strong> {jugador.posicion || 'N/A'}</p>
+                <p style={styles.data}><strong>Fecha nacimiento:</strong> {jugador.fechaNacimiento || 'N/A'}</p>
+                <p style={styles.data}><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
               </div>
             </div>
 
@@ -126,7 +126,7 @@ const styles = {
   infoBasica: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '2px',
+    gap: '5px',
   },
   seccion: {
     backgroundColor: 'var(--color-secundario)',
@@ -141,5 +141,9 @@ const styles = {
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
+  },
+  data: {
+    marginTop: "0px",
   }
 };
+
