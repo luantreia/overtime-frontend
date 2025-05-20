@@ -91,7 +91,7 @@ body {
 }
 
 .App-header {
-  background-color: #141414; /* Un color oscuro y elegante */
+  background-color: var(--color-primario); /* Un color oscuro y elegante */
   padding: 20px 40px; /* Mayor espacio alrededor */
   display: flex;
   justify-content: space-between;

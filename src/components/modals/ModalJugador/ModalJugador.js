@@ -4,7 +4,6 @@ import EditarJugador from './EditarJugador';
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
 
-  // Función para calcular edad desde fecha de nacimiento (si tienes esa data)
   const calcularEdad = fechaNacimiento => {
     if (!fechaNacimiento) return jugador.edad || 'N/A';
     const hoy = new Date();
@@ -22,55 +21,64 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
     onJugadorActualizado(actualizado);
   };
 
+  const handleCerrarSubmodal = () => {
+    setModoEdicion(false);
+  };
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <button onClick={onClose} style={styles.cerrar}>✖</button>
 
-        {modoEdicion ? (
-          <EditarJugador
-            jugador={jugador}
-            onGuardar={handleGuardar}
-            onCancelar={() => setModoEdicion(false)}
-          />
-        ) : (
-          <div style={styles.contenido}>
-            <div style={styles.header}>
-              <img 
-                src={jugador.foto || '/default-player.png'} 
-                alt={`Foto de ${jugador.nombre}`} 
-                style={styles.foto} 
-              />
-              <div style={styles.infoBasica}>
-                <h2 style={styles.data}>{jugador.nombre}</h2>
-                <p style={styles.data}><strong>Equipo actual:</strong> {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}</p>
-                <p style={styles.data}><strong>Posición:</strong> {jugador.posicion || 'N/A'}</p>
-                <p style={styles.data}><strong>Fecha nacimiento:</strong> {jugador.fechaNacimiento || 'N/A'}</p>
-                <p style={styles.data}><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
-              </div>
+        <div style={styles.contenido}>
+          <div style={styles.header}>
+            <img 
+              src={jugador.foto || '/default-player.png'} 
+              alt={`Foto de ${jugador.nombre}`} 
+              style={styles.foto} 
+            />
+            <div style={styles.infoBasica}>
+              <h2 style={styles.data}>{jugador.nombre}</h2>
+              <p style={styles.data}><strong>Equipo actual:</strong> {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}</p>
+              <p style={styles.data}><strong>Posición:</strong> {jugador.posicion || 'N/A'}</p>
+              <p style={styles.data}><strong>Fecha nacimiento:</strong> {jugador.fechaNacimiento || 'N/A'}</p>
+              <p style={styles.data}><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
             </div>
+          </div>
 
-            <section style={styles.seccion}>
-              <h3>Estadísticas individuales</h3>
-              {jugador.estadisticas ? (
-                <ul>
-                  {Object.entries(jugador.estadisticas).map(([key, value]) => (
-                    <li key={key}>
-                      <strong>{key}:</strong> {value}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No hay estadísticas disponibles.</p>
-              )}
-            </section>
+          <section style={styles.seccion}>
+            <h3>Estadísticas individuales</h3>
+            {jugador.estadisticas ? (
+              <ul>
+                {Object.entries(jugador.estadisticas).map(([key, value]) => (
+                  <li key={key}>
+                    <strong>{key}:</strong> {value}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No hay estadísticas disponibles.</p>
+            )}
+          </section>
 
-            <button
-              onClick={() => setModoEdicion(true)}
-              style={styles.botonEditar}
-            >
-              ✎ Editar
-            </button>
+          <button
+            onClick={() => setModoEdicion(true)}
+            style={styles.botonEditar}
+            disabled={modoEdicion}
+          >
+            ✎ Editar
+          </button>
+        </div>
+
+        {modoEdicion && (
+          <div onClick={handleCerrarSubmodal}>
+            <div style={styles.submodal} onClick={e => e.stopPropagation()}>
+              <EditarJugador
+                jugador={jugador}
+                onGuardar={handleGuardar}
+                onCancelar={handleCerrarSubmodal}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -143,7 +151,16 @@ const styles = {
     cursor: 'pointer',
   },
   data: {
-    marginTop: "0px",
-  }
+    marginTop: 0,
+  },
+  submodal: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    zIndex: 1100,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '10px',
+  },
 };
-

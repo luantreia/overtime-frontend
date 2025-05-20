@@ -7,11 +7,11 @@ import SeccionJugadores from './SeccionJugadores';
 import ModalJugador from '../ModalJugador/ModalJugador';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
-  const [modoEdicion, setModoEdicion] = useState(false);
   const [equipo, setEquipo] = useState(equipoProp);
   const [jugadoresDelEquipo, setJugadoresDelEquipo] = useState([]);
   const [loadingJugadores, setLoadingJugadores] = useState(true);
-  const [modalJugador, setModalJugador] = useState(null); // <- importante
+  const [modalJugador, setModalJugador] = useState(null);
+  const [modalEditarEquipo, setModalEditarEquipo] = useState(false); // NUEVO
 
   useEffect(() => {
     setEquipo(equipoProp);
@@ -46,7 +46,11 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
 
   const handleGuardar = (equipoActualizado) => {
     setEquipo(equipoActualizado);
-    setModoEdicion(false);
+    setModalEditarEquipo(false); // Cierra el modal
+  };
+
+  const handleCerrarSubmodal = () => {
+    setModalEditarEquipo(false);
   };
 
   return (
@@ -62,46 +66,48 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
           ✖
         </button>
 
-        {modoEdicion ? (
-          <EditarEquipo
-            equipo={equipo}
-            onGuardar={handleGuardar}
-            onCancelar={() => setModoEdicion(false)}
+        <EncabezadoEquipo equipo={equipo} onEditar={() => setModalEditarEquipo(true)} />
+        <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
+
+        <div style={styles.secciones}>
+          <SeccionResultados resultados={equipo.resultados} />
+          <SeccionEstadisticas
+            copas={equipo.copas}
+            puntos={equipo.puntos}
+            racha={equipo.racha}
           />
-        ) : (
-          <>
-            <EncabezadoEquipo equipo={equipo} onEditar={() => setModoEdicion(true)} />
-            <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
+          <SeccionJugadores
+            loading={loadingJugadores}
+            jugadores={jugadoresDelEquipo}
+            setModalJugador={setModalJugador}
+          />
+        </div>
 
-            <div style={styles.secciones}>
-              <SeccionResultados resultados={equipo.resultados} />
-              <SeccionEstadisticas
-                copas={equipo.copas}
-                puntos={equipo.puntos}
-                racha={equipo.racha}
-              />
-              <SeccionJugadores
-                loading={loadingJugadores}
-                jugadores={jugadoresDelEquipo}
-                setModalJugador={setModalJugador} // <- CORRECTO
-              />
-            </div>
+        {modalJugador && (
+          <ModalJugador
+            jugador={modalJugador}
+            onClose={() => setModalJugador(null)}
+            onJugadorActualizado={actualizado => {
+              if (actualizado) {
+                setJugadoresDelEquipo(js =>
+                  js.map(j => j._id === actualizado._id ? actualizado : j)
+                );
+              }
+              setModalJugador(null);
+            }}
+          />
+        )}
 
-            {modalJugador && (
-              <ModalJugador
-                jugador={modalJugador}
-                onClose={() => setModalJugador(null)}
-                onJugadorActualizado={actualizado => {
-                  if (actualizado) {
-                    setJugadoresDelEquipo(js =>
-                      js.map(j => j._id === actualizado._id ? actualizado : j)
-                    );
-                  }
-                  setModalJugador(null);
-                }}
-              />
-            )}
-          </>
+        {modalEditarEquipo && (
+          <div onClick={handleCerrarSubmodal}>
+          <div style={styles.submodal} onClick={e => e.stopPropagation()}>
+            <EditarEquipo
+              equipo={equipo}
+              onGuardar={handleGuardar}
+              onCancelar={() => setModalEditarEquipo(false)}
+            />
+          </div>
+          </div>
         )}
       </div>
     </div>
@@ -156,7 +162,17 @@ const styles = {
     flexWrap: 'wrap',
     gap: '20px',
     justifyContent: 'space-between',
-  }
+  },
+  submodal: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    zIndex: 1100,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '10px',
+  },
 };
 
 export default ModalEquipo;

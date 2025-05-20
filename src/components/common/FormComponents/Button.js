@@ -20,7 +20,7 @@ export default function Button({
       opacity: disabled ? 0.6 : 1,
     },
     variants: {
-      primary:    { backgroundColor: '#007bff', color: 'white' },
+      primary:    { backgroundColor: 'var(--color-secundario)', color: 'white' },
       danger:     { backgroundColor: '#dc3545', color: 'white' },
       success:    { backgroundColor: '#28a745', color: 'white' },
       secondary:  { backgroundColor: '#6c757d', color: 'white' },

@@ -51,34 +51,42 @@ function EditarEquipo({ equipo, onGuardar, onCancelar }) {
   };
 
   return (
-    <div className="container">
-      <form onSubmit={handleSubmit} className="form">
-      <h3>Editar equipo</h3>
-        <InputText
-          label="Nombre"
-          name="nombre"
-          value={formData.nombre}
-          onChange={handleChange}
-        />
-        <InputText
-          label="Escudo (URL)"
-          name="escudo"
-          value={formData.escudo}
-          onChange={handleChange}
-        />
-        <InputText
-          label="Foto (URL)"
-          name="foto"
-          value={formData.foto}
-          onChange={handleChange}
-        />
-        <div className="flex gap-3 justify-end mt-4">
-          <Button type="submit">Guardar</Button>
-          <Button type="button" color="red" onClick={onCancelar}>
-            Cancelar
-          </Button>
-        </div>
-      </form>
+    <div
+      className="container"
+      onClick={onCancelar}
+    >
+      <div
+        className="overlay"
+        onClick={e => e.stopPropagation()}
+      >
+        <form onSubmit={handleSubmit} className="form">
+        <h3 className="text">Editar equipo</h3>
+          <InputText
+            placeholder="Nombre"
+            name="nombre"
+            value={formData.nombre}
+            onChange={handleChange}
+          />
+          <InputText
+            placeholder="Escudo (URL)"
+            name="escudo"
+            value={formData.escudo}
+            onChange={handleChange}
+          />
+          <InputText
+            placeholder="Foto (URL)"
+            name="foto"
+            value={formData.foto}
+            onChange={handleChange}
+          />
+          <div>
+            <Button type="submit" variant = 'primary'>Guardar</Button>
+            <Button type="button" variant = 'danger' onClick={onCancelar}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
