@@ -13,6 +13,7 @@ import AgregarJugadoresMultiple from './components/modals/ModalJugador/AgregarJu
 import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
 import Login from './components/user/Login';
 import Registro from './components/user/Registro';
+import Perfil from './pages/Perfil';
 
 function App() {
   const [activo, setActivo] = useState('jugadores');
@@ -29,6 +30,7 @@ function App() {
         {activo === 'AgregarEquipo' && <AgregarEquipo />}
         {activo === 'login' && <Login />}
         {activo === 'registro' && <Registro />}
+        {activo === 'perfil' && <Perfil />}
       </div>
     </div>
   );

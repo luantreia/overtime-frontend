@@ -1,3 +1,5 @@
+// src/components/layout/NavBar.js
+
 import React, { useState } from 'react';
 import logo from '../../logo.png';
 import { signOut } from 'firebase/auth';
@@ -33,6 +35,8 @@ const NavBar = ({ setActivo }) => {
           
           <button className="button" onClick={() => onSelect('AgregarJugadoresMultiple')}>Anotar jugador</button>
           <button className="button" onClick={() => onSelect('AgregarEquipo')}>Anotar Equipo</button>
+          <button className="button" onClick={() => onSelect('perfil')}>Mi perfil</button>
+
           <button
             className="button"
             style={{ backgroundColor: 'var(--color-error)' }}

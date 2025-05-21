@@ -78,7 +78,7 @@ const AgregarEquipo = () => {
   return (
     <div className="container">
       <form className='form' onSubmit={handleSubmit}>
-        <h2>Agregar Equipo</h2>
+        <h2>Anotar Equipo</h2>
         <InputText
           name="nombre"
           placeholder="Nombre"
@@ -98,7 +98,7 @@ const AgregarEquipo = () => {
           onChange={e => setFoto(e.target.value)}
         />
         <Button type="submit" variant="success" disabled={false}>
-                    Agregar Equipo
+                    Anotar Equipo
         </Button>
       </form>
     </div>
