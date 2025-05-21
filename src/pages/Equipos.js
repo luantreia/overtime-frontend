@@ -7,7 +7,7 @@ import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
 export default function Equipos() {
   const [equipos, setEquipos] = useState([]);
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
-  const [orden, setOrden] = useState('nombre_asc');
+  const [orden, setOrden] = useState('aleatorio');
 
   // Función para ordenar equipos según criterio
   const ordenarEquipos = (equipos, criterio) => {
@@ -17,6 +17,8 @@ export default function Equipos() {
         return copia.sort((a, b) => a.nombre.localeCompare(b.nombre));
       case 'nombre_desc':
         return copia.sort((a, b) => b.nombre.localeCompare(a.nombre));
+      case 'aleatorio':
+        return copia.sort(() => Math.random() - 0.5);
       default:
         return copia;
     }
@@ -37,7 +39,6 @@ export default function Equipos() {
     fetchEquipos();
   }, [orden]);
 
-  // Manejar cambio en orden de listado
   const handleOrdenChange = (e) => {
     const nuevoOrden = e.target.value;
     setOrden(nuevoOrden);
@@ -49,6 +50,7 @@ export default function Equipos() {
       <div style={styles.selector}>
         <label htmlFor="orden">Ordenar por: </label>
         <select id="orden" value={orden} onChange={handleOrdenChange}>
+          <option value="aleatorio">Orden aleatorio</option>
           <option value="nombre_asc">Nombre (A-Z)</option>
           <option value="nombre_desc">Nombre (Z-A)</option>
         </select>
