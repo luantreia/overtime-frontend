@@ -1,6 +1,6 @@
 // src/pages/Jugadores.js
 import React, { useState, useEffect } from 'react';
-import TarjetaJugador from '../components/modals/ModalJugador/tarjetajugador';
+import TarjetaJugador from '../components/common/tarjetajugador';
 import ModalJugador from '../components/modals/ModalJugador/ModalJugador';
 import PhysicsBall from '../components/common/PhysicsBall';
 

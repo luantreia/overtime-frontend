@@ -1,4 +1,4 @@
-// src/components/common/Tarjetaugador.js
+// src/components/common/Tarjetajugador.js
 import React from 'react';
 
 export default function TarjetaJugador({

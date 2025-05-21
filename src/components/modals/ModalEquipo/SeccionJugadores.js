@@ -1,6 +1,6 @@
 // components/modals/ModalEquipo/SeccionJugadores.js
 import React from 'react';
-import TarjetaJugador from '../ModalJugador/tarjetajugador';
+import TarjetaJugador from '../../common/tarjetajugador';
 
 export default function SeccionJugadores({ loading, jugadores, setModalJugador }) {
   return (
