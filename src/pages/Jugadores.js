@@ -14,7 +14,7 @@ export default function Jugadores() {
   const [showPhysicsBall, setShowPhysicsBall] = useState(false);
 
   useEffect(() => {
-    fetch('https://overtime-ddyl.onrender.com/api/jugadore')
+    fetch('https://overtime-ddyl.onrender.com/api/jugadores')
       .then(res => res.json())
       .then(data => {
         setJugadores(ordenarJugadores(data, orden));
