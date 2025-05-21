@@ -1,9 +1,9 @@
 // src/hooks/useUserRole.js
 import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const useUserRole = () => {
-  const { user, rol } = useContext(AuthContext);
+  const { user, rol } = useContext(useAuth);
   const uid = user?.uid || null;
   return { rol, uid };
 };
