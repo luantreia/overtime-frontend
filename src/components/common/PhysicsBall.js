@@ -291,6 +291,9 @@ export default function PhysicsBall() {
       style={{ maxWidth: 600, margin: 'auto', userSelect: 'none', padding: 10, textAlign: 'center' }}
     >
       <h2>Lanza la pelota y golpea los objetivos</h2>
+      <p style={{ marginTop: 8, fontStyle: 'italic', color: '#555' }}>
+        Los jugadores se están cargando, jugá mientras esperás...
+      </p>
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
