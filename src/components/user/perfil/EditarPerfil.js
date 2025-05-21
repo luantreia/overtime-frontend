@@ -9,7 +9,8 @@ export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem' }}>
+    <div className='container'>
+    <form onSubmit={handleSubmit} className='form'>
       <h2>Editar Perfil</h2>
       <div>
         <label>Nombre:</label>
@@ -28,5 +29,6 @@ export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
         </button>
       </div>
     </form>
+    </div>
   );
 }
