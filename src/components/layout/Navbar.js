@@ -30,8 +30,8 @@ const NavBar = ({ setActivo }) => {
 
       {user ? (
         <>
-          <button className="button" onClick={() => onSelect('AgregarJugador')}>Anotar Jugador</button>
-          <button className="button" onClick={() => onSelect('AgregarJugadoresMultiple')}>Anotar jugadores</button>
+          
+          <button className="button" onClick={() => onSelect('AgregarJugadoresMultiple')}>Anotar jugador</button>
           <button className="button" onClick={() => onSelect('AgregarEquipo')}>Anotar Equipo</button>
           <button
             className="button"

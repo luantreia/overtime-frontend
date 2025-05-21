@@ -8,7 +8,7 @@ import NavBar from './components/layout/Navbar';
 
 import Jugadores from './pages/Jugadores';
 import Equipos from './pages/Equipos';
-import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
+//import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
 import AgregarJugadoresMultiple from './components/modals/ModalJugador/AgregarJugadoresMultiples';
 import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
 import Login from './components/user/Login';
@@ -26,7 +26,6 @@ function App() {
         {activo === 'AgregarJugadoresMultiple' && <AgregarJugadoresMultiple />}
         {activo === 'jugadores' && <Jugadores />}
         {activo === 'equipos' && <Equipos />}
-        {activo === 'AgregarJugador' && <AgregarJugador />}
         {activo === 'AgregarEquipo' && <AgregarEquipo />}
         {activo === 'login' && <Login />}
         {activo === 'registro' && <Registro />}

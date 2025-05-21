@@ -72,7 +72,7 @@ export default function AgregarJugadoresMultiple() {
   return (
     <div className="container mx-auto">
       <form onSubmit={handleSubmit} className="form">
-        <h2>Agregar Multiples Jugadores</h2> 
+        <h2>Agregar Jugador</h2> 
         {jugadores.map((j, i) => (
           <div key={i} className="form-row">
             <InputText
@@ -132,7 +132,7 @@ export default function AgregarJugadoresMultiple() {
             variant="success"
             disabled={loading}
           >
-            {loading ? 'Enviando…' : 'Enviar todos'}
+            {loading ? 'Agregando…' : 'Agregar'}
           </Button>
         </div>
       </form>

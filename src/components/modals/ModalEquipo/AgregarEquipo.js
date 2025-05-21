@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth'; // Importa las funciones necesarias para obtener el token
 import Button from '../../common/FormComponents/Button';
 import InputText from '../../common/FormComponents/InputText';
-import SelectDropdown from '../../common/FormComponents/SelectDropdown';
 
 
 const AgregarEquipo = () => {

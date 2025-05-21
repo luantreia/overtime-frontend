@@ -1,0 +1,99 @@
+/* src/components/common/LoadingScreen.css */
+
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(to bottom, #f2f2f2, #dfe6e9);
+  font-family: 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+.ball-container {
+  position: relative;
+  height: 250px;
+  width: 100px;
+  margin-bottom: 40px;
+}
+
+.ball {
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at 30% 30%, #ff4d4d, #c0392b);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: realisticBounce 2.2s ease-in-out infinite;
+}
+
+.shadow {
+  width: 40px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.15);
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  animation: shadowBounce 2.2s ease-in-out infinite;
+}
+
+.loading-message {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #2d3436;
+  max-width: 300px;
+  line-height: 1.5;
+  animation: fadeInText 1s ease-out 0.5s forwards;
+  opacity: 0;
+}
+
+@keyframes realisticBounce {
+  0% {
+    transform: translateX(-50%) translateY(0) scaleY(1) scaleX(1);
+  }
+  12% {
+    transform: translateX(-50%) translateY(-180px) scaleY(1.05) scaleX(0.95);
+  }
+  22% {
+    transform: translateX(-50%) translateY(0) scaleY(0.85) scaleX(1.1);
+  }
+  32% {
+    transform: translateX(-50%) translateY(-120px) scaleY(1.03) scaleX(0.97);
+  }
+  42% {
+    transform: translateX(-50%) translateY(0) scaleY(0.87) scaleX(1.08);
+  }
+  52% {
+    transform: translateX(-50%) translateY(-70px) scaleY(1.02) scaleX(0.98);
+  }
+  62% {
+    transform: translateX(-50%) translateY(0) scaleY(0.89) scaleX(1.05);
+  }
+  72% {
+    transform: translateX(-50%) translateY(-35px) scaleY(1) scaleX(1);
+  }
+  82%, 100% {
+    transform: translateX(-50%) translateY(0) scaleY(1) scaleX(1);
+  }
+}
+
+@keyframes shadowBounce {
+  0%, 82%, 100% {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 0.15;
+  }
+  12%, 32%, 52% {
+    transform: translateX(-50%) scaleX(1.5);
+    opacity: 0.08;
+  }
+}
+
+@keyframes fadeInText {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

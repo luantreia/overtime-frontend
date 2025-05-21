@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import TarjetaJugador from '../components/common/tarjetajugador';
 import ModalJugador from '../components/modals/ModalJugador/ModalJugador';
-
+import PhysicsBall from '../components/common/PhysicsBall';
 
 export default function Jugadores() {
   const [jugadores, setJugadores] = useState([]);
@@ -10,12 +10,31 @@ export default function Jugadores() {
   const [modalJugador, setModalJugador] = useState(null);
   const [orden, setOrden] = useState('aleatorio');
 
+  const [cargando, setCargando] = useState(true);
+  const [showPhysicsBall, setShowPhysicsBall] = useState(false);
+
   useEffect(() => {
     fetch('https://overtime-ddyl.onrender.com/api/jugadores')
       .then(res => res.json())
-      .then(data => setJugadores(ordenarJugadores(data, orden)))
+      .then(data => {
+        setJugadores(ordenarJugadores(data, orden));
+        setCargando(false);
+      })
       .catch(console.error);
-  }, []);
+  }, [orden]);
+
+  // Controla el timer para mostrar PhysicsBall solo si tarda > 3 segundos en cargar
+  useEffect(() => {
+    let timer;
+    if (cargando) {
+      timer = setTimeout(() => {
+        setShowPhysicsBall(true);
+      }, 3000);
+    } else {
+      setShowPhysicsBall(false);
+    }
+    return () => clearTimeout(timer);
+  }, [cargando]);
 
   const ordenarJugadores = (jugadores, criterio) => {
     const copia = [...jugadores];
@@ -35,12 +54,15 @@ export default function Jugadores() {
         );
       case 'aleatorio':
         return copia.sort(() => Math.random() - 0.5);
+      default:
+        return copia;
     }
   };
 
   const handleOrdenChange = e => {
     const nuevoOrden = e.target.value;
     setOrden(nuevoOrden);
+    // Ordenamos después de setOrden para reflejar el cambio de orden
     setJugadores(js => ordenarJugadores(js, nuevoOrden));
   };
 
@@ -64,6 +86,21 @@ export default function Jugadores() {
     }
   };
 
+  // Renderizado condicional
+  if (cargando) {
+    // Si está cargando y pasaron menos de 3s, mostramos solo mensaje
+    if (!showPhysicsBall) {
+      return (
+        <div style={{ textAlign: 'center', marginTop: 40 }}>
+          <p>Cargando datos, por favor espera...</p>
+        </div>
+      );
+    }
+    // Si está cargando y pasaron 3s, mostramos PhysicsBall
+    return <PhysicsBall />;
+  }
+
+  // Si no está cargando, renderizamos todo normalmente
   return (
     <div>
       <div style={styles.selector}>
