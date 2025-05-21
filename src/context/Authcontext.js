@@ -3,6 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
 
 const AuthContext = createContext();
+export { AuthContext }; // <-- 👈 NECESARIO para usar useContext(AuthContext)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -17,8 +18,8 @@ export function AuthProvider({ children }) {
           const token = await user.getIdToken();
           const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/usuarios', {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           });
 
           const data = await res.json();

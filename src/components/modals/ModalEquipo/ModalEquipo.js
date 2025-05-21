@@ -1,3 +1,5 @@
+// src/compoents/modals/ModalEquipo.js
+
 import React, { useState, useEffect } from 'react';
 import EditarEquipo from './EditarEquipo';
 import EncabezadoEquipo from './EncabezadoEquipo';

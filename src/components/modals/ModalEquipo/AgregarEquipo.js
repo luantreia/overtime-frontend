@@ -1,3 +1,5 @@
+// src/compoents/modals/ModalEquipo/AgregarEquipo.js
+
 import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth'; // Importa las funciones necesarias para obtener el token
 import Button from '../../common/FormComponents/Button';
@@ -87,7 +89,7 @@ const AgregarEquipo = () => {
           placeholder="URL Escudo"
           name="foto"
           value={escudo}
-          onChange={e => setFoto(e.target.value)}
+          onChange={e => setEscudo(e.target.value)}
         />
         <InputText
           placeholder="URL Foto"

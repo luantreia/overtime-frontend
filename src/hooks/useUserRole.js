@@ -1,8 +1,11 @@
-export function useUserRole(user) {
-  if (!user) return { isAdmin: false, isReader: false };
+// src/hooks/useUserRole.js
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
-  const isAdmin = user.rol === 'admin';
-  const isReader = user.rol === 'lector';
+const useUserRole = () => {
+  const { user, rol } = useContext(AuthContext);
+  const uid = user?.uid || null;
+  return { rol, uid };
+};
 
-  return { isAdmin, isReader };
-}
+export default useUserRole;

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import EditarJugador from './EditarJugador';
+import useUserRole from '../../../hooks/useUserRole';
+
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
+  const { uid } = useUserRole();
+
 
   const calcularEdad = fechaNacimiento => {
     if (!fechaNacimiento) return jugador.edad || 'N/A';
@@ -61,6 +65,7 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
             )}
           </section>
 
+          {jugador.creadoPor === uid && (
           <button
             onClick={() => setModoEdicion(true)}
             style={styles.botonEditar}
@@ -68,6 +73,7 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
           >
             ✎ Editar
           </button>
+          )}
         </div>
 
         {modoEdicion && (

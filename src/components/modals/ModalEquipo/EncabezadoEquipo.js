@@ -1,14 +1,18 @@
-// components/modals/ModalEquipo/EncabezadoEquipo.js
 import React from 'react';
 import Button from '../../common/FormComponents/Button';
+import useUserRole from '../../../hooks/useUserRole';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
+  const { uid } = useUserRole(); // ✅ Aquí obtenés el uid
+  const esAdmin = equipo.administradores?.includes(uid);
 
   return (
     <div style={styles.encabezado}>
       <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
       <h2>{equipo.nombre}</h2>
-      <Button type="button" color="secondary" onClick={onEditar}>✎ Editar</Button>
+      {esAdmin && (
+        <Button type="button" color="secondary" onClick={onEditar}>✎ Editar</Button>
+      )}
     </div>
   );
 }

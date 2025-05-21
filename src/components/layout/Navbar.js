@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import logo from '../../logo.png';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
-import { useAuth } from '../../context/Authcontext';
+import { useAuth } from '../../context/AuthContext';
 
 const NavBar = ({ setActivo }) => {
   const { user } = useAuth();
