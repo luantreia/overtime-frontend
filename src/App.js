@@ -2,7 +2,7 @@
 import './App.css';
 import React, { useState } from 'react';
 
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/Authcontext';
 
 import NavBar from './components/layout/Navbar';
 
