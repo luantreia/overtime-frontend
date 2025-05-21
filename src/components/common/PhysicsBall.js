@@ -1,89 +1,97 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export default function PhysicsBall() {
+  const containerRef = useRef(null);
   const canvasRef = useRef(null);
+
+  const [canvasSize, setCanvasSize] = useState({ width: 600, height: 400 });
   const [targets, setTargets] = useState([]);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(10);
   const [gameOver, setGameOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Estado físico de la pelota
   const ball = useRef({
     x: 100,
     y: 100,
     radius: 15,
     vx: 0,
     vy: 0,
-    ax: 0,
-    ay: 0.6,
+    ay: 0.6, // gravedad
   });
 
+  // Estado de drag para lanzar
   const drag = useRef({
-    isDragging: false,
-    dragStart: null,
-    dragEnd: null,
+    dragging: false,
+    start: null,
+    current: null,
   });
 
-  const canvasWidth = 600;
-  const canvasHeight = 400;
-
-  const generateTarget = () => ({
-    x: 50 + Math.random() * (canvasWidth - 100),
-    y: 50 + Math.random() * (canvasHeight - 150),
-    radius: 12,
-  });
-
-  const initTargets = () => {
-    const newTargets = [];
-    for (let i = 0; i < 5; i++) {
-      newTargets.push(generateTarget());
-    }
-    setTargets(newTargets);
-  };
-
-  const resetGame = () => {
-    setScore(0);
-    setTimeLeft(10);
-    setGameOver(false);
-    ball.current = { x: 100, y: 100, radius: 15, vx: 0, vy: 0, ax: 0, ay: 0.6 };
-    initTargets();
-  };
-
+  // Ajustar tamaño canvas de forma responsiva
   useEffect(() => {
-    initTargets();
+    function updateSize() {
+      if (!containerRef.current) return;
+      const maxWidth = containerRef.current.clientWidth;
+      const width = Math.min(600, maxWidth);
+      const height = (width * 2) / 3;
+      setCanvasSize({ width, height });
+
+      ball.current.radius = Math.max(12, width / 40);
+      ball.current.x = width / 6;
+      ball.current.y = height / 4;
+      ball.current.vx = 0;
+      ball.current.vy = 0;
+    }
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
   }, []);
 
+  // Función para crear un objetivo en posiciones aleatorias dentro del canvas
+  const createTarget = () => {
+    const margin = 50;
+    const radius = Math.max(10, canvasSize.width / 50);
+    return {
+      x: margin + Math.random() * (canvasSize.width - 2 * margin),
+      y: margin + Math.random() * (canvasSize.height - 2 * margin),
+      radius,
+    };
+  };
+
+  // Inicializar objetivos
+  useEffect(() => {
+    if (!gameOver) {
+      const initialTargets = [];
+      for (let i = 0; i < 5; i++) initialTargets.push(createTarget());
+      setTargets(initialTargets);
+    }
+  }, [canvasSize, gameOver]);
+
+  // Timer de cuenta regresiva
   useEffect(() => {
     if (gameOver) return;
+    if (timeLeft <= 0) {
+      setGameOver(true);
+      return;
+    }
+    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [timeLeft, gameOver]);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setGameOver(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [gameOver]);
-
+  // Spawn de nuevos objetivos cada 5 segundos si hay menos de 5
   useEffect(() => {
     if (gameOver) return;
-
-    const spawnTimer = setInterval(() => {
+    const spawnInterval = setInterval(() => {
       setTargets((prev) => {
-        if (prev.length < 5) {
-          return [...prev, generateTarget()];
-        }
+        if (prev.length < 5) return [...prev, createTarget()];
         return prev;
       });
     }, 5000);
+    return () => clearInterval(spawnInterval);
+  }, [gameOver, canvasSize]);
 
-    return () => clearInterval(spawnTimer);
-  }, [gameOver]);
-
+  // Física y dibujo
   useEffect(() => {
     if (gameOver) return;
 
@@ -91,11 +99,11 @@ export default function PhysicsBall() {
     const ctx = canvas.getContext('2d');
 
     function draw() {
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // Pelota
+      // Dibujo pelota
       ctx.beginPath();
-      ctx.fillStyle = '#d32f2f';
+      ctx.fillStyle = '#e53935';
       ctx.shadowColor = 'rgba(0,0,0,0.3)';
       ctx.shadowBlur = 8;
       ctx.shadowOffsetX = 2;
@@ -104,173 +112,224 @@ export default function PhysicsBall() {
       ctx.fill();
       ctx.closePath();
 
-      // Línea de lanzamiento
-      if (drag.current.isDragging && drag.current.dragStart && drag.current.dragEnd) {
+      // Línea de lanzamiento si está draggeando
+      if (drag.current.dragging && drag.current.start && drag.current.current) {
         ctx.beginPath();
-        ctx.strokeStyle = '#1976d2';
+        ctx.strokeStyle = '#1e88e5';
         ctx.lineWidth = 3;
-        ctx.moveTo(drag.current.dragStart.x, drag.current.dragStart.y);
-        ctx.lineTo(drag.current.dragEnd.x, drag.current.dragEnd.y);
+        ctx.moveTo(drag.current.start.x, drag.current.start.y);
+        ctx.lineTo(drag.current.current.x, drag.current.current.y);
         ctx.stroke();
       }
 
-      // Objetivos
-      targets.forEach((t) => {
+      // Dibujar objetivos
+      targets.forEach(({ x, y, radius }) => {
         ctx.beginPath();
-        ctx.fillStyle = '#2e7d32';
-        ctx.shadowColor = 'rgba(0,0,0,0.2)';
-        ctx.shadowBlur = 5;
-        ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#43a047';
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 6;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
       });
 
       // Puntaje y tiempo
-      ctx.font = '18px Arial';
+      ctx.font = `${Math.max(16, canvasSize.width / 35)}px Arial`;
       ctx.fillStyle = '#333';
-      ctx.fillText(`Puntaje: ${score}`, 10, 25);
-      ctx.fillText(`Tiempo: ${timeLeft}s`, 10, 50);
+      ctx.fillText(`Puntaje: ${score}`, 10, 30);
+      ctx.fillText(`Tiempo: ${timeLeft}s`, 10, 60);
     }
 
     function updatePhysics() {
-      if (drag.current.isDragging) return;
+      if (drag.current.dragging) return; // pausa física durante drag
 
-      const b = ball.current;
-      b.vx += b.ax;
-      b.vy += b.ay;
+      // Actualizar velocidad con gravedad
+      ball.current.vy += ball.current.ay;
 
-      b.x += b.vx;
-      b.y += b.vy;
+      // Actualizar posición
+      ball.current.x += ball.current.vx;
+      ball.current.y += ball.current.vy;
 
-      const restitution = 0.7;
+      const r = ball.current.radius;
+      const w = canvasSize.width;
+      const h = canvasSize.height;
+
+      const bounceFactor = 0.7;
       const friction = 0.98;
 
-      if (b.y + b.radius > canvasHeight) {
-        b.y = canvasHeight - b.radius;
-        b.vy = -b.vy * restitution;
-        b.vx *= friction;
+      // Rebotes con paredes y suelo
+      if (ball.current.y + r > h) {
+        ball.current.y = h - r;
+        ball.current.vy = -ball.current.vy * bounceFactor;
+        ball.current.vx *= friction;
       }
-      if (b.y - b.radius < 0) {
-        b.y = b.radius;
-        b.vy = -b.vy * restitution;
+      if (ball.current.y - r < 0) {
+        ball.current.y = r;
+        ball.current.vy = -ball.current.vy * bounceFactor;
       }
-      if (b.x + b.radius > canvasWidth) {
-        b.x = canvasWidth - b.radius;
-        b.vx = -b.vx * restitution;
+      if (ball.current.x + r > w) {
+        ball.current.x = w - r;
+        ball.current.vx = -ball.current.vx * bounceFactor;
       }
-      if (b.x - b.radius < 0) {
-        b.x = b.radius;
-        b.vx = -b.vx * restitution;
+      if (ball.current.x - r < 0) {
+        ball.current.x = r;
+        ball.current.vx = -ball.current.vx * bounceFactor;
       }
 
-      if (Math.abs(b.vx) < 0.05) b.vx = 0;
-      if (Math.abs(b.vy) < 0.05) b.vy = 0;
+      // Pequeñas velocidades se detienen
+      if (Math.abs(ball.current.vx) < 0.05) ball.current.vx = 0;
+      if (Math.abs(ball.current.vy) < 0.05) ball.current.vy = 0;
 
+      // Detectar colisión con objetivos
       for (let i = targets.length - 1; i >= 0; i--) {
         const t = targets[i];
-        const dist = Math.hypot(b.x - t.x, b.y - t.y);
-        if (dist < b.radius + t.radius) {
-          setScore((s) => s + 1);
-          setTimeLeft((t) => t + 5);
-          setTargets((ts) => ts.filter((_, idx) => idx !== i));
-          b.vx = -b.vx * 0.8;
-          b.vy = -b.vy * 0.8;
+        const dist = Math.hypot(ball.current.x - t.x, ball.current.y - t.y);
+        if (dist < r + t.radius) {
+          setScore((prev) => prev + 1);
+          setTimeLeft((prev) => prev + 4); // +10 segundos por objetivo
+          setTargets((prev) => prev.filter((_, idx) => idx !== i));
+
+          // Rebote al chocar con objetivo
+          ball.current.vx = -ball.current.vx * 0.8;
+          ball.current.vy = -ball.current.vy * 0.8;
           break;
         }
       }
     }
 
-    let animationFrameId;
+    let animationId;
 
     function loop() {
       updatePhysics();
       draw();
-      animationFrameId = requestAnimationFrame(loop);
+      animationId = requestAnimationFrame(loop);
     }
+
     loop();
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [targets, score, timeLeft, gameOver]);
+    return () => cancelAnimationFrame(animationId);
+  }, [targets, score, timeLeft, gameOver, canvasSize]);
 
-  const handleMouseDown = (e) => {
-    if (gameOver) return;
+  // Obtener posición relativa al canvas para mouse y touch
+  const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+  };
 
-    const b = ball.current;
-    const dist = Math.hypot(mouseX - b.x, mouseY - b.y);
-    if (dist <= b.radius) {
-      drag.current.isDragging = true;
-      drag.current.dragStart = { x: b.x, y: b.y };
-      drag.current.dragEnd = { x: mouseX, y: mouseY };
-      b.vx = 0;
-      b.vy = 0;
+  // Eventos drag & drop
+  const handleDown = (e) => {
+    if (gameOver) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    const dist = Math.hypot(pos.x - ball.current.x, pos.y - ball.current.y);
+    if (dist <= ball.current.radius) {
+      drag.current.dragging = true;
+      drag.current.start = { x: ball.current.x, y: ball.current.y };
+      drag.current.current = pos;
+      ball.current.vx = 0;
+      ball.current.vy = 0;
       setIsDragging(true);
     }
   };
 
-  const handleMouseMove = (e) => {
-    if (!drag.current.isDragging || gameOver) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    drag.current.dragEnd = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+  const handleMove = (e) => {
+    if (!drag.current.dragging || gameOver) return;
+    e.preventDefault();
+    drag.current.current = getPos(e);
   };
 
-  const handleMouseUp = () => {
-    if (!drag.current.isDragging || gameOver) return;
+  const handleUp = (e) => {
+    if (!drag.current.dragging || gameOver) return;
+    e.preventDefault();
 
-    const dx = drag.current.dragStart.x - drag.current.dragEnd.x;
-    const dy = drag.current.dragStart.y - drag.current.dragEnd.y;
+    const dx = drag.current.current.x - drag.current.start.x;
+    const dy = drag.current.current.y - drag.current.start.y;
 
-    const force = 2.0;
-    ball.current.vx = dx * force;
-    ball.current.vy = dy * force;
+    // Escala fuerza según tamaño canvas para consistencia
+    const forceScale = canvasSize.width / 23000;
+    ball.current.vx = dx * 2 * forceScale;
+    ball.current.vy = dy * 2 * forceScale;
 
-    drag.current.isDragging = false;
-    drag.current.dragStart = null;
-    drag.current.dragEnd = null;
+    drag.current.dragging = false;
+    drag.current.start = null;
+    drag.current.current = null;
     setIsDragging(false);
   };
 
+  // Reiniciar juego
+  const resetGame = () => {
+    setScore(0);
+    setTimeLeft(10);
+    setGameOver(false);
+    ball.current = {
+      x: canvasSize.width / 6,
+      y: canvasSize.height / 4,
+      radius: Math.max(12, canvasSize.width / 40),
+      vx: 0,
+      vy: 0,
+      ay: 0.6,
+    };
+    const initialTargets = [];
+    for (let i = 0; i < 5; i++) initialTargets.push(createTarget());
+    setTargets(initialTargets);
+  };
+
   return (
-    <div style={{ textAlign: 'center', userSelect: 'none' }} className='overlay'>
-      <h2>Lanza la pelota - ¡Golpea los objetivos!</h2>
-        <p style={{ marginTop: '8px', fontStyle: 'italic', color: '#555' }}>
-        Los jugadores se están cargando, jugá mientras esperás...
-        </p>
+    <div
+      ref={containerRef}
+      style={{ maxWidth: 600, margin: 'auto', userSelect: 'none', padding: 10, textAlign: 'center' }}
+    >
+      <h2>Lanza la pelota y golpea los objetivos</h2>
       <canvas
         ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
+        width={canvasSize.width}
+        height={canvasSize.height}
         style={{
           border: '2px solid #333',
-          backgroundColor: '#f0f0f0',
-          cursor: isDragging ? 'grabbing' : gameOver ? 'not-allowed' : 'grab',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           borderRadius: 12,
+          backgroundColor: '#f5f5f5',
+          cursor: isDragging ? 'grabbing' : gameOver ? 'not-allowed' : 'grab',
+          width: '100%',
+          height: 'auto',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          touchAction: 'none',
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onMouseDown={handleDown}
+        onMouseMove={handleMove}
+        onMouseUp={handleUp}
+        onMouseLeave={handleUp}
+        onTouchStart={handleDown}
+        onTouchMove={handleMove}
+        onTouchEnd={handleUp}
+        onTouchCancel={handleUp}
       />
+
       {gameOver && (
-        <div style={{ marginTop: '20px' }}>
-          <p><strong>¡Juego terminado!</strong></p>
-          <p>Puntaje final: {score}</p>
+        <div style={{ marginTop: 20 }}>
+          <p style={{ fontSize: 18, fontWeight: 'bold' }}>¡Juego terminado!</p>
+          <p style={{ fontSize: 16 }}>Puntaje final: {score}</p>
           <button
             onClick={resetGame}
             style={{
               padding: '10px 20px',
-              fontSize: '16px',
-              borderRadius: '8px',
+              fontSize: 16,
+              borderRadius: 8,
               border: 'none',
-              backgroundColor: '#1976d2',
+              backgroundColor: '#1e88e5',
               color: '#fff',
               cursor: 'pointer',
-              boxShadow: '0 3px 8px rgba(0,0,0,0.2)',
+              marginTop: 10,
             }}
           >
             Jugar de nuevo
