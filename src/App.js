@@ -1,7 +1,7 @@
 // src/App.js
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import NavBar from './components/layout/NavBar';
+import NavBar from "./components/layout/Navbar";
 import Jugadores from './pages/Jugadores';
 import Equipos from './pages/Equipos';
 import Perfil from './pages/Perfil';
