@@ -1,19 +1,21 @@
-// src/pages/Perfil.js
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/Authcontext';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 
+import MostrarPerfil from '../components/user/perfil/MostrarPerfil';
+import EditarPerfil from '../components/user/perfil/EditarPerfil';
+
 export default function Perfil() {
   const { user } = useAuth();
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [modoEdicion, setModoEdicion] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
-      navigate('/login'); // redirige si no está autenticado
+      navigate('/login');
       return;
     }
 
@@ -21,9 +23,7 @@ export default function Perfil() {
       try {
         const token = await user.getIdToken();
         const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/mi-perfil', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const data = await res.json();
@@ -45,12 +45,10 @@ export default function Perfil() {
       const token = await user.getIdToken();
       await fetch('https://overtime-ddyl.onrender.com/api/usuarios/eliminar', {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      await auth.currentUser.delete(); // elimina de Firebase
+      await auth.currentUser.delete();
       alert('Tu cuenta ha sido eliminada.');
       navigate('/');
     } catch (error) {
@@ -59,21 +57,35 @@ export default function Perfil() {
     }
   };
 
-  if (cargando) return <p>Cargando perfil...</p>;
+  const handleGuardar = async (nuevosDatos) => {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/actualizar', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(nuevosDatos),
+      });
 
+      if (!res.ok) throw new Error('Error al actualizar perfil');
+
+      const dataActualizada = await res.json();
+      setDatos(dataActualizada);
+      setModoEdicion(false);
+    } catch (error) {
+      console.error(error);
+      alert('Error al guardar los cambios');
+    }
+  };
+
+  if (cargando) return <p>Cargando perfil...</p>;
   if (!datos) return <p>No se pudieron cargar los datos del perfil.</p>;
 
-  return (
-    <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem' }}>
-      <h2>Mi Perfil</h2>
-      <p><strong>Nombre:</strong> {datos.nombre}</p>
-      <p><strong>Email:</strong> {user.email}</p>
-      <p><strong>Rol:</strong> {datos.rol}</p>
-
-      <button onClick={() => navigate('/editar-perfil')}>Editar perfil</button>
-      <button onClick={handleEliminarCuenta} style={{ marginLeft: 10, color: 'red' }}>
-        Eliminar cuenta
-      </button>
-    </div>
+  return modoEdicion ? (
+    <EditarPerfil datos={datos} onGuardar={handleGuardar} onCancelar={() => setModoEdicion(false)} />
+  ) : (
+    <MostrarPerfil datos={datos} onEditar={() => setModoEdicion(true)} onEliminar={handleEliminarCuenta} />
   );
 }
