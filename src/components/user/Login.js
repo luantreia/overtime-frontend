@@ -22,7 +22,7 @@ const Login = () => {
   };
 
   return (
-    <div className="container">
+    <div className="warpper">
       <form className="form" onSubmit={handleLogin}>
         <h2>Iniciar Sesión</h2>
         <InputText
