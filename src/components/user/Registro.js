@@ -52,7 +52,7 @@ const Registro = () => {
   };
 
   return (
-    <div className="warpper">
+    <div className="wrapper">
       <form onSubmit={handleRegister} className="form">
         <h2 className="text-2xl font-semibold text-center">Registrar Cuenta</h2>
 
