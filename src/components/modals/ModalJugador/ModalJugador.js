@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import EditarJugador from './EditarJugador';
 import useUserRole from '../../../hooks/useUserRole';
-
+import CloseButton from '../../common/FormComponents/CloseButton';
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -32,7 +32,7 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={styles.cerrar}>✖</button>
+        <CloseButton onClick={onClose} />
 
         <div style={styles.contenido}>
           <div style={styles.header}>

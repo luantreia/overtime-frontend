@@ -70,7 +70,7 @@ export default function AgregarJugadoresMultiple() {
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="wrapper">
       <form onSubmit={handleSubmit} className="form">
         <h2>Anotar Jugador</h2> 
         {jugadores.map((j, i) => (

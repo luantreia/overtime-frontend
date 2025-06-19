@@ -1,7 +1,7 @@
 // src/pages/Equipos.js
 
 import React, { useState, useEffect } from 'react';
-import TarjetaEquipo from '../components/common/tarjetaequipo.js';
+import TarjetaEquipo from '../components/modals/ModalEquipo/tarjetaequipo.js';
 import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
 
 export default function Equipos() {
@@ -47,7 +47,7 @@ export default function Equipos() {
 
   return (
     <div>
-      <div style={styles.selector}>
+      <div className='selector'>
         <label htmlFor="orden">Ordenar por: </label>
         <select id="orden" value={orden} onChange={handleOrdenChange}>
           <option value="aleatorio">Orden aleatorio</option>
@@ -56,7 +56,7 @@ export default function Equipos() {
         </select>
       </div>
 
-      <div style={styles.lista}>
+      <div className='lista'>
         {equipos.map((equipo, index) => (
           <TarjetaEquipo
             key={index}
@@ -74,16 +74,3 @@ export default function Equipos() {
   );
 }
 
-const styles = {
-  selector: {
-    textAlign: 'center',
-    margin: '1rem 0',
-  },
-  lista: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: '10px',
-    padding: '10px',
-  }
-};

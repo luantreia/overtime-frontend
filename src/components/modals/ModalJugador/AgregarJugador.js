@@ -61,7 +61,7 @@ const AgregarJugador = () => {
   };
 
   return (
-    <div className="container">
+    <div className="wrapper">
       <form className='form' onSubmit={handleSubmit} >
       <h2>Agregar Jugador</h2> 
           <InputText

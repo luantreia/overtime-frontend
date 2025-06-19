@@ -8,8 +8,11 @@ import Equipos from './pages/Equipos';
 import Perfil from './pages/Perfil';
 import Login from './components/user/Login';
 import Registro from './components/user/Registro';
-import AgregarJugadoresMultiple from './components/modals/ModalJugador/AgregarJugadoresMultiples';
+import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
 import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
+import LandingPage from './pages/LandingPage';
+import Partidos from './pages/Partidos';
+import AgregarPartido from './components/modals/ModalPartido/AgregarPartido';
 
 function App() {
   return (
@@ -17,10 +20,13 @@ function App() {
       <NavBar />
 
       <Routes>
-        <Route path="/" element={<Jugadores />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/jugadores" element={<Jugadores />} />
         <Route path="/equipos" element={<Equipos />} />
-        <Route path="/agregar-jugadores-multiple" element={<AgregarJugadoresMultiple />} />
+        <Route path="/agregar-jugadores-multiple" element={<AgregarJugador />} />
         <Route path="/agregar-equipo" element={<AgregarEquipo />} />
+        <Route path="/agregar-partido" element={<AgregarPartido />} />
+        <Route path="/partidos" element={<Partidos />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />

@@ -7,6 +7,7 @@ import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
 import ModalJugador from '../ModalJugador/ModalJugador';
+import CloseButton from '../../common/FormComponents/CloseButton';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [equipo, setEquipo] = useState(equipoProp);
@@ -58,15 +59,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <button
-          onClick={onClose}
-          style={styles.cerrar}
-          aria-label="Cerrar modal"
-          onMouseEnter={e => e.currentTarget.style.color = '#000'}
-          onMouseLeave={e => e.currentTarget.style.color = '#555'}
-        >
-          ✖
-        </button>
+        <CloseButton onClick={onClose} />
 
         <EncabezadoEquipo equipo={equipo} onEditar={() => setModalEditarEquipo(true)} />
         <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
@@ -140,17 +133,6 @@ const styles = {
     overflowY: 'auto',
     position: 'relative',
     boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-  },
-  cerrar: {
-    position: 'absolute',
-    top: '10px',
-    right: '15px',
-    fontSize: '22px',
-    background: 'none',
-    border: 'none',
-    color: '#555',
-    cursor: 'pointer',
-    transition: 'color 0.2s',
   },
   banner: {
     width: '100%',

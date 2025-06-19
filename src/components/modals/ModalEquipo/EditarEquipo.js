@@ -1,4 +1,5 @@
 // src/components/modals/ModalEquipo/EditarEquipo.js
+
 import React, { useState } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth';
 import InputText from '../../common/FormComponents/InputText';
@@ -51,10 +52,6 @@ function EditarEquipo({ equipo, onGuardar, onCancelar }) {
   };
 
   return (
-    <div
-      className="container"
-      onClick={onCancelar}
-    >
       <div
         className="overlay"
         onClick={e => e.stopPropagation()}
@@ -87,7 +84,6 @@ function EditarEquipo({ equipo, onGuardar, onCancelar }) {
           </div>
         </form>
       </div>
-    </div>
   );
 }
 

@@ -76,7 +76,7 @@ const AgregarEquipo = () => {
   };
 
   return (
-    <div className="container">
+    <div className="wrapper">
       <form className='form' onSubmit={handleSubmit}>
         <h2>Anotar Equipo</h2>
         <InputText
@@ -87,7 +87,7 @@ const AgregarEquipo = () => {
         />
         <InputText
           placeholder="URL Escudo"
-          name="foto"
+          name="escudo"
           value={escudo}
           onChange={e => setEscudo(e.target.value)}
         />

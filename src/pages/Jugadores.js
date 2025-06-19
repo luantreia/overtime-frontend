@@ -1,8 +1,8 @@
 // src/pages/Jugadores.js
 import React, { useState, useEffect } from 'react';
-import TarjetaJugador from '../components/common/tarjetajugador';
+import TarjetaJugador from '../components/modals/ModalJugador/tarjetajugador';
 import ModalJugador from '../components/modals/ModalJugador/ModalJugador';
-import PhysicsBall from '../components/common/PhysicsBall';
+import PhysicsBall from '../components/common/LoadingGame/PhysicsBall';
 
 export default function Jugadores() {
   const [jugadores, setJugadores] = useState([]);
@@ -103,7 +103,7 @@ export default function Jugadores() {
   // Si no está cargando, renderizamos todo normalmente
   return (
     <div>
-      <div style={styles.selector}>
+      <div className='selector'>
         <label htmlFor="orden">Ordenar por: </label>
         <select id="orden" value={orden} onChange={handleOrdenChange}>
           <option value="nombre_asc">Nombre (A-Z)</option>
@@ -115,7 +115,7 @@ export default function Jugadores() {
         </select>
       </div>
 
-      <div style={styles.lista}>
+      <div className='lista'>
         {jugadores.map(j => (
           <TarjetaJugador
             key={j._id}
@@ -142,16 +142,3 @@ export default function Jugadores() {
   );
 }
 
-const styles = {
-  selector: {
-    textAlign: 'center',
-    margin: '1rem 0',
-  },
-  lista: {
-    justifyContent: 'center',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 10,
-    padding: 10,
-  },
-};

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import Button from '../../common/FormComponents/Button';
 export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
   const [nombre, setNombre] = useState(datos.nombre || '');
 
@@ -9,7 +9,7 @@ export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
   };
 
   return (
-    <div className='container'>
+    <div className='perfil-wrapper'>
     <form onSubmit={handleSubmit} className='form'>
       <h2>Editar Perfil</h2>
       <div>
@@ -23,10 +23,10 @@ export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
       </div>
 
       <div style={{ marginTop: '1rem' }}>
-        <button type="submit">Guardar</button>
-        <button type="button" onClick={onCancelar} style={{ marginLeft: 10 }}>
+        <Button type="submit" variant='success'>Guardar</Button>
+        <Button type="button" onClick={onCancelar} variant='danger'>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
     </div>

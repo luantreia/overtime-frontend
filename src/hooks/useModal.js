@@ -1,3 +1,7 @@
+//src/hook/useModal.js
+
+import { useState } from 'react';
+
 export function useModal() {
   const [isOpen, setIsOpen] = useState(false);
 

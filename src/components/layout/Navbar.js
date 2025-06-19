@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import logo from '../../logo.png';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
-import { useAuth } from '../../context/Authcontext';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Button from '../common/FormComponents/Button';
 
 const NavBar = () => {
   const { user } = useAuth();
@@ -21,8 +22,6 @@ const NavBar = () => {
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-
-  // Cambia ruta y cierra menú
   const onSelect = (ruta) => {
     navigate(ruta);
     setMenuAbierto(false);
@@ -30,22 +29,24 @@ const NavBar = () => {
 
   const renderBotones = () => (
     <>
-      <button className="button" onClick={() => onSelect('/')}>Jugadores</button>
+      <button className="button" onClick={() => onSelect('/jugadores')}>Jugadores</button>
       <button className="button" onClick={() => onSelect('/equipos')}>Equipos</button>
+      <button className="button" onClick={() => onSelect('/partidos')}>Partidos</button>
 
       {user ? (
         <>
           <button className="button" onClick={() => onSelect('/agregar-jugadores-multiple')}>Anotar jugador</button>
           <button className="button" onClick={() => onSelect('/agregar-equipo')}>Anotar Equipo</button>
+          <button className="button" onClick={() => onSelect('/agregar-partido')}>Agregar Partido</button>
           <button className="button" onClick={() => onSelect('/perfil')}>Mi perfil</button>
 
-          <button
+          <Button
             className="button"
-            style={{ backgroundColor: 'var(--color-error)' }}
+            variant="danger"
             onClick={handleLogout}
           >
             Cerrar sesión
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -58,7 +59,7 @@ const NavBar = () => {
 
   return (
     <header className="App-header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+      <div className="nav-left">
         <img src={logo} alt="logo" className="App-logo" />
       </div>
 

@@ -9,7 +9,7 @@ export function useFetchJugadores(equipoId) {
     if (!equipoId) return;
 
     setLoading(true);
-    fetch(`/api/jugadores?equipoId=${equipoId}`)
+    fetch(`https://overtime-ddyl.onrender.com/api/jugadores?equipoId=${equipoId}`)
       .then(res => res.json())
       .then(data => {
         setJugadores(data);
