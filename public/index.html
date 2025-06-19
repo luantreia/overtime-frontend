@@ -2,36 +2,54 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Open Graph para compartir en WhatsApp, Facebook, etc. -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Overtime Dodgeball | Análisis de Partidos y Estadísticas</title>
+    <meta name="description" content="Registrá partidos, equipos y estadísticas de dodgeball con Overtime Dodgeball. Ideal para torneos, ligas y análisis de rendimiento." />
+    <meta name="keywords" content="dodgeball, estadísticas, partidos, equipos, torneos, jugadores, deportes, ligas, captura de datos" />
+    <meta name="author" content="Overtime Dodgeball" />
+    <meta name="theme-color" content="#000000" />
+
+    <!-- Open Graph -->
     <meta property="og:title" content="Overtime Dodgeball" />
-    
+    <meta property="og:description" content="Analizá partidos y registrá estadísticas de dodgeball en tiempo real." />
     <meta property="og:image" content="%PUBLIC_URL%/og-image.jpg" />
     <meta property="og:url" content="https://overtime-dodgeball.vercel.app/" />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web About Dodgeball"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/og-image.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>Overtime Dodgeball</title>
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Overtime Dodgeball" />
+    <meta name="twitter:description" content="La mejor app para llevar estadísticas de dodgeball." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og-image.jpg" />
+
+    <!-- Apple -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/og-image.png" />
+
+    <!-- Manifest + Favicon -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Overtime Dodgeball",
+        "url": "https://overtime-dodgeball.vercel.app",
+        "description": "Aplicación para registrar partidos y estadísticas de dodgeball.",
+        "applicationCategory": "SportsApplication",
+        "operatingSystem": "All",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
+
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
