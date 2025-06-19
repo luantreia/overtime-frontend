@@ -1,5 +1,5 @@
 import React from 'react';
-import JugadorEstadisticas from './JugadorEstadisticas';
+import JugadorEstadisticasCard from './JugadorEstadisticasCard';
 import { useFetchJugadores } from '../../../hooks/useFetchJugadores';
 
 export function TablaEstadisticas({ equipoNombre, equipoId, estadisticasJugador = [], onAsignarJugador, onCambiarEstadistica }) {
@@ -34,7 +34,7 @@ export function TablaEstadisticas({ equipoNombre, equipoId, estadisticasJugador 
             const stats = jugadorObj.estadisticas || { throws: 0, hits: 0, outs: 0, catches: 0 };
 
             return (
-              <JugadorEstadisticas
+              <JugadorEstadisticasCard
                 key={idx}
                 index={idx}
                 jugadorId={jugadorId}
