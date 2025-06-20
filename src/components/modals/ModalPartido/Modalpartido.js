@@ -5,6 +5,7 @@ import PartidoSetsResumen from './PartidoSetsResumen';
 import Button from '../../common/FormComponents/Button';
 import useJugadores from '../../../hooks/useJugadores';
 import CloseButton from '../../common/FormComponents/CloseButton';
+import ExportarExcelBoton from '../../common/FormComponents/ExportarExcelboton';
 
 export default function ModalPartido({ partido, onClose, token, refrescarPartidoSeleccionado, cargarPartidoPorId, agregarSetAPartido, actualizarSetDePartido }) {
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
@@ -36,7 +37,7 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
         <Button onClick={() => setModalEstadisticasAbierto(true)} variant="primary">
           Cargar estadísticas
         </Button>
-
+        <ExportarExcelBoton partido={partido} />
         {modalEstadisticasAbierto && (
           <ModalEstadisticasCaptura
             partido={partido}
