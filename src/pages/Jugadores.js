@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import TarjetaJugador from '../components/modals/ModalJugador/tarjetajugador';
 import ModalJugador from '../components/modals/ModalJugador/ModalJugador';
 import PhysicsBall from '../components/common/LoadingGame/PhysicsBall';
+import { useJugadorEquipo } from '../hooks/useJugadoresEquipo';
 
 export default function Jugadores() {
   const [jugadores, setJugadores] = useState([]);

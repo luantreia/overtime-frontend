@@ -27,6 +27,7 @@ export async function agregarPartido(partido, token) {
     },
     body: JSON.stringify(partido),
   });
+  console.log('Token obtenido:', token);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || 'Error al agregar partido');

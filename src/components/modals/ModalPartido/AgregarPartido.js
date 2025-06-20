@@ -19,7 +19,7 @@ const AgregarPartido = () => {
   // No need to fetch 'ligas' yet, but keeping 'equipos'
   const [equipos, setEquipos] = useState([]);
   const [token, setToken] = useState('');
-
+  const [uid, setUid] = useState('');
   // Define static options for modality and category
   const modalidadOptions = [
     { value: 'Foam', label: 'Foam' },
@@ -30,6 +30,7 @@ const AgregarPartido = () => {
     { value: 'Masculino', label: 'Masculino' },
     { value: 'Femenino', label: 'Femenino' },
     { value: 'Mixto', label: 'Mixto' },
+    { value: 'Libre', label: 'Libre' }
   ];
 
   // --- Fetch Authentication Token ---
@@ -38,14 +39,17 @@ const AgregarPartido = () => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
-          const idToken = await getIdToken(user);
+          const idToken = await getIdToken(user, true); // Forzamos nuevo token
           setToken(idToken);
+          setUid(user.uid); // <-- Guardamos UID
         } catch (error) {
           console.error("Error al obtener el token:", error);
           setToken('');
+          setUid('');
         }
       } else {
         setToken('');
+        setUid('');
       }
     });
     return () => unsubscribe();
@@ -68,10 +72,43 @@ const AgregarPartido = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!token) {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
       alert('Debes estar autenticado para agregar un partido.');
       return;
     }
+      if (!liga.trim()) {
+    alert('Debes ingresar el nombre de la liga.');
+    return;
+    }
+    if (!modalidad) {
+      alert('Debes seleccionar una modalidad.');
+      return;
+    }
+    if (!categoria) {
+      alert('Debes seleccionar una categoría.');
+      return;
+    }
+    if (!fecha) {
+      alert('Debes seleccionar una fecha.');
+      return;
+    }
+    if (!equipoLocal) {
+      alert('Debes seleccionar el equipo local.');
+      return;
+    }
+    if (!equipoVisitante) {
+      alert('Debes seleccionar el equipo visitante.');
+      return;
+    }
+    if (equipoLocal === equipoVisitante) {
+      alert('El equipo local y el equipo visitante no pueden ser el mismo.');
+      return;
+    }
+
+    const token = await getIdToken(user); // ✅ token actualizado
 
     if (equipoLocal === equipoVisitante) {
       alert('El equipo local y el equipo visitante no pueden ser el mismo.');
@@ -79,17 +116,18 @@ const AgregarPartido = () => {
     }
 
     const partido = {
-      liga, // Now just a string
+      liga,
       modalidad,
       categoria,
       fecha: new Date(fecha).toISOString(),
-      equipoLocal, // Still sends team ID as a string
-      equipoVisitante, // Still sends team ID as a string
+      equipoLocal,
+      equipoVisitante,
       marcadorLocal: marcadorLocal !== '' ? parseInt(marcadorLocal, 10) : 0,
       marcadorVisitante: marcadorVisitante !== '' ? parseInt(marcadorVisitante, 10) : 0,
     };
 
     try {
+      console.log('Datos del partido a enviar:', JSON.stringify(partido, null, 2));
       const response = await fetch('https://overtime-ddyl.onrender.com/api/partidos', {
         method: 'POST',
         headers: {
@@ -104,7 +142,6 @@ const AgregarPartido = () => {
 
       if (response.ok) {
         alert('Partido agregado exitosamente');
-        // Clear form after successful submission
         setLiga('');
         setModalidad('');
         setCategoria('');

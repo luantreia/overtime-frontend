@@ -1,26 +1,34 @@
-// components/modals/ModalEquipo/SeccionJugadores.js
+// src/components/modals/ModalEquipo/SeccionJugadores.js
 import React from 'react';
 import TarjetaJugador from '../ModalJugador/tarjetajugador';
+import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
 
-export default function SeccionJugadores({ loading, jugadores, setModalJugador }) {
+export default function SeccionJugadores({ equipoId, setModalJugador }) {
+  const { relaciones, loading } = useJugadorEquipo({equipoId});
+
   return (
     <div style={styles.seccion}>
-      <h3>Jugadores</h3>
+      <h3>Jugadores asignados</h3>
       {loading ? (
         <p>Cargando jugadores...</p>
-      ) : jugadores.length > 0 ? (
+      ) : relaciones.length > 0 ? (
         <div style={styles.jugadoresGrid}>
-          {jugadores.map((jugador) => (
-            <TarjetaJugador
-              key={jugador._id || jugador.nombre}
-              jugador={jugador}
-              nombre={jugador.nombre}
-              equipo={jugador.equipo}
-              posicion={jugador.posicion}
-              foto={jugador.foto}
-              onClick={() => setModalJugador(jugador)}
-            />
-          ))}
+          {relaciones.map((rel) => {
+            const jugador = rel.jugador;
+            if (!jugador) return null; // Evita errores de render
+
+            return (
+              <TarjetaJugador
+                key={jugador._id}
+                jugador={jugador}
+                nombre={jugador.nombre}
+                equipo={rel.equipo?.nombre}
+                posicion={jugador.posicion}
+                foto={jugador.foto}
+                onClick={() => setModalJugador(jugador)}
+              />
+            );
+          })}
         </div>
       ) : (
         <p>Sin jugadores asignados</p>
@@ -28,6 +36,7 @@ export default function SeccionJugadores({ loading, jugadores, setModalJugador }
     </div>
   );
 }
+
 
 const styles = {
   seccion: {

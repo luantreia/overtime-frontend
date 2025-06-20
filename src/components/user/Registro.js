@@ -8,6 +8,7 @@ import Button from '../common/FormComponents/Button';
 import ErrorMessage from '../common/FormComponents/ErrorMessage';
 
 const Registro = () => {
+  const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mensaje, setMensaje] = useState('');
@@ -32,7 +33,8 @@ const Registro = () => {
         },
         body: JSON.stringify({
           email: user.email,
-          rol: 'lector'
+          rol: 'lector',
+          nombre: nombre.trim()
         })
       });
 
@@ -42,6 +44,7 @@ const Registro = () => {
       }
 
       setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.');
+      setNombre('');
       setEmail('');
       setPassword('');
     } catch (err) {
@@ -55,6 +58,15 @@ const Registro = () => {
     <div className="wrapper">
       <form onSubmit={handleRegister} className="form">
         <h2 className="text-2xl font-semibold text-center">Registrar Cuenta</h2>
+
+        <InputText
+          placeholder="Nombre"
+          name="nombre"
+          type="text"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          required
+        />
 
         <InputText
           placeholder="Correo"

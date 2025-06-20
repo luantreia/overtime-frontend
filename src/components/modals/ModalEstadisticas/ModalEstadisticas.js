@@ -75,10 +75,12 @@ export default function ModalEstadisticasCaptura({ partido, partidoId, token, on
     }
     setGuardando(true);
     try {
-      await actualizarSetDePartido(partidoId, estadisticasSet.numeroSet, {
+      console.log('Datos a guardar:', {
         ...estadisticasSet,
         statsJugadoresSet: estadisticasSet.statsJugadoresSet
       });
+      // Llamás a actualizar todo el set, enviando toda la info del set actualizada
+      await actualizarSetDePartido(partidoId, estadisticasSet.numeroSet, estadisticasSet);
 
       const refreshed = await refrescarPartidoSeleccionado(partidoId);
       setPartidoLocal(refreshed);

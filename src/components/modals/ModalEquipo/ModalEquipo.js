@@ -1,4 +1,4 @@
-// src/compoents/modals/ModalEquipo.js
+// src/components/modals/ModalEquipo.js
 
 import React, { useState, useEffect } from 'react';
 import EditarEquipo from './EditarEquipo';
@@ -8,48 +8,23 @@ import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
 import ModalJugador from '../ModalJugador/ModalJugador';
 import CloseButton from '../../common/FormComponents/CloseButton';
+import AsignarJugadoresEquipo from './AsignarJugadoresEquipo';
+
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [equipo, setEquipo] = useState(equipoProp);
-  const [jugadoresDelEquipo, setJugadoresDelEquipo] = useState([]);
-  const [loadingJugadores, setLoadingJugadores] = useState(true);
   const [modalJugador, setModalJugador] = useState(null);
-  const [modalEditarEquipo, setModalEditarEquipo] = useState(false); // NUEVO
+  const [modalEditarEquipo, setModalEditarEquipo] = useState(false);
+  const [modalAsignarJugadores, setModalAsignarJugadores] = useState(false);
+  const [jugadoresVersion, setJugadoresVersion] = useState(0);
 
   useEffect(() => {
     setEquipo(equipoProp);
   }, [equipoProp]);
 
-  useEffect(() => {
-    if (!equipo || !equipo._id) return;
-
-    const controller = new AbortController();
-    setLoadingJugadores(true);
-
-    fetch(`https://overtime-ddyl.onrender.com/api/jugadores?equipoId=${equipo._id}`, {
-      signal: controller.signal,
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al cargar jugadores');
-        return res.json();
-      })
-      .then(data => {
-        setJugadoresDelEquipo(data);
-        setLoadingJugadores(false);
-      })
-      .catch(err => {
-        if (err.name === 'AbortError') return;
-        console.error(err);
-        setJugadoresDelEquipo([]);
-        setLoadingJugadores(false);
-      });
-
-    return () => controller.abort();
-  }, [equipo?._id]);
-
   const handleGuardar = (equipoActualizado) => {
     setEquipo(equipoActualizado);
-    setModalEditarEquipo(false); // Cierra el modal
+    setModalEditarEquipo(false);
   };
 
   const handleCerrarSubmodal = () => {
@@ -71,23 +46,36 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
             puntos={equipo.puntos}
             racha={equipo.racha}
           />
+          <button onClick={() => setModalAsignarJugadores(true)}>Asignar jugadores</button>
+
           <SeccionJugadores
-            loading={loadingJugadores}
-            jugadores={jugadoresDelEquipo}
+            equipoId={equipo._id}
             setModalJugador={setModalJugador}
           />
         </div>
+
+        {modalAsignarJugadores && (
+          <div onClick={() => setModalAsignarJugadores(false)} style={styles.submodal}>
+            <div onClick={e => e.stopPropagation()} style={styles.submodalContent}>
+              <AsignarJugadoresEquipo
+                equipoId={equipo._id}
+                onAsignar={() => {
+                  setModalAsignarJugadores(false);
+                  // Aquí podrías forzar recargar jugadores si fuera necesario
+                  setJugadoresVersion(v => v + 1); // Por ejemplo: recargar con alguna función o actualización de estado
+                }}
+                onCancelar={() => setModalAsignarJugadores(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {modalJugador && (
           <ModalJugador
             jugador={modalJugador}
             onClose={() => setModalJugador(null)}
             onJugadorActualizado={actualizado => {
-              if (actualizado) {
-                setJugadoresDelEquipo(js =>
-                  js.map(j => j._id === actualizado._id ? actualizado : j)
-                );
-              }
+              // Opcional: aquí podrías hacer algo si querés actualizar la lista de jugadores
               setModalJugador(null);
             }}
           />
@@ -95,13 +83,13 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
 
         {modalEditarEquipo && (
           <div onClick={handleCerrarSubmodal}>
-          <div style={styles.submodal} onClick={e => e.stopPropagation()}>
-            <EditarEquipo
-              equipo={equipo}
-              onGuardar={handleGuardar}
-              onCancelar={() => setModalEditarEquipo(false)}
-            />
-          </div>
+            <div style={styles.submodal} onClick={e => e.stopPropagation()}>
+              <EditarEquipo
+                equipo={equipo}
+                onGuardar={handleGuardar}
+                onCancelar={() => setModalEditarEquipo(false)}
+              />
+            </div>
           </div>
         )}
       </div>

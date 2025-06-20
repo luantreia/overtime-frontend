@@ -4,14 +4,10 @@ import React from 'react';
 export default function TarjetaJugador({
   id,
   nombre,
-  equipo,
-  posicion,
+  nacionalidad,
   edad,
   foto,
-  expandido,
-  onExpand,
-  onEditar,
-  onClick
+  onClick,
 }) {
   const tieneFoto = foto && foto.trim() !== '';
 
@@ -26,16 +22,19 @@ export default function TarjetaJugador({
       )}
 
       <div style={styles.overlay}>
-        <h3>{nombre}</h3>
+        <h3 style={styles.nombre}>{nombre}</h3>
+        {nacionalidad && <p style={styles.nacionalidad}>{nacionalidad}</p>}
+        {edad != null && <p style={styles.edad}>{edad} años</p>}
       </div>
     </div>
   );
 }
 
+
 const styles = {
   card: {
-    width: '140px',
-    height: '240px',
+    width: '160px',
+    height: '260px',
     position: 'relative',
     margin: '10px',
     borderRadius: '10px',
@@ -43,35 +42,65 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
     cursor: 'pointer',
     transition: 'all 0.3s ease-in-out',
-  },
-  expanded: {
-    width: '280px',
-    height: '480px',
+    backgroundColor: 'var(--color-fondo)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
   },
   imagen: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 1,
+  },
+  placeholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#888',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 1,
   },
   inicial: {
-    fontSize: '48px',
+    fontSize: '56px',
     color: 'var(--color-fondo)',
   },
   overlay: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    background: 'rgba(0, 0, 0, 0.5)',
+    position: 'relative',
+    zIndex: 2,
+    background: 'rgba(0, 0, 0, 0.6)',
     color: 'var(--color-fondo)',
+    padding: '12px',
     textAlign: 'center',
+    borderBottomLeftRadius: '10px',
+    borderBottomRightRadius: '10px',
   },
-  botonEditar: {
-    marginTop: '6px',
-    padding: '4px 8px',
-    borderRadius: '6px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    cursor: 'pointer',
+  nombre: {
+    margin: '0 0 4px',
+    fontSize: '18px',
+    fontWeight: '700',
+    textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+  },
+  nacionalidad: {
+    margin: '0 0 2px',
+    fontSize: '14px',
+    fontWeight: '500',
+    fontStyle: 'italic',
+    color: '#ddd',
+    textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
+  },
+  edad: {
+    margin: 0,
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#ccc',
+    textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
   },
 };
