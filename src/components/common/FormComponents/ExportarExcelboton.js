@@ -1,38 +1,65 @@
-// components/ExportarExcelBoton.js
 import React from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 export default function ExportarExcelBoton({ partido }) {
-    const exportar = () => {
-        const rows = [];
+  const exportar = () => {
+    if (!partido?.sets?.length) {
+      alert("No hay sets cargados para exportar.");
+      return;
+    }
 
-        partido.sets.forEach(set => {
-            set.statsJugadoresSet.forEach(stat => {
-            const equipoNombre = stat.equipo === partido.equipoLocal._id
-                ? partido.equipoLocal.nombre
-                : partido.equipoVisitante.nombre;
+    const rowsEstadisticas = [];
+    const resumenPorJugador = {};
 
-            // Si 'jugador' es un objeto con nombre o alias
-            const nombreJugador = typeof stat.jugador === 'object'
-            ? stat.jugador.nombre || stat.jugador.alias || 'Jugador desconocido'
-            : stat.jugador;
+    partido.sets.forEach(set => {
+      set.statsJugadoresSet?.forEach(stat => {
+        const equipoNombre = stat.equipo === partido.equipoLocal._id
+          ? partido.equipoLocal.nombre
+          : partido.equipoVisitante.nombre;
 
-            rows.push({
-            Set: set.numeroSet,
-            Equipo: equipoNombre,
-            Jugador: nombreJugador,
-            Throws: stat.estadisticas.throws,
-            Hits: stat.estadisticas.hits,
-            Outs: stat.estadisticas.outs,
-            Catches: stat.estadisticas.catches,
-            });
-            });
+        const jugadorObj = typeof stat.jugador === 'object' ? stat.jugador : null;
+        const jugadorId = jugadorObj?._id || stat.jugador;
+        const nombreJugador = jugadorObj?.nombre || jugadorObj?.alias || 'Jugador desconocido';
+
+        // Hoja principal
+        rowsEstadisticas.push({
+          Set: set.numeroSet,
+          Equipo: equipoNombre,
+          Jugador: nombreJugador,
+          Throws: stat.estadisticas.throws,
+          Hits: stat.estadisticas.hits,
+          Outs: stat.estadisticas.outs,
+          Catches: stat.estadisticas.catches,
         });
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+        // Hoja de resumen acumulado
+        if (!resumenPorJugador[jugadorId]) {
+          resumenPorJugador[jugadorId] = {
+            Jugador: nombreJugador,
+            Throws: 0,
+            Hits: 0,
+            Outs: 0,
+            Catches: 0,
+          };
+        }
+
+        resumenPorJugador[jugadorId].Throws += stat.estadisticas.throws || 0;
+        resumenPorJugador[jugadorId].Hits += stat.estadisticas.hits || 0;
+        resumenPorJugador[jugadorId].Outs += stat.estadisticas.outs || 0;
+        resumenPorJugador[jugadorId].Catches += stat.estadisticas.catches || 0;
+      });
+    });
+
+    const resumenData = Object.values(resumenPorJugador);
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Estadísticas');
+
+    const hojaEstadisticas = XLSX.utils.json_to_sheet(rowsEstadisticas);
+    XLSX.utils.book_append_sheet(workbook, hojaEstadisticas, 'Estadísticas');
+
+    const hojaResumen = XLSX.utils.json_to_sheet(resumenData);
+    XLSX.utils.book_append_sheet(workbook, hojaResumen, 'Resumen Jugadores');
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], {
@@ -43,8 +70,18 @@ export default function ExportarExcelBoton({ partido }) {
   };
 
   return (
-    <button onClick={exportar}>
+    <button onClick={exportar} style={botonStyle}>
       Exportar a Excel
     </button>
   );
 }
+
+const botonStyle = {
+  marginTop: '10px',
+  padding: '10px 15px',
+  backgroundColor: '#28a745',
+  color: 'white',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer'
+};
