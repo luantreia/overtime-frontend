@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import EditarJugador from './EditarJugador';
 import useUserRole from '../../../hooks/useUserRole';
 import CloseButton from '../../common/FormComponents/CloseButton';
+import Button from '../../common/FormComponents/Button';
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -47,6 +48,13 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
               <p style={styles.data}><strong>Posición:</strong> {jugador.posicion || 'N/A'}</p>
               <p style={styles.data}><strong>Fecha nacimiento:</strong> {jugador.fechaNacimiento || 'N/A'}</p>
               <p style={styles.data}><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
+              <Button
+                onClick={() => setModoEdicion(true)}
+                variant= "primary"
+                disabled={modoEdicion}
+              >
+                ✎ Editar
+              </Button>
             </div>
           </div>
 
@@ -65,15 +73,9 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
             )}
           </section>
 
-          {jugador.creadoPor === uid && (
-          <button
-            onClick={() => setModoEdicion(true)}
-            style={styles.botonEditar}
-            disabled={modoEdicion}
-          >
-            ✎ Editar
-          </button>
-          )}
+
+
+
         </div>
 
         {modoEdicion && (

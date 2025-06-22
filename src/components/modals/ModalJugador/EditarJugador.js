@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth';
 import InputText from '../../common/FormComponents/InputText';
 import SelectDropdown from '../../common/FormComponents/SelectDropdown';
@@ -7,20 +7,11 @@ import Button from '../../common/FormComponents/Button';
 export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
   const [formData, setFormData] = useState({
     nombre: jugador.nombre || '',
+    alias: jugador.alias || '',
     foto: jugador.foto || '',
-    posicion: jugador.posicion || '',
-    equipo: jugador.equipo?._id || jugador.equipo || '',
-    edad: jugador.edad || '',
+    fechaNacimiento: jugador.fechaNacimiento ? jugador.fechaNacimiento.slice(0, 10) : '',
+    genero: jugador.genero || 'otro',
   });
-
-  const [equipos, setEquipos] = useState([]);
-
-  useEffect(() => {
-    fetch('https://overtime-ddyl.onrender.com/api/equipos')
-      .then(res => res.json())
-      .then(data => setEquipos(data))
-      .catch(err => console.error('Error al cargar equipos:', err));
-  }, []);
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -41,10 +32,10 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
 
       const payload = {
         nombre: formData.nombre,
+        alias: formData.alias,
         foto: formData.foto,
-        posicion: formData.posicion,
-        equipo: formData.equipo,
-        edad: formData.edad,
+        fechaNacimiento: formData.fechaNacimiento,
+        genero: formData.genero,
       };
 
       const res = await fetch(
@@ -70,10 +61,10 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
   };
 
   return (
-    <div className="container" onClick={onCancelar}>
       <div className="overlay" onClick={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit} className="form">
           <h3 className="text">Editar jugador</h3>
+
           <InputText
             placeholder="Nombre"
             name="nombre"
@@ -81,41 +72,47 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
             onChange={handleChange}
             required
           />
+
+          <InputText
+            placeholder="Alias"
+            name="alias"
+            value={formData.alias}
+            onChange={handleChange}
+          />
+
           <InputText
             placeholder="Foto (URL)"
             name="foto"
             value={formData.foto}
             onChange={handleChange}
           />
+
           <InputText
-            placeholder="Posición"
-            name="posicion"
-            value={formData.posicion}
+            type="date"
+            placeholder="Fecha de nacimiento"
+            name="fechaNacimiento"
+            value={formData.fechaNacimiento}
             onChange={handleChange}
+            required
           />
+
           <SelectDropdown
-            placeholder="Equipo"
-            name="equipo"
-            value={formData.equipo}
+            placeholder="Género"
+            name="genero"
+            value={formData.genero}
             onChange={handleChange}
-            options={equipos.map(e => ({ label: e.nombre, value: e._id }))}
+            options={[
+              { label: 'Masculino', value: 'masculino' },
+              { label: 'Femenino', value: 'femenino' },
+              { label: 'Otro', value: 'otro' },
+            ]}
           />
-          <InputText
-            placeholder="Edad"
-            name="edad"
-            type="number"
-            min="0"
-            value={formData.edad}
-            onChange={handleChange}
-          />
+
           <div>
             <Button type="submit" variant="primary">Guardar</Button>
-            <Button type="button" variant="danger" onClick={onCancelar}>
-              Cancelar
-            </Button>
+            <Button type="button" variant="danger" onClick={onCancelar}>Cancelar</Button>
           </div>
         </form>
       </div>
-    </div>
   );
 }

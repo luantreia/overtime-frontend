@@ -9,7 +9,7 @@ import SeccionJugadores from './SeccionJugadores';
 import ModalJugador from '../ModalJugador/ModalJugador';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import AsignarJugadoresEquipo from './AsignarJugadoresEquipo';
-
+import Button from '../../common/FormComponents/Button';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [equipo, setEquipo] = useState(equipoProp);
@@ -35,11 +35,19 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <CloseButton onClick={onClose} />
-
+        
         <EncabezadoEquipo equipo={equipo} onEditar={() => setModalEditarEquipo(true)} />
         <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
-
+        
+        <Button
+          variant= "primary"
+          onClick={() => setModalEditarEquipo(true)}
+        >
+          ✎ Editar equipo
+        </Button>
+        
         <div style={styles.secciones}>
+          
           <SeccionResultados resultados={equipo.resultados} />
           <SeccionEstadisticas
             copas={equipo.copas}
@@ -53,6 +61,8 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
             setModalJugador={setModalJugador}
           />
         </div>
+
+        
 
         {modalAsignarJugadores && (
           <div onClick={() => setModalAsignarJugadores(false)} style={styles.submodal}>
