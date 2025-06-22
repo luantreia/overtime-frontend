@@ -3,6 +3,7 @@ import EditarJugador from './EditarJugador';
 import useUserRole from '../../../hooks/useUserRole';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import Button from '../../common/FormComponents/Button';
+import SeccionEquiposJugador from './SeccionEquiposJugador';
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -44,9 +45,6 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
             />
             <div style={styles.infoBasica}>
               <h2 style={styles.data}>{jugador.nombre}</h2>
-              <p style={styles.data}><strong>Equipo actual:</strong> {jugador.equipoId?.nombre || jugador.equipo || 'Sin equipo'}</p>
-              <p style={styles.data}><strong>Posición:</strong> {jugador.posicion || 'N/A'}</p>
-              <p style={styles.data}><strong>Fecha nacimiento:</strong> {jugador.fechaNacimiento || 'N/A'}</p>
               <p style={styles.data}><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
               <Button
                 onClick={() => setModoEdicion(true)}
@@ -55,6 +53,8 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
               >
                 ✎ Editar
               </Button>
+              <SeccionEquiposJugador jugadorId={jugador._id} />
+
             </div>
           </div>
 
