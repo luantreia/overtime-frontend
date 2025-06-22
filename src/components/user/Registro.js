@@ -35,7 +35,7 @@ const Registro = () => {
           email: user.email,
           rol: 'lector',
           nombre: nombre.trim(),
-          firebaseUid: user.uid
+          _id: user.uid
         })
       });
 
