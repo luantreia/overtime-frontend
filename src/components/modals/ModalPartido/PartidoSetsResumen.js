@@ -39,7 +39,11 @@ export default function PartidoSetsResumen({ sets, jugadores = [] }) {
                 <ul>
                   {setActual.statsJugadoresSet.map((stat, idx) => (
                     <li key={idx}>
-                      {obtenerNombreJugador(stat.jugador)} - Stats: {JSON.stringify(stat.estadisticas)}
+                      {typeof stat.jugador === 'object'
+                        ? stat.jugador.alias || stat.jugador.nombre || 'Jugador desconocido'
+                        : obtenerNombreJugador(stat.jugador)
+                      } - Stats: {JSON.stringify(stat.estadisticas)}
+
                     </li>
                   ))}
                 </ul>

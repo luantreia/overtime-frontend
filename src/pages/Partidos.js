@@ -57,6 +57,15 @@ export default function Partidos() {
     return <p style={{ textAlign: 'center', marginTop: 40 }}>Cargando partidos...</p>;
   }
 
+  const handleSeleccionarPartido = async (partido) => {
+    const partidoCompleto = await cargarPartidoPorId(partido._id);
+    if (partidoCompleto) {
+      setPartidoSeleccionado(partidoCompleto);
+    } else {
+      // fallback, en caso de error usa el partido simple
+      setPartidoSeleccionado(partido);
+    }
+  };
 
   return (
     <div>
@@ -75,7 +84,7 @@ export default function Partidos() {
           <TarjetaPartido
             key={p._id}
             partido={p}
-            onClick={() => setPartidoSeleccionado(p)}
+            onClick={() => handleSeleccionarPartido(p)}
           />
         ))}
       </div>

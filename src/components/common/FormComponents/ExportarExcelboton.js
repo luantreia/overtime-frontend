@@ -14,14 +14,17 @@ export default function ExportarExcelBoton({ partido }) {
 
     partido.sets.forEach(set => {
       set.statsJugadoresSet?.forEach(stat => {
-        const equipoNombre = stat.equipo === partido.equipoLocal._id
-          ? partido.equipoLocal.nombre
-          : partido.equipoVisitante.nombre;
+        const equipoNombre =
+          stat.equipo === partido.equipoLocal._id
+            ? partido.equipoLocal.nombre
+            : partido.equipoVisitante.nombre;
 
         const jugadorObj = typeof stat.jugador === 'object' ? stat.jugador : null;
         const jugadorId = jugadorObj?._id || stat.jugador;
-        const nombreJugador = jugadorObj?.nombre || jugadorObj?.alias || 'Jugador desconocido';
-
+        const nombreJugador =
+          jugadorObj?.alias?.trim() ||
+          jugadorObj?.nombre?.trim() ||
+          `Jugador ${jugadorId?.substring(0, 6) || 'desconocido'}`;
         // Hoja principal
         rowsEstadisticas.push({
           Set: set.numeroSet,
@@ -33,7 +36,7 @@ export default function ExportarExcelBoton({ partido }) {
           Catches: stat.estadisticas.catches,
         });
 
-        // Hoja de resumen acumulado
+        // Resumen acumulado
         if (!resumenPorJugador[jugadorId]) {
           resumenPorJugador[jugadorId] = {
             Jugador: nombreJugador,
@@ -54,19 +57,21 @@ export default function ExportarExcelBoton({ partido }) {
     const resumenData = Object.values(resumenPorJugador);
 
     const workbook = XLSX.utils.book_new();
-
     const hojaEstadisticas = XLSX.utils.json_to_sheet(rowsEstadisticas);
     XLSX.utils.book_append_sheet(workbook, hojaEstadisticas, 'Estadísticas');
 
     const hojaResumen = XLSX.utils.json_to_sheet(resumenData);
     XLSX.utils.book_append_sheet(workbook, hojaResumen, 'Resumen Jugadores');
 
+    const nombrePartido = `${partido.equipoLocal?.nombre}_vs_${partido.equipoVisitante?.nombre}`.replace(/\s+/g, '_');
+    const nombreArchivo = `estadisticas_${nombrePartido}.xlsx`;
+
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
 
-    saveAs(blob, `partido-${partido._id}.xlsx`);
+    saveAs(blob, nombreArchivo);
   };
 
   return (
