@@ -34,7 +34,8 @@ const Registro = () => {
         body: JSON.stringify({
           email: user.email,
           rol: 'lector',
-          nombre: nombre.trim()
+          nombre: nombre.trim(),
+          firebaseUid: user.uid
         })
       });
 
