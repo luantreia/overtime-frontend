@@ -115,6 +115,14 @@ const AgregarPartido = () => {
       return;
     }
 
+      const hoy = new Date();
+      const fechaPartido = new Date(fecha);
+
+      let estado = 'programado'; // default
+      if (fechaPartido < hoy) {
+        estado = 'finalizado';
+      }
+
     const partido = {
       liga,
       modalidad,
@@ -122,8 +130,7 @@ const AgregarPartido = () => {
       fecha: new Date(fecha).toISOString(),
       equipoLocal,
       equipoVisitante,
-      marcadorLocal: marcadorLocal !== '' ? parseInt(marcadorLocal, 10) : 0,
-      marcadorVisitante: marcadorVisitante !== '' ? parseInt(marcadorVisitante, 10) : 0,
+      estado,
     };
 
     try {
@@ -148,8 +155,6 @@ const AgregarPartido = () => {
         setFecha('');
         setEquipoLocal('');
         setEquipoVisitante('');
-        setMarcadorLocal('');
-        setMarcadorVisitante('');
       } else {
         alert(`Error al agregar partido: ${data.error || data.message || 'Desconocido'}`);
       }
@@ -221,23 +226,6 @@ const AgregarPartido = () => {
           onChange={e => setEquipoVisitante(e.target.value)}
           options={equipos.map(eq => ({ value: eq._id, label: eq.nombre }))}
           placeholder="Seleccionar Equipo Visitante"
-          {...commonInputProps}
-        />
-
-        <InputText
-          name="marcadorLocal"
-          type="number"
-          placeholder="Marcador Local"
-          value={marcadorLocal}
-          onChange={e => setMarcadorLocal(e.target.value)}
-          {...commonInputProps}
-        />
-        <InputText
-          name="marcadorVisitante"
-          type="number"
-          placeholder="Marcador Visitante"
-          value={marcadorVisitante}
-          onChange={e => setMarcadorVisitante(e.target.value)}
           {...commonInputProps}
         />
 

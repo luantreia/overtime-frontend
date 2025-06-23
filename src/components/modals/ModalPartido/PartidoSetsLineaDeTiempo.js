@@ -25,7 +25,7 @@ export default function PartidoSetsLineaDeTiempo({ sets = [], equipoLocal, equip
     if (ganador === 'pendiente') return 'Pendiente';
     return `Equipo ${ganador}`;
   };
-  
+
   const agruparPorEquipo = (stats) => {
     const grupos = {
       [equipoLocal._id]: [],
@@ -51,8 +51,10 @@ export default function PartidoSetsLineaDeTiempo({ sets = [], equipoLocal, equip
             style={{
               ...styles.setBox,
               backgroundColor: colorFondoSet(set),
-              flex: 1,
-              maxWidth: `${100 / sets.length}%`,
+              flex: '1 1 80px',      // base ancho 80px, puede crecer y encoger
+              maxWidth: '20px',     // no más de 120px para evitar cajas muy grandes
+              minWidth: '20px',
+              minHeight: '40px',      // que no queden muy pequeñas
               cursor: 'pointer',
               border: setSeleccionado?.numeroSet === set.numeroSet ? '2px solid #333' : 'none'
             }}
@@ -124,6 +126,8 @@ const styles = {
     gap: 10,
     width: '100%',
     marginBottom: 15,
+    flexWrap: 'wrap',   // <<-- importante!
+    justifyContent: 'center', // opcional, para centrar los sets en la nueva línea
   },
   setBox: {
     padding: '10px',
