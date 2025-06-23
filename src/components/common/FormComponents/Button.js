@@ -8,7 +8,7 @@ export default function Button({
   const styles = {
     base: {
       padding: '8px 12px',
-      margin: "0 5px",
+      margin: "auto 5px",
       marginBottom: "12px",
       borderRadius: '4px',
       border: 'none',

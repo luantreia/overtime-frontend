@@ -41,6 +41,7 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
         {modalEstadisticasAbierto && (
           <ModalEstadisticasCaptura
             partido={partido}
+            setsLocales={setsLocales}
             partidoId={partido._id}
             token={token}
             onClose={() => setModalEstadisticasAbierto(false)}
@@ -48,6 +49,7 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
             eliminarSetLocal={eliminarSetLocal}
             cargarPartidoPorId={cargarPartidoPorId}
             actualizarSetsLocales={setSetsLocales}
+            
             actualizarSetDePartido={actualizarSetDePartido}
             refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
           />

@@ -1,21 +1,25 @@
 import React from 'react';
 import Button from '../../common/FormComponents/Button';
-import useUserRole from '../../../hooks/useUserRole';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function EncabezadoEquipo({ equipo, onEditar }) {
-  const { uid } = useUserRole(); // ✅ Aquí obtenés el uid
-  const esAdmin = equipo.administradores?.includes(uid);
+  const { user, rol } = useAuth(); // ✅ obtenés uid y rol del contexto
+  const uid = user?.uid;
+
+  const esAdminEquipo = equipo.administradores?.includes(uid);
+  const esAdminGlobal = rol === 'admin';
 
   return (
     <div style={styles.encabezado}>
       <img src={equipo.escudo || equipo.foto} alt="Escudo" style={styles.escudo} />
       <h2>{equipo.nombre}</h2>
-      {esAdmin && (
+      {(esAdminEquipo || esAdminGlobal) && (
         <Button type="button" color="secondary" onClick={onEditar}>✎ Editar</Button>
       )}
     </div>
   );
 }
+
 
 const styles = {
   encabezado: {

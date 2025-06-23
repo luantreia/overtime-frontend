@@ -96,8 +96,6 @@ export async function agregarSet(partidoId, setData, token) {
   }
 }
 
-
-
 export async function actualizarSet(partidoId, numeroSet, setData, token) {
   const res = await fetch(`${API_URL}/${partidoId}/sets/${numeroSet}`, {
     method: 'PUT',
@@ -112,6 +110,20 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
     throw new Error(errorData.message || 'Error al actualizar set');
   }
   return await res.json();
+}
+
+export async function eliminarSet(partidoId, numeroSet, token) {
+  const res = await fetch(`${API_URL}/${partidoId}/sets/${numeroSet}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || 'Error al eliminar set');
+  }
+  return true;
 }
 
 export async function actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet, token) {

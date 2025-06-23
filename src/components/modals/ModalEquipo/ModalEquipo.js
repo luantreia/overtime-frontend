@@ -39,13 +39,6 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
         <EncabezadoEquipo equipo={equipo} onEditar={() => setModalEditarEquipo(true)} />
         <img src={equipo.foto} alt={equipo.nombre} style={styles.banner} />
         
-        <Button
-          variant= "primary"
-          onClick={() => setModalEditarEquipo(true)}
-        >
-          ✎ Editar equipo
-        </Button>
-        
         <div style={styles.secciones}>
           
           <SeccionResultados resultados={equipo.resultados} />
@@ -54,11 +47,10 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
             puntos={equipo.puntos}
             racha={equipo.racha}
           />
-          <button onClick={() => setModalAsignarJugadores(true)}>Asignar jugadores</button>
-
           <SeccionJugadores
             equipoId={equipo._id}
             setModalJugador={setModalJugador}
+            abrirAsignarJugadores={() => setModalAsignarJugadores(true)}
           />
         </div>
 
@@ -71,6 +63,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
                 equipoId={equipo._id}
                 onAsignar={() => {
                   setModalAsignarJugadores(false);
+                  
                   // Aquí podrías forzar recargar jugadores si fuera necesario
                   setJugadoresVersion(v => v + 1); // Por ejemplo: recargar con alguna función o actualización de estado
                 }}

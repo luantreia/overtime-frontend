@@ -17,6 +17,7 @@ export default function Partidos() {
     actualizarSetDePartido,
     eliminarPartidoPorId,
     cargarPartidoPorId,
+    eliminarSetDePartido
     // ...otros
   } = usePartidos(token, ordenLista);
 
@@ -97,6 +98,7 @@ export default function Partidos() {
           agregarSetAPartido={agregarSetAPartido}
           actualizarSetDePartido={actualizarSetDePartido}
           cargarPartidoPorId={cargarPartidoPorId}
+          eliminarSetDePartido={eliminarSetDePartido}
           refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
         />
       )}

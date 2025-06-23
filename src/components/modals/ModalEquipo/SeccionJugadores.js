@@ -1,21 +1,36 @@
-// src/components/modals/ModalEquipo/SeccionJugadores.js
 import React from 'react';
 import TarjetaJugador from '../ModalJugador/tarjetajugador';
 import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
+import { useAuth } from '../../../context/AuthContext';
+import Button from '../../common/FormComponents/Button';
 
-export default function SeccionJugadores({ equipoId, setModalJugador }) {
-  const { relaciones, loading } = useJugadorEquipo({equipoId});
+export default function SeccionJugadores({ equipoId, setModalJugador, abrirAsignarJugadores }) {
+  const { relaciones, loading } = useJugadorEquipo({ equipoId });
+  const { user, rol } = useAuth();
+  const uid = user?.uid;
+
+  const equipo = relaciones[0]?.equipo; // asume que todas las relaciones son del mismo equipo
+  const esAdminDelEquipo = equipo?.administradores?.includes(uid);
+  const esAdminGlobal = rol === 'admin';
 
   return (
     <div style={styles.seccion}>
+      <div style={styles.encabezado}>
       <h3>Jugadores asignados</h3>
+      {(esAdminDelEquipo || esAdminGlobal) && (
+          <Button onClick={abrirAsignarJugadores} color="primary">
+          + Asignar jugadores
+          </Button>
+      )}
+      </div>
+
       {loading ? (
         <p>Cargando jugadores...</p>
       ) : relaciones.length > 0 ? (
         <div style={styles.jugadoresGrid}>
           {relaciones.map((rel) => {
             const jugador = rel.jugador;
-            if (!jugador) return null; // Evita errores de render
+            if (!jugador) return null;
 
             return (
               <TarjetaJugador
@@ -39,6 +54,14 @@ export default function SeccionJugadores({ equipoId, setModalJugador }) {
 
 
 const styles = {
+  
+  encabezado: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '15px',
+    marginBottom: '15px',
+  },
   seccion: {
     flex: '1 1 250px',
     backgroundColor: "var(--color-fondo-secundario)",

@@ -1,6 +1,6 @@
 // src/components/modals/ModalEstadisticasCaptura/EquiposEstadisticas.js
 import React from 'react';
-import { ListaJugadores } from './ListaJugadores';
+import { ListaJugadores } from './ListaJugadores.js';
 
 export default function EquiposEstadisticas({ equipoLocal, equipoVisitante, estadisticas, onCambiarEstadistica, onAsignarJugador }) {
   return (

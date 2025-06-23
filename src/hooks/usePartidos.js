@@ -8,7 +8,8 @@ import {
   eliminarPartido,
   agregarSet,
   actualizarSet,
-  actualizarStatsSet
+  actualizarStatsSet,
+  eliminarSet
 } from '../services/partidoService';
 
 export function usePartidos(token) {
@@ -90,10 +91,17 @@ export function usePartidos(token) {
   };
 
   const actualizarSetDePartido = async (partidoId, numeroSet, setData) => {
+    setError(null); // Limpiar error anterior si existía
+    setLoading(true); // Opcional: si usás un estado de loading
+
     try {
-      return await actualizarSet(partidoId, numeroSet, setData, token);
+      const actualizado = await actualizarSet(partidoId, numeroSet, setData, token);
+      return actualizado; // Devolvés el partido actualizado
     } catch (err) {
       setError(err.message);
+      return null; // Para que quien la llame sepa que falló
+    } finally {
+      setLoading(false); // Opcional
     }
   };
 
@@ -102,6 +110,21 @@ export function usePartidos(token) {
       return await actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet, token);
     } catch (err) {
       setError(err.message);
+    }
+  };
+  const eliminarSetDePartido = async (partidoId, numeroSet) => {
+    try {
+      await eliminarSet(partidoId, numeroSet, token);
+      // Luego deberías recargar los sets o el partido para mantener estado actualizado
+      // Por ejemplo:
+      const partidoActualizado = await fetchPartidoById(partidoId, token);
+      setPartidos(prev =>
+        prev.map(p => (p._id === partidoId ? partidoActualizado : p))
+      );
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
     }
   };
 
@@ -116,5 +139,6 @@ export function usePartidos(token) {
     agregarSetAPartido,
     actualizarSetDePartido,
     actualizarStatsDeSet,
+    eliminarSetDePartido,
   };
 }

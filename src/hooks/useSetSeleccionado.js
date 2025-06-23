@@ -1,9 +1,10 @@
 // src/hooks/useSetSeleccionado.js
 import { useMemo } from 'react';
 
-export function useSetSeleccionado(numeroSet, sets) {
+export function useSetSeleccionado(numeroSetSeleccionado, sets) {
   return useMemo(() => {
-    if (!numeroSet) return null;
-    return sets.find(s => s.numeroSet === Number(numeroSet)) || null;
-  }, [numeroSet, sets]);
+    if (!numeroSetSeleccionado || !sets) return null;
+    const n = parseInt(numeroSetSeleccionado, 10);
+    return sets.find(s => s.numeroSet === n) || null;
+  }, [numeroSetSeleccionado, sets]);
 }
