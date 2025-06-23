@@ -4,9 +4,12 @@ import useUserRole from '../../../hooks/useUserRole';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import Button from '../../common/FormComponents/Button';
 import SeccionEquiposJugador from './SeccionEquiposJugador';
+import SeccionEstadisticasJugador from './SeccionEstadisticasJugador';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
+  const { token } = useAuth(); 
   const { uid } = useUserRole();
 
 
@@ -58,23 +61,7 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
             </div>
           </div>
 
-          <section style={styles.seccion}>
-            <h3>Estadísticas individuales</h3>
-            {jugador.estadisticas ? (
-              <ul>
-                {Object.entries(jugador.estadisticas).map(([key, value]) => (
-                  <li key={key}>
-                    <strong>{key}:</strong> {value}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No hay estadísticas disponibles.</p>
-            )}
-          </section>
-
-
-
+          <SeccionEstadisticasJugador jugadorId={jugador._id} token={token} />
 
         </div>
 
