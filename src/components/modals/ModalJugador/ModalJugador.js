@@ -6,12 +6,15 @@ import Button from '../../common/FormComponents/Button';
 import SeccionEquiposJugador from './SeccionEquiposJugador';
 import SeccionEstadisticasJugador from './SeccionEstadisticasJugador';
 import { useAuth } from '../../../context/AuthContext';
+import RadarPromedios from './RadarPromedios';
+import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticasJugador';
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
+  const [mostrarPromedios, setMostrarPromedios] = useState(false);
   const { token } = useAuth(); 
   const { uid } = useUserRole();
-
+  const { resumen, loading: loadingResumen } = useResumenEstadisticasJugador(jugador._id, token);
 
   const calcularEdad = fechaNacimiento => {
     if (!fechaNacimiento) return jugador.edad || 'N/A';
@@ -57,12 +60,22 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
                 ✎ Editar
               </Button>
               <SeccionEquiposJugador jugadorId={jugador._id} />
-
+              <Button
+                variant="secondary"
+                onClick={() => setMostrarPromedios(prev => !prev)}
+                style={{ marginTop: '10px' }}
+              >
+                {mostrarPromedios ? 'Ocultar Stats' : 'Mostrar Stats'}
+              </Button>
             </div>
           </div>
-
-          <SeccionEstadisticasJugador jugadorId={jugador._id} token={token} />
-
+          
+          {mostrarPromedios && (
+            <>
+              {loadingResumen && <p>Cargando promedios...</p>}
+              {resumen && <RadarPromedios resumen={resumen} />}
+            </>
+          )}
         </div>
 
         {modoEdicion && (
@@ -113,7 +126,7 @@ const styles = {
   contenido: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '10px',
   },
   header: {
     display: 'flex',
