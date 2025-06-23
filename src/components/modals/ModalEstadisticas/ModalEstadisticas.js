@@ -159,6 +159,13 @@ export default function ModalEstadisticasCaptura({
   // NUEVO: eliminar set seleccionado
   const eliminarSet = async () => {
     if (!numeroSetSeleccionado) return alert('Seleccione un set para eliminar');
+
+    const ultimoNumeroSet = Math.max(...setsLocales.map(s => s.numeroSet));
+
+    if (Number(numeroSetSeleccionado) !== ultimoNumeroSet) {
+      return alert('Solo se puede eliminar el último set.');
+    }
+
     const confirm = window.confirm(`¿Seguro que querés eliminar el Set ${numeroSetSeleccionado}? Esta acción no se puede deshacer.`);
     if (!confirm) return;
 
