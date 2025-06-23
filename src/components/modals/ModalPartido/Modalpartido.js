@@ -6,8 +6,9 @@ import Button from '../../common/FormComponents/Button';
 import useJugadores from '../../../hooks/useJugadores';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import ExportarExcelBoton from '../../common/FormComponents/ExportarExcelboton';
+import PartidoSetsLineaDeTiempo from './PartidoSetsLineaDeTiempo';
 
-export default function ModalPartido({ partido, onClose, token, refrescarPartidoSeleccionado, cargarPartidoPorId, agregarSetAPartido, actualizarSetDePartido }) {
+export default function ModalPartido({ partido, onClose, token, refrescarPartidoSeleccionado, eliminarSetDePartido, cargarPartidoPorId, agregarSetAPartido, actualizarSetDePartido }) {
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
   const [setsLocales, setSetsLocales] = useState(partido.sets || []);
   const { jugadores } = useJugadores(token);
@@ -31,7 +32,11 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
         <h2>Partido</h2>
 
         <PartidoDatosGenerales partido={partido} />
-        <PartidoSetsResumen sets={setsLocales} jugadores={jugadores} />
+        <PartidoSetsLineaDeTiempo
+          sets={partido.sets}
+          equipoLocal={partido.equipoLocal}
+          equipoVisitante={partido.equipoVisitante}
+        />
 
 
         <Button onClick={() => setModalEstadisticasAbierto(true)} variant="primary">
@@ -46,7 +51,7 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
             token={token}
             onClose={() => setModalEstadisticasAbierto(false)}
             agregarSetAPartido={agregarSetAPartido}
-            eliminarSetLocal={eliminarSetLocal}
+            eliminarSetDePartido={eliminarSetDePartido}
             cargarPartidoPorId={cargarPartidoPorId}
             actualizarSetsLocales={setSetsLocales}
             

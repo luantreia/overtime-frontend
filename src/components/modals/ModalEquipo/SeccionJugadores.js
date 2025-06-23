@@ -9,18 +9,21 @@ export default function SeccionJugadores({ equipoId, setModalJugador, abrirAsign
   const { user, rol } = useAuth();
   const uid = user?.uid;
 
-  const equipo = relaciones[0]?.equipo; // asume que todas las relaciones son del mismo equipo
+  const equipo = relaciones[0]?.equipo;
   const esAdminDelEquipo = equipo?.administradores?.includes(uid);
   const esAdminGlobal = rol === 'admin';
+
+  // Siempre mostrar el botón si es admin global, o si ya hay relaciones para chequear permisos
+  const puedeAsignar = esAdminGlobal || esAdminDelEquipo || relaciones.length === 0;
 
   return (
     <div style={styles.seccion}>
       <div style={styles.encabezado}>
       <h3>Jugadores asignados</h3>
-      {(esAdminDelEquipo || esAdminGlobal) && (
-          <Button onClick={abrirAsignarJugadores} color="primary">
+      {puedeAsignar && (
+        <Button onClick={abrirAsignarJugadores} color="primary">
           + Asignar jugadores
-          </Button>
+        </Button>
       )}
       </div>
 

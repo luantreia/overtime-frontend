@@ -1,4 +1,3 @@
-// src/components/modals/ModalEstadisticasCaptura/index.js
 import React, { useState, useEffect } from 'react';
 import ModalLayout from '../../common/ModalLayout';
 import EncabezadoEstadisticas from './EncabezadoEstadisticas';
@@ -16,33 +15,31 @@ export default function ModalEstadisticasCaptura({
   actualizarSetsLocales,
   agregarSetAPartido,
   actualizarSetDePartido,
-  refrescarPartidoSeleccionado
+  refrescarPartidoSeleccionado,
+  eliminarSetDePartido // función para eliminar set, pasada desde ModalPartido
 }) {
   const [numeroSetSeleccionado, setNumeroSetSeleccionado] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const [partidoLocal, setPartidoLocal] = useState(partido);
 
   const setsLocales = partidoLocal?.sets || [];
   const estadisticasSet = useSetSeleccionado(numeroSetSeleccionado, setsLocales);
 
-  // Sincroniza partidoLocal con los props al cambiar
   useEffect(() => {
     setPartidoLocal(partido);
   }, [partido]);
 
-  // Setea el primer set automáticamente si no hay ninguno seleccionado
   useEffect(() => {
     if (setsLocales.length > 0 && !numeroSetSeleccionado) {
       setNumeroSetSeleccionado(setsLocales[0].numeroSet.toString());
     }
   }, [setsLocales, numeroSetSeleccionado]);
 
-  // Notifica al padre los cambios locales en los sets
   useEffect(() => {
     if (partidoLocal) actualizarSetsLocales(partidoLocal.sets || []);
   }, [partidoLocal?.sets]);
 
-  // Modifica el set seleccionado dentro del estado local del partido
   const actualizarSetSeleccionado = (cambios) => {
     if (!estadisticasSet) return;
     setPartidoLocal(prev => {
@@ -53,21 +50,17 @@ export default function ModalEstadisticasCaptura({
     });
   };
 
-  // Asigna un nuevo jugador a un equipo en el set actual
   const asignarJugador = (indexLocal, jugadorId, equipoId) => {
     const actual = estadisticasSet.statsJugadoresSet || [];
 
-    // Buscar duplicados: mismo jugador ya asignado al mismo equipo
     const duplicado = actual.some((s, i) => {
       const id = typeof s.jugador === 'object' ? s.jugador._id : s.jugador;
       return id === jugadorId && String(s.equipo) === String(equipoId) && i !== indexLocal;
     });
     if (duplicado) return;
 
-    // Filtrar solo los del equipo actual
     const statsDelEquipo = actual.filter(s => String(s.equipo) === String(equipoId));
 
-    // Si aún no hay suficientes en el equipo, agregamos
     if (statsDelEquipo.length <= indexLocal) {
       const nuevosStats = [...actual, {
         jugador: jugadorId,
@@ -78,7 +71,6 @@ export default function ModalEstadisticasCaptura({
       return;
     }
 
-    // Si ya existe, actualizamos esa posición del equipo dentro del array global
     const jugadorGlobalIndex = actual.findIndex((s, idx) => {
       const mismoEquipo = String(s.equipo) === String(equipoId);
       const esElIndexDelEquipo = actual
@@ -99,7 +91,6 @@ export default function ModalEstadisticasCaptura({
     actualizarSetSeleccionado({ statsJugadoresSet: nuevosStats });
   };
 
-  // Incrementa o decrementa una estadística para un jugador
   const cambiarEstadistica = (jugadorId, campo, delta) => {
     if (!estadisticasSet) return;
     const nuevosStats = estadisticasSet.statsJugadoresSet.map(item => {
@@ -119,12 +110,10 @@ export default function ModalEstadisticasCaptura({
     actualizarSetSeleccionado({ statsJugadoresSet: nuevosStats });
   };
 
-  // Define el ganador del set (solo en estado local)
   const setGanadorSetLocal = (ganador) => {
     actualizarSetSeleccionado({ ganadorSet: ganador });
   };
 
-  // Guarda todos los datos del set actual en el backend
   const guardar = async () => {
     if (!estadisticasSet) return alert('Seleccione un set para guardar');
     setGuardando(true);
@@ -146,7 +135,6 @@ export default function ModalEstadisticasCaptura({
     }
   };
 
-  // Agrega un nuevo set al partido
   const handleAgregarSet = async () => {
     const numero = setsLocales.length > 0
       ? Math.max(...setsLocales.map(s => s.numeroSet)) + 1
@@ -168,9 +156,32 @@ export default function ModalEstadisticasCaptura({
     }
   };
 
+  // NUEVO: eliminar set seleccionado
+  const eliminarSet = async () => {
+    if (!numeroSetSeleccionado) return alert('Seleccione un set para eliminar');
+    const confirm = window.confirm(`¿Seguro que querés eliminar el Set ${numeroSetSeleccionado}? Esta acción no se puede deshacer.`);
+    if (!confirm) return;
+
+    setEliminando(true);
+    try {
+      const exito = await eliminarSetDePartido(partidoId, Number(numeroSetSeleccionado));
+      if (exito) {
+        const nuevosSets = partidoLocal.sets.filter(s => s.numeroSet !== Number(numeroSetSeleccionado));
+        setPartidoLocal(prev => ({ ...prev, sets: nuevosSets }));
+        actualizarSetsLocales(nuevosSets);
+        setNumeroSetSeleccionado('');
+        alert(`Set ${numeroSetSeleccionado} eliminado correctamente`);
+      }
+    } catch (e) {
+      alert('Error eliminando el set');
+      console.error(e);
+    } finally {
+      setEliminando(false);
+    }
+  };
+
   if (!partidoLocal) return <p>Cargando partido...</p>;
 
-  // Prepara las estadísticas por equipo para pasarlas al componente de edición
   const mapEquipo = (equipoId) =>
     estadisticasSet?.statsJugadoresSet
       .filter(s => String(s.equipo) === String(equipoId))
@@ -188,6 +199,27 @@ export default function ModalEstadisticasCaptura({
         numeroSetSeleccionado={numeroSetSeleccionado}
         setNumeroSetSeleccionado={setNumeroSetSeleccionado}
       />
+
+      {/* Botón para eliminar set */}
+      {numeroSetSeleccionado && (
+        <div style={{ marginBottom: 12 }}>
+          <button
+            onClick={eliminarSet}
+            disabled={eliminando}
+            style={{
+              backgroundColor: '#e55353',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: 6,
+              cursor: 'pointer'
+            }}
+            title={`Eliminar Set ${numeroSetSeleccionado}`}
+          >
+            {eliminando ? 'Eliminando...' : `Eliminar Set ${numeroSetSeleccionado}`}
+          </button>
+        </div>
+      )}
 
       {!numeroSetSeleccionado && <p style={{ fontStyle: 'italic', color: '#555' }}>Seleccione un set...</p>}
 
