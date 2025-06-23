@@ -3,24 +3,29 @@ import React, { useState } from 'react';
 export default function PartidoSetsLineaDeTiempo({ sets = [], equipoLocal, equipoVisitante, jugadores = [] }) {
   const [setSeleccionado, setSetSeleccionado] = useState(null);
 
-  const colorFondoSet = (set) => {
-    if (set.ganadorSet === 'pendiente' || !set.ganadorSet) return '#eeeeee';
-    if (String(set.ganadorSet) === String(equipoLocal._id)) return '#a5d6a7'; // verde
-    if (String(set.ganadorSet) === String(equipoVisitante._id)) return '#ef9a9a'; // rojo
-    return '#90caf9'; // azul (empate)
-  };
+    const colorFondoSet = (set) => {
+      const ganador = set.ganadorSet;
 
-  const obtenerNombreJugador = (id) => {
-    const jugador = jugadores.find(j => j._id === id);
-    return jugador ? jugador.alias || jugador.nombre : `ID: ${id}`;
-  };
+      if (!ganador || ganador === 'pendiente') return '#eeeeee'; // gris claro
+      if (ganador === 'empate') return '#90caf9'; // azul
+      if (ganador === 'local') return '#a5d6a7'; // verde
+      if (ganador === 'visitante') return '#ef9a9a'; // rojo
+      return '#cccccc'; // caso inesperado
+    };
 
-  const obtenerNombreEquipo = (id) => {
-    if (String(id) === String(equipoLocal._id)) return equipoLocal.nombre;
-    if (String(id) === String(equipoVisitante._id)) return equipoVisitante.nombre;
-    return `Equipo ${id}`;
-  };
+    const obtenerNombreJugador = (id) => {
+        const jugador = jugadores.find(j => j._id === id);
+        return jugador ? jugador.alias || jugador.nombre : `ID: ${id}`;
+    };
 
+  const obtenerNombreEquipo = (ganador) => {
+    if (ganador === 'local') return equipoLocal.nombre;
+    if (ganador === 'visitante') return equipoVisitante.nombre;
+    if (ganador === 'empate') return 'Empate';
+    if (ganador === 'pendiente') return 'Pendiente';
+    return `Equipo ${ganador}`;
+  };
+  
   const agruparPorEquipo = (stats) => {
     const grupos = {
       [equipoLocal._id]: [],
