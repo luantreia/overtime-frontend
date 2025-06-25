@@ -60,14 +60,14 @@ export default function RadarPromedios({ resumen }) {
   ];
 
   return (
-    <div style={styles.container}>
-      <h3 style={styles.titulo}>Comparativa Promedio vs Partido</h3>
+    <div className="p-4 bg-gray-100 rounded-2xl shadow-md mt-5"> {/* container */}
+      <h3 className="text-center mb-4 text-gray-800 text-lg font-semibold">Comparativa Promedio vs Partido</h3> {/* titulo */}
 
       {resumen.estadisticasPorPartido?.length > 0 && (
         <select
           value={partidoSeleccionadoId}
           onChange={e => setPartidoSeleccionadoId(e.target.value)}
-          style={styles.select}
+          className="block mx-auto mb-5 p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" // select
         >
           <option value="">Seleccionar partido</option>
           {resumen.estadisticasPorPartido.map(p => (
@@ -80,9 +80,9 @@ export default function RadarPromedios({ resumen }) {
 
       <ResponsiveContainer width="100%" height={350}>
         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-          <PolarGrid stroke="#ccc" />
+          <PolarGrid stroke="#e2e8f0" /> {/* stroke="#ccc" */}
           <PolarAngleAxis dataKey="subject" tick={{ fill: '#333', fontSize: 12 }} />
-          <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#aaa" />
+          <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#94a3b8" /> {/* stroke="#aaa" */}
           <Radar
             name="Promedio"
             dataKey="Promedio"
@@ -116,26 +116,3 @@ export default function RadarPromedios({ resumen }) {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    padding: '10px 0',
-    backgroundColor: 'var(--color-secundario)',
-    borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    marginTop: '20px',
-  },
-  titulo: {
-    textAlign: 'center',
-    marginBottom: '15px',
-    color: '#333',
-    fontSize: '18px',
-  },
-  select: {
-    display: 'block',
-    margin: '0 auto 20px',
-    padding: '8px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-  },
-};

@@ -1,38 +1,28 @@
-// src/compoents/modals/ModalEquipo/AgregarEquipo.js
-
 import React, { useState, useEffect } from 'react';
-import { getAuth, getIdToken } from 'firebase/auth'; // Importa las funciones necesarias para obtener el token
-import Button from '../../common/FormComponents/Button';
-import InputText from '../../common/FormComponents/InputText';
-
+import { getAuth, getIdToken } from 'firebase/auth';
 
 const AgregarEquipo = () => {
   const [nombre, setNombre] = useState('');
   const [foto, setFoto] = useState('');
   const [escudo, setEscudo] = useState('');
-  const [token, setToken] = useState(''); // Estado para almacenar el token de autenticación
+  const [token, setToken] = useState('');
 
   useEffect(() => {
-    // Obtiene el token de autenticación de Firebase al cargar el componente y cuando el usuario cambia.
     const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Si hay un usuario autenticado, obtén su token de ID.
         try {
           const idToken = await getIdToken(user);
           setToken(idToken);
         } catch (error) {
           console.error("Error al obtener el token:", error);
-          // Manejar el error (por ejemplo, mostrar un mensaje al usuario)
-          setToken(''); // Asegúrate de limpiar el token en caso de error.
+          setToken('');
         }
       } else {
-        // Si no hay usuario autenticado, limpia el token.
         setToken('');
       }
     });
 
-    // Limpia el listener cuando el componente se desmonta.
     return () => unsubscribe();
   }, []);
 
@@ -41,28 +31,25 @@ const AgregarEquipo = () => {
 
     if (!token) {
       alert('Debes estar autenticado para agregar un equipo.');
-      return; // Detiene el proceso si no hay token.
+      return;
     }
 
-    const equipo = {
-      nombre,
-      escudo,
-      foto,
-    };
+    const equipo = { nombre, escudo, foto };
 
     try {
       const response = await fetch('https://overtime-ddyl.onrender.com/api/equipos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json','Authorization': `Bearer ${token}`, },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(equipo),
       });
 
       const data = await response.json();
-      console.log('Respuesta del servidor:', data);
 
       if (response.ok) {
         alert('Equipo agregado exitosamente');
-        // Opcional: limpiar formulario
         setNombre('');
         setFoto('');
         setEscudo('');
@@ -76,30 +63,40 @@ const AgregarEquipo = () => {
   };
 
   return (
-    <div className="wrapper">
-      <form className='form' onSubmit={handleSubmit}>
-        <h2>Anotar Equipo</h2>
-        <InputText
+    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Anotar Equipo</h2>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <input
           name="nombre"
           placeholder="Nombre"
           value={nombre}
           onChange={e => setNombre(e.target.value)}
+          required
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <InputText
-          placeholder="URL Escudo"
+
+        <input
           name="escudo"
+          placeholder="URL Escudo"
           value={escudo}
           onChange={e => setEscudo(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <InputText
-          placeholder="URL Foto"
+
+        <input
           name="foto"
+          placeholder="URL Foto"
           value={foto}
           onChange={e => setFoto(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <Button type="submit" variant="success" disabled={false}>
-                    Anotar Equipo
-        </Button>
+
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Anotar Equipo
+        </button>
       </form>
     </div>
   );

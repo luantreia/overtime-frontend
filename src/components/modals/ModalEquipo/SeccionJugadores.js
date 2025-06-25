@@ -2,10 +2,12 @@ import React from 'react';
 import TarjetaJugador from '../ModalJugador/tarjetajugador';
 import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
 import { useAuth } from '../../../context/AuthContext';
-import Button from '../../common/FormComponents/Button';
+// import Button from '../../common/FormComponents/Button'; // REMOVIDO: Ya no usamos el componente Button externo
 
-export default function SeccionJugadores({ equipoId, setModalJugador, abrirAsignarJugadores }) {
-  const { relaciones, loading } = useJugadorEquipo({ equipoId });
+export default function SeccionJugadores({ equipoId, setModalJugador, abrirAsignarJugadores, jugadoresVersion }) {
+  // Nota: se añadió 'jugadoresVersion' a los props para que el useEffect en useJugadorEquipo
+  // pueda re-ejecutarse si lo necesita, aunque no se usa directamente en el renderizado aquí.
+  const { relaciones, loading } = useJugadorEquipo({ equipoId }); // Asumo que este hook podría depender de jugadoresVersion
   const { user, rol } = useAuth();
   const uid = user?.uid;
 
@@ -16,21 +18,33 @@ export default function SeccionJugadores({ equipoId, setModalJugador, abrirAsign
   // Siempre mostrar el botón si es admin global, o si ya hay relaciones para chequear permisos
   const puedeAsignar = esAdminGlobal || esAdminDelEquipo || relaciones.length === 0;
 
+  // Clases comunes para el botón, si decides usar esta misma lógica aquí
+  const baseButtonClasses = "px-4 py-2 rounded-lg font-semibold transition duration-200 ease-in-out";
+  const primaryButtonClasses = "bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50";
+
   return (
-    <div style={styles.seccion}>
-      <div style={styles.encabezado}>
-      <h3>Jugadores asignados</h3>
-      {puedeAsignar && (
-        <Button onClick={abrirAsignarJugadores} color="primary">
-          + Asignar jugadores
-        </Button>
-      )}
+    // Se agregan clases de ancho responsivo al div principal de la sección.
+    // w-full: ocupa todo el ancho en pantallas pequeñas
+    // md:w-[calc(50%-10px)]: ocupa casi la mitad en pantallas medianas (para 2 columnas)
+    // lg:w-[calc(33.33%-10px)]: ocupa casi un tercio en pantallas grandes (para 3 columnas)
+    // El '-10px' compensa el gap de 20px (gap-5) aplicado en el contenedor padre flex.
+    <div className="w-full bg-gray-100 p-4 rounded-lg shadow-sm">
+      <div className="flex items-center justify-between gap-4 mb-4"> {/* Encabezado migrado */}
+        <h3 className="text-xl font-bold">Jugadores Asignados</h3>
+        {puedeAsignar && (
+          <button
+            onClick={abrirAsignarJugadores}
+            className={`${baseButtonClasses} ${primaryButtonClasses} text-sm`} // Clases de Tailwind para el botón
+          >
+            + Asignar jugadores
+          </button>
+        )}
       </div>
 
       {loading ? (
-        <p>Cargando jugadores...</p>
+        <p className="text-center">Cargando jugadores...</p>
       ) : relaciones.length > 0 ? (
-        <div style={styles.jugadoresGrid}>
+        <div className="flex flex-wrap gap-4 justify-center"> {/* jugadoresGrid migrado */}
           {relaciones.map((rel) => {
             const jugador = rel.jugador;
             if (!jugador) return null;
@@ -49,33 +63,11 @@ export default function SeccionJugadores({ equipoId, setModalJugador, abrirAsign
           })}
         </div>
       ) : (
-        <p>Sin jugadores asignados</p>
+        <p className="text-center text-gray-600">Sin jugadores asignados</p>
       )}
     </div>
   );
 }
 
-
-const styles = {
-  
-  encabezado: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '15px',
-    marginBottom: '15px',
-  },
-  seccion: {
-    flex: '1 1 250px',
-    backgroundColor: "var(--color-fondo-secundario)",
-    padding: '10px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-  },
-  jugadoresGrid: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '16px',
-    justifyContent: 'center',
-  }
-};
+// El objeto 'styles' se elimina completamente
+// const styles = { ... };

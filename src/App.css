@@ -1,3 +1,4 @@
+
 :root {
   --color-primario: #0F172A;     /* Azul muy oscuro: fondo general o navbar */
   --color-secundario: #2563EB;   /* Azul vibrante: botones, links activos */
@@ -92,7 +93,7 @@ body {
 
 .App-header {
   background-color: var(--color-primario); /* Un color oscuro y elegante */
-  padding: 20px 40px; /* Mayor espacio alrededor */
+  padding: 10px 40px; /* Mayor espacio alrededor */
   display: flex;
   justify-content: space-between;
   align-items: center;

@@ -3,8 +3,8 @@ import React from 'react';
 
 export default function SeccionResultados({ resultados }) {
   return (
-    <div style={styles.seccion}>
-      <h3>Últimos Resultados</h3>
+    <div className="w-full lg:w-[calc(66.66%-10px)] bg-gray-100 p-4 rounded-lg shadow-sm">
+      <h3 className="text-xl font-bold mb-2">Últimos Resultados</h3>
       <ul>
         {resultados?.length > 0 ? (
           resultados.map((r, i) => <li key={i}>{r}</li>)
@@ -15,13 +15,3 @@ export default function SeccionResultados({ resultados }) {
     </div>
   );
 }
-
-const styles = {
-  seccion: {
-    flex: '1 1 250px',
-    backgroundColor: "var(--color-fondo-secundario)",
-    padding: '10px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-  }
-};

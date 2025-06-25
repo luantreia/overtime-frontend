@@ -5,31 +5,22 @@ export default function SeccionEquiposJugador({ jugadorId }) {
   const { relaciones, loading } = useJugadorEquipo({ jugadorId });
 
   return (
-    <section style={styles.seccion}>
-      <h3>Equipo/s</h3>
+    <section className="bg-gray-100 rounded-xl p-4 mt-2.5 shadow-sm"> {/* Refactorizado de styles.seccion */}
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">Equipo/s</h3> {/* Título de sección */}
       {loading ? (
-        <p>Cargando equipos...</p>
+        <p className="text-gray-600">Cargando equipos...</p>
       ) : relaciones.length === 0 ? (
-        <p>Este jugador no pertenece a ningún equipo actualmente.</p>
+        <p className="text-gray-600">No se encontro ningún equipo</p>
       ) : (
-        <ul>
+        <ul className="list-disc pl-5 space-y-1"> {/* Añadido estilo de lista básica */}
           {relaciones.map((rel) => (
-            <h2 key={rel._id}>
-              {rel.equipo?.nombre || 'Equipo sin nombre'}
-              {rel.posicion && <> – <strong>{rel.posicion}</strong></>}
-            </h2>
+            <li key={rel._id} className="text-gray-700"> {/* Usamos <li> para elementos de lista */}
+              <span className="font-medium">{rel.equipo?.nombre || 'Equipo sin nombre'}</span>
+              {rel.posicion && <span className="font-bold"> – {rel.posicion}</span>}
+            </li>
           ))}
         </ul>
       )}
     </section>
   );
 }
-
-const styles = {
-  seccion: {
-    backgroundColor: 'var(--color-secundario)',
-    borderRadius: '12px',
-    padding: '15px',
-    marginTop: '10px',
-  },
-};

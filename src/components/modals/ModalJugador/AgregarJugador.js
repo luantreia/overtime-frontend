@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import Button from '../../common/FormComponents/Button';
-import InputText from '../../common/FormComponents/InputText';
 import { useAuth } from '../../../context/AuthContext';
 
 const AgregarJugador = () => {
   const [nombre, setNombre] = useState('');
   const [alias, setAlias] = useState('');
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [genero, setGenero] = useState('otro');
   const [foto, setFoto] = useState('');
- 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -36,7 +34,6 @@ const AgregarJugador = () => {
 
       if (response.ok) {
         alert('Jugador agregado exitosamente');
-        // Opcional: limpiar campos
         setNombre('');
         setAlias('');
         setFechaNacimiento('');
@@ -51,57 +48,93 @@ const AgregarJugador = () => {
     }
   };
 
-    const commonInputProps = {
-    className: 'input-field',
-  };
   return (
-    <div className="wrapper">
-      <form className="form" onSubmit={handleSubmit}>
-        <h2>Agregar Jugador</h2>
+    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Anotar Jugador</h2>
 
-        <InputText
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <input
           name="nombre"
           placeholder="Nombre"
           value={nombre}
           onChange={e => setNombre(e.target.value)}
           required
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        <InputText
+        <input
           name="alias"
           placeholder="Apodo (opcional)"
           value={alias}
           onChange={e => setAlias(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        <InputText
+        <input
           name="fechaNacimiento"
           type="date"
           placeholder="Fecha de Nacimiento"
           value={fechaNacimiento}
           onChange={e => setFechaNacimiento(e.target.value)}
-          {...commonInputProps}
+          required
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        <label>
-          Género:
-          <select name="genero" value={genero} onChange={e => setGenero(e.target.value)}>
-            <option value="masculino">Masculino</option>
-            <option value="femenino">Femenino</option>
-            <option value="otro">Otro</option>
-          </select>
-        </label>
+        <div className="block text-gray-700">
+          <span>Género:</span>
+          <div className="mt-1 flex flex-col sm:flex-row sm:gap-4 gap-2">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="genero"
+                value="masculino"
+                checked={genero === 'masculino'}
+                onChange={e => setGenero(e.target.value)}
+                className="form-radio text-blue-600"
+              />
+              <span className="ml-2">Masculino</span>
+            </label>
 
-        <InputText
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="genero"
+                value="femenino"
+                checked={genero === 'femenino'}
+                onChange={e => setGenero(e.target.value)}
+                className="form-radio text-pink-600"
+              />
+              <span className="ml-2">Femenino</span>
+            </label>
+
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="genero"
+                value="otro"
+                checked={genero === 'otro'}
+                onChange={e => setGenero(e.target.value)}
+                className="form-radio text-gray-600"
+              />
+              <span className="ml-2">Otro</span>
+            </label>
+          </div>
+        </div>
+
+        <input
           name="foto"
           placeholder="URL Foto (opcional)"
           value={foto}
           onChange={e => setFoto(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        <Button type="submit" variant="success">
-          Agregar Jugador
-        </Button>
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Anotar Jugador
+        </button>
       </form>
     </div>
   );

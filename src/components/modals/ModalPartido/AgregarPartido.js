@@ -1,26 +1,17 @@
-// src/components/modals/ModalPartido/AgregarPartido.js
-
 import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth';
-import Button from '../../common/FormComponents/Button';
-import InputText from '../../common/FormComponents/InputText';
-import SelectDropdown from '../../common/FormComponents/SelectDropdown';
 
 const AgregarPartido = () => {
-  const [liga, setLiga] = useState(''); // Changed to string input for now
-  const [modalidad, setModalidad] = useState(''); // Now a select dropdown
-  const [categoria, setCategoria] = useState(''); // Now a select dropdown
+  const [liga, setLiga] = useState('');
+  const [modalidad, setModalidad] = useState('');
+  const [categoria, setCategoria] = useState('');
   const [fecha, setFecha] = useState('');
   const [equipoLocal, setEquipoLocal] = useState('');
   const [equipoVisitante, setEquipoVisitante] = useState('');
-  const [marcadorLocal, setMarcadorLocal] = useState('');
-  const [marcadorVisitante, setMarcadorVisitante] = useState('');
-
-  // No need to fetch 'ligas' yet, but keeping 'equipos'
   const [equipos, setEquipos] = useState([]);
   const [token, setToken] = useState('');
   const [uid, setUid] = useState('');
-  // Define static options for modality and category
+
   const modalidadOptions = [
     { value: 'Foam', label: 'Foam' },
     { value: 'Cloth', label: 'Cloth' },
@@ -33,15 +24,14 @@ const AgregarPartido = () => {
     { value: 'Libre', label: 'Libre' }
   ];
 
-  // --- Fetch Authentication Token ---
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
-          const idToken = await getIdToken(user, true); // Forzamos nuevo token
+          const idToken = await getIdToken(user, true);
           setToken(idToken);
-          setUid(user.uid); // <-- Guardamos UID
+          setUid(user.uid);
         } catch (error) {
           console.error("Error al obtener el token:", error);
           setToken('');
@@ -55,13 +45,12 @@ const AgregarPartido = () => {
     return () => unsubscribe();
   }, []);
 
-  // --- Fetch Teams for Dropdowns ---
   useEffect(() => {
     const fetchEquipos = async () => {
       try {
-        const equiposResponse = await fetch('https://overtime-ddyl.onrender.com/api/equipos');
-        const equiposData = await equiposResponse.json();
-        setEquipos(equiposData);
+        const res = await fetch('https://overtime-ddyl.onrender.com/api/equipos');
+        const data = await res.json();
+        setEquipos(data);
       } catch (error) {
         console.error('Error al obtener equipos:', error);
       }
@@ -72,69 +61,36 @@ const AgregarPartido = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!liga.trim()) return alert('Debes ingresar el nombre de la liga.');
+    if (!modalidad) return alert('Debes seleccionar una modalidad.');
+    if (!categoria) return alert('Debes seleccionar una categoría.');
+    if (!fecha) return alert('Debes seleccionar una fecha.');
+    if (!equipoLocal) return alert('Debes seleccionar el equipo local.');
+    if (!equipoVisitante) return alert('Debes seleccionar el equipo visitante.');
+    if (equipoLocal === equipoVisitante) return alert('El equipo local y el equipo visitante no pueden ser el mismo.');
+
     const auth = getAuth();
     const user = auth.currentUser;
+    if (!user) return alert('Debes estar autenticado para agregar un partido.');
 
-    if (!user) {
-      alert('Debes estar autenticado para agregar un partido.');
-      return;
-    }
-      if (!liga.trim()) {
-    alert('Debes ingresar el nombre de la liga.');
-    return;
-    }
-    if (!modalidad) {
-      alert('Debes seleccionar una modalidad.');
-      return;
-    }
-    if (!categoria) {
-      alert('Debes seleccionar una categoría.');
-      return;
-    }
-    if (!fecha) {
-      alert('Debes seleccionar una fecha.');
-      return;
-    }
-    if (!equipoLocal) {
-      alert('Debes seleccionar el equipo local.');
-      return;
-    }
-    if (!equipoVisitante) {
-      alert('Debes seleccionar el equipo visitante.');
-      return;
-    }
-    if (equipoLocal === equipoVisitante) {
-      alert('El equipo local y el equipo visitante no pueden ser el mismo.');
-      return;
-    }
+    const token = await getIdToken(user);
 
-    const token = await getIdToken(user); // ✅ token actualizado
+    const hoy = new Date();
+    const fechaPartido = new Date(fecha);
 
-    if (equipoLocal === equipoVisitante) {
-      alert('El equipo local y el equipo visitante no pueden ser el mismo.');
-      return;
-    }
-
-      const hoy = new Date();
-      const fechaPartido = new Date(fecha);
-
-      let estado = 'programado'; // default
-      if (fechaPartido < hoy) {
-        estado = 'finalizado';
-      }
+    const estado = fechaPartido < hoy ? 'finalizado' : 'programado';
 
     const partido = {
       liga,
       modalidad,
       categoria,
-      fecha: new Date(fecha).toISOString(),
+      fecha: fechaPartido.toISOString(),
       equipoLocal,
       equipoVisitante,
       estado,
     };
 
     try {
-      console.log('Datos del partido a enviar:', JSON.stringify(partido, null, 2));
       const response = await fetch('https://overtime-ddyl.onrender.com/api/partidos', {
         method: 'POST',
         headers: {
@@ -145,7 +101,6 @@ const AgregarPartido = () => {
       });
 
       const data = await response.json();
-      console.log('Respuesta del servidor:', data);
 
       if (response.ok) {
         alert('Partido agregado exitosamente');
@@ -164,74 +119,110 @@ const AgregarPartido = () => {
     }
   };
 
-  const commonInputProps = {
-    className: 'input-field',
-  };
-
   return (
-    <div className="wrapper">
-      <form className='form' onSubmit={handleSubmit}>
-        <h2>Anotar Partido</h2>
+    <div className="max-w-lg mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Anotar Partido</h2>
 
-        {/* Liga as a text input */}
-        <InputText
+      <form onSubmit={handleSubmit} className="space-y-5">
+
+        {/* Liga */}
+        <input
           name="liga"
           placeholder="Nombre de la Liga"
           value={liga}
           onChange={e => setLiga(e.target.value)}
-          {...commonInputProps}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
 
-        {/* Modalidad as a SelectDropdown */}
-        <SelectDropdown
-          name="modalidad"
-          value={modalidad}
-          onChange={e => setModalidad(e.target.value)}
-          options={modalidadOptions}
-          placeholder="Seleccionar Modalidad"
-          {...commonInputProps}
-        />
+        {/* Modalidad */}
+        <div className="block text-gray-700">
+          <span>Modalidad:</span>
+          <div className="mt-1 flex flex-col sm:flex-row sm:gap-6 gap-3">
+            {modalidadOptions.map(({ value, label }) => (
+              <label key={value} className="inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="modalidad"
+                  value={value}
+                  checked={modalidad === value}
+                  onChange={e => setModalidad(e.target.value)}
+                  className="form-radio text-blue-600"
+                  required
+                />
+                <span className="ml-2">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
-        {/* Categoría as a SelectDropdown */}
-        <SelectDropdown
-          name="categoria"
-          value={categoria}
-          onChange={e => setCategoria(e.target.value)}
-          options={categoriaOptions}
-          placeholder="Seleccionar Categoría"
-          {...commonInputProps}
-        />
+        {/* Categoría */}
+        <div className="block text-gray-700 mt-5">
+          <span>Categoría:</span>
+          <div className="mt-1 flex flex-col sm:flex-row sm:gap-6 gap-3">
+            {categoriaOptions.map(({ value, label }) => (
+              <label key={value} className="inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="categoria"
+                  value={value}
+                  checked={categoria === value}
+                  onChange={e => setCategoria(e.target.value)}
+                  className="form-radio text-green-600"
+                  required
+                />
+                <span className="ml-2">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
-        <InputText
+        {/* Fecha */}
+        <input
           name="fecha"
           type="date"
           placeholder="Fecha del Partido"
           value={fecha}
           onChange={e => setFecha(e.target.value)}
-          {...commonInputProps}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
 
-        <SelectDropdown
+        {/* Equipo Local */}
+        <select
           name="equipoLocal"
           value={equipoLocal}
           onChange={e => setEquipoLocal(e.target.value)}
-          options={equipos.map(eq => ({ value: eq._id, label: eq.nombre }))}
-          placeholder="Seleccionar Equipo Local"
-          {...commonInputProps}
-        />
+          className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        >
+          <option value="" disabled>Seleccionar Equipo Local</option>
+          {equipos.map(eq => (
+            <option key={eq._id} value={eq._id}>{eq.nombre}</option>
+          ))}
+        </select>
 
-        <SelectDropdown
+        {/* Equipo Visitante */}
+        <select
           name="equipoVisitante"
           value={equipoVisitante}
           onChange={e => setEquipoVisitante(e.target.value)}
-          options={equipos.map(eq => ({ value: eq._id, label: eq.nombre }))}
-          placeholder="Seleccionar Equipo Visitante"
-          {...commonInputProps}
-        />
+          className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        >
+          <option value="" disabled>Seleccionar Equipo Visitante</option>
+          {equipos.map(eq => (
+            <option key={eq._id} value={eq._id}>{eq.nombre}</option>
+          ))}
+        </select>
 
-        <Button type="submit" variant="success" disabled={false}>
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Anotar Partido
-        </Button>
+        </button>
       </form>
     </div>
   );

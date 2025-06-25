@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import EditarJugador from './EditarJugador';
-import useUserRole from '../../../hooks/useUserRole';
+import useUserRole from '../../../hooks/useUserRole'; // This hook doesn't seem to be used, consider removing if not needed.
 import CloseButton from '../../common/FormComponents/CloseButton';
 import Button from '../../common/FormComponents/Button';
 import SeccionEquiposJugador from './SeccionEquiposJugador';
-import SeccionEstadisticasJugador from './SeccionEstadisticasJugador';
+import SeccionEstadisticasJugador from './SeccionEstadisticasJugador'; // This component is imported but not used, consider removing if not needed.
 import { useAuth } from '../../../context/AuthContext';
 import RadarPromedios from './RadarPromedios';
 import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticasJugador';
@@ -12,8 +12,8 @@ import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticas
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mostrarPromedios, setMostrarPromedios] = useState(false);
-  const { token } = useAuth(); 
-  const { uid } = useUserRole();
+  const { token } = useAuth();
+  const { uid } = useUserRole(); // This variable is not used
   const { resumen, loading: loadingResumen } = useResumenEstadisticasJugador(jugador._id, token);
 
   const calcularEdad = fechaNacimiento => {
@@ -38,49 +38,67 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 h-screen flex items-center justify-center z-50 p-2 overflow-y-auto bg-black bg-opacity-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[--color-fondo] p-5 rounded-2xl max-w-2xl w-auto max-h-[80dvh] overflow-y-auto relative shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
         <CloseButton onClick={onClose} />
 
-        <div style={styles.contenido}>
-          <div style={styles.header}>
-            <img 
-              src={jugador.foto || '/default-player.png'} 
-              alt={`Foto de ${jugador.nombre}`} 
-              style={styles.foto} 
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-5 items-start">
+            <img
+              src={jugador.foto || '/default-player.png'}
+              alt={`Foto de ${jugador.nombre}`}
+              className="w-48 h-96 rounded-lg object-cover"
             />
-            <div style={styles.infoBasica}>
-              <h2 style={styles.data}>{jugador.nombre}</h2>
-              <p style={styles.data}><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</p>
+            <div className="flex flex-col gap-1">
+              <h2 className="mt-0 text-2xl font-bold">{jugador.nombre}</h2>
+              <p className="mt-0 text-lg">
+                <strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}
+              </p>
               <Button
                 onClick={() => setModoEdicion(true)}
-                variant= "primary"
+                variant="primary"
                 disabled={modoEdicion}
+                className="mt-2"
               >
                 ✎ Editar
               </Button>
+              {/* Modular Section: Player Teams */}
               <SeccionEquiposJugador jugadorId={jugador._id} />
+
+              {/* Toggle for Player Stats Section */}
               <Button
                 variant="secondary"
                 onClick={() => setMostrarPromedios(prev => !prev)}
-                style={{ marginTop: '10px' }}
+                className="mt-4"
               >
-                {mostrarPromedios ? 'Ocultar Stats' : 'Mostrar Stats'}
+                {mostrarPromedios ? 'Ocultar Estadísticas' : 'Mostrar Estadísticas'}
               </Button>
             </div>
           </div>
-          
+
+          {/* Modular Section: Player Statistics */}
           {mostrarPromedios && (
-            <>
+            <div className="mt-4 p-4 rounded-xl shadow-md">
+              <h3 className="text-xl font-semibold mb-3">Estadísticas del Jugador</h3>
               {loadingResumen && <p>Cargando promedios...</p>}
               {resumen && <RadarPromedios resumen={resumen} />}
-            </>
+              {/* Here you could include other statistics components, e.g., <TablaEstadisticas />, <GraficoRendimiento /> */}
+            </div>
           )}
         </div>
 
         {modoEdicion && (
-          <div onClick={handleCerrarSubmodal}>
-            <div style={styles.submodal} onClick={e => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-60 z-[1100] flex items-center justify-center p-2"
+            onClick={handleCerrarSubmodal}
+          >
+            <div className="bg-[--color-fondo] p-5 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
               <EditarJugador
                 jugador={jugador}
                 onGuardar={handleGuardar}
@@ -93,82 +111,3 @@ export default function ModalJugador({ jugador, onClose, onJugadorActualizado })
     </div>
   );
 }
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    height: '100dvh',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    padding: '10px',
-    boxSizing: 'border-box',
-    overflowY: 'auto',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modal: {
-    backgroundColor: 'var(--color-fondo)',
-    padding: '30px 20px',
-    borderRadius: '16px',
-    maxWidth: '700px',
-    width: 'auto',
-    maxHeight: '80dvh',
-    overflowY: 'auto',
-    position: 'relative',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-  },
-  cerrar: {
-    position: 'absolute', top: 10, right: 10,
-    background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
-  },
-  contenido: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  header: {
-    display: 'flex',
-    gap: '20px',
-    alignItems: 'flex-start',
-  },
-  foto: {
-    width: '200px',
-    height: '360px',
-    borderRadius: '10px',
-    objectFit: 'cover',
-  },
-  infoBasica: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '5px',
-  },
-  seccion: {
-    backgroundColor: 'var(--color-secundario)',
-    borderRadius: '12px',
-    padding: '15px',
-  },
-  botonEditar: {
-    alignSelf: 'flex-start',
-    padding: '8px 16px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-  },
-  data: {
-    marginTop: 0,
-  },
-  submodal: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    zIndex: 1100,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '10px',
-  },
-};
