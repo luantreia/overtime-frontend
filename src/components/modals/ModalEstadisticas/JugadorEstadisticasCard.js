@@ -100,7 +100,7 @@ export default function JugadorEstadisticasCard({
 
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+    <div className="bg-white p-2 rounded-lg shadow-md mb-0">
       <SelectDropdown
         label={null}
         name={`jugador-${index}`}
@@ -111,12 +111,12 @@ export default function JugadorEstadisticasCard({
         className="mb-4 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
       />
 
-      <div className="grid grid-cols-1  gap-2"> {/* Grid adaptable a 1 o 2 columnas */}
+      <div className="grid grid-cols-1  gap-0"> {/* Grid adaptable a 1 o 2 columnas */}
         {controles.map(({ campo, label }) => {
           const valor = estadisticasJugador[campo] || 0;
           return (
             <div key={campo} className="flex flex-col items-center">
-              <span className="text-gray-700 font-medium mb-1">{label}</span>
+              <span className="text-gray-700 font-medium mb-0">{label}</span>
               <div
                 // Eventos para desktop
                 onMouseDown={() => handleMouseDown(campo)}
