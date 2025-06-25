@@ -5,6 +5,8 @@ import { saveAs } from 'file-saver';
 export default function ExportarExcelBoton({ partido }) {
   const exportar = () => {
     if (!partido?.sets?.length) {
+      // Using a custom alert/modal is recommended instead of native alert()
+      // For now, keeping alert() as per original code, but noting the best practice.
       alert("No hay sets cargados para exportar.");
       return;
     }
@@ -25,18 +27,19 @@ export default function ExportarExcelBoton({ partido }) {
           jugadorObj?.alias?.trim() ||
           jugadorObj?.nombre?.trim() ||
           `Jugador ${jugadorId?.substring(0, 6) || 'desconocido'}`;
-        // Hoja principal
+        
+        // Main sheet data
         rowsEstadisticas.push({
           Set: set.numeroSet,
           Equipo: equipoNombre,
           Jugador: nombreJugador,
-          Throws: stat.estadisticas.throws,
-          Hits: stat.estadisticas.hits,
-          Outs: stat.estadisticas.outs,
-          Catches: stat.estadisticas.catches,
+          Throws: stat.estadisticas.throws || 0,
+          Hits: stat.estadisticas.hits || 0,
+          Outs: stat.estadisticas.outs || 0,
+          Catches: stat.estadisticas.catches || 0,
         });
 
-        // Resumen acumulado
+        // Accumulate summary data per player
         if (!resumenPorJugador[jugadorId]) {
           resumenPorJugador[jugadorId] = {
             Jugador: nombreJugador,
@@ -63,7 +66,7 @@ export default function ExportarExcelBoton({ partido }) {
     const hojaResumen = XLSX.utils.json_to_sheet(resumenData);
     XLSX.utils.book_append_sheet(workbook, hojaResumen, 'Resumen Jugadores');
 
-    const nombrePartido = `${partido.equipoLocal?.nombre}_vs_${partido.equipoVisitante?.nombre}`.replace(/\s+/g, '_');
+    const nombrePartido = `${partido.equipoLocal?.nombre || 'Partido'}_vs_${partido.equipoVisitante?.nombre || 'Desconocido'}`.replace(/\s+/g, '_');
     const nombreArchivo = `estadisticas_${nombrePartido}.xlsx`;
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -75,18 +78,14 @@ export default function ExportarExcelBoton({ partido }) {
   };
 
   return (
-    <button onClick={exportar} style={botonStyle}>
+    <button
+      onClick={exportar}
+      // Tailwind CSS classes for the button
+      className="mt-2 px-4 py-2 bg-green-600 text-white font-medium rounded-md
+                 hover:bg-green-700 transition-colors duration-200
+                 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+    >
       Exportar a Excel
     </button>
   );
 }
-
-const botonStyle = {
-  marginTop: '10px',
-  padding: '10px 15px',
-  backgroundColor: '#28a745',
-  color: 'white',
-  border: 'none',
-  borderRadius: '5px',
-  cursor: 'pointer'
-};

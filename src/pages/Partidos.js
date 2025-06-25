@@ -74,7 +74,7 @@ export default function Partidos() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <div className="selector" style={{ marginBottom: 16 }}>
         <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700">
           Ordenar por:
@@ -92,7 +92,7 @@ export default function Partidos() {
         </select>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-4">
+      <div className="lista px-0">
         {partidosPagina.map((p) => (
           <TarjetaPartido key={p._id} partido={p} onClick={() => handleSeleccionarPartido(p)} />
         ))}

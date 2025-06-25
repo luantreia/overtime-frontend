@@ -2,91 +2,54 @@
 
 import React from "react";
 
-// The 'onClick' prop is crucial for making the card interactive.
-// The 'partido' prop should contain all the necessary data,
-// with equipoLocal and equipoVisitante already populated (objects, not just IDs).
-function TarjetaPartido({ partido, onClick }) { // Removed 'equipos' prop, as it's not needed if 'partido' is populated
-  // Ensure partido exists and its properties are accessible
+export default function TarjetaPartido({ partido, onClick }) {
   if (!partido) {
     return null; // Or some fallback UI
   }
 
-  // Access equipoLocal and equipoVisitante directly from the partido object.
-  // Use optional chaining (?.) for safety, in case they are not yet populated or null.
-  // Note: Your Mongoose schema defines 'equipoLocal' and 'equipoVisitante' directly,
-  // not an array named 'equipos'.
   const equipoLocal = partido.equipoLocal;
   const equipoVisitante = partido.equipoVisitante;
 
-  // Extract names and escudos, providing fallbacks
   const nombreLocal = equipoLocal?.nombre || "Equipo Local";
   const nombreVisitante = equipoVisitante?.nombre || "Equipo Visitante";
 
-  const escudoLocal = equipoLocal?.escudo || "";
-  const escudoVisitante = equipoVisitante?.escudo || "";
+  // Use a placeholder if no actual escudo URL is provided
+  const escudoLocal = equipoLocal?.escudo || "https://via.placeholder.com/40x40?text=EL"; // Example placeholder
+  const escudoVisitante = equipoVisitante?.escudo || "https://via.placeholder.com/40x40?text=EV"; // Example placeholder
 
   return (
-    <div style={styles.card} onClick={onClick}> {/* Attach onClick to the card div */}
-      <div style={styles.escudos}>
-        <img src={escudoLocal || undefined} alt={nombreLocal} style={styles.img} />
-        <span style={styles.vs}>vs</span>
-        <img src={escudoVisitante || undefined} alt={nombreVisitante} style={styles.img} />
+    <div
+      className="bg-white rounded-lg shadow-lg p-4 w-52 text-center cursor-pointer
+                 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl
+                 flex flex-col justify-between items-center" // Added flex for internal layout
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-center gap-3 w-full mb-3"> {/* escudos flex container */}
+        <img
+          src={escudoLocal}
+          alt={nombreLocal}
+          className="w-10 h-10 object-contain flex-shrink-0" // Adjusted size, added flex-shrink-0
+        />
+        <span className="font-bold text-lg text-gray-700">vs</span> {/* vs text */}
+        <img
+          src={escudoVisitante}
+          alt={nombreVisitante}
+          className="w-10 h-10 object-contain flex-shrink-0" // Adjusted size, added flex-shrink-0
+        />
       </div>
-      <h3 style={styles.nombre}>{nombreLocal} vs {nombreVisitante}</h3>
-      {partido.liga && <p style={styles.liga}>{partido.liga}</p>}
-      <p style={styles.fecha}>{new Date(partido.fecha).toLocaleDateString()}</p>
-      {/* The button can still be here, but the whole card is clickable */}
-      <button style={styles.boton} onClick={(e) => { e.stopPropagation(); onClick(); }}>Ver más</button>
+
+      <h3 className="text-base font-semibold text-gray-800 mb-1 leading-tight">{nombreLocal} vs {nombreVisitante}</h3> {/* nombre */}
+      {partido.liga && <p className="text-sm text-gray-600 mb-1">{partido.liga}</p>} {/* liga */}
+      <p className="text-xs text-gray-500 mb-3">{new Date(partido.fecha).toLocaleDateString()}</p> {/* fecha */}
+
+      <button
+        className="mt-2 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg
+                   hover:bg-slate-800 transition-colors duration-200
+                   focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-white" // Professional button styling
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+      >
+        Ver más
+      </button>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    padding: "10px",
-    width: "200px",
-    textAlign: "center",
-    background: "white",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    cursor: "pointer", // Make the card clickable
-  },
-  escudos: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px"
-  },
-  img: {
-    width: "40px",
-    height: "40px",
-    objectFit: "contain"
-  },
-  vs: {
-    fontWeight: "bold"
-  },
-  nombre: {
-    fontSize: "16px",
-    margin: "10px 0 5px 0"
-  },
-  liga: {
-    fontSize: "14px",
-    color: "#666"
-  },
-  fecha: {
-    fontSize: "13px",
-    color: "#888"
-  },
-  boton: {
-    marginTop: "8px",
-    padding: "5px 10px",
-    border: "none",
-    borderRadius: "5px",
-    backgroundColor: "#007bff",
-    color: "white",
-    cursor: "pointer"
-  }
-};
-
-export default TarjetaPartido;

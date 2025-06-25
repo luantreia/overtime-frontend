@@ -1,48 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import ModalEstadisticasCaptura from '../ModalEstadisticas/ModalEstadisticas';
 import PartidoDatosGenerales from './PartidoDatosGenerales';
-import PartidoSetsResumen from './PartidoSetsResumen';
+import PartidoSetsResumen from './PartidoSetsResumen'; // This component is not used in the JSX, consider removing if not needed.
 import Button from '../../common/FormComponents/Button';
 import useJugadores from '../../../hooks/useJugadores';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import ExportarExcelBoton from '../../common/FormComponents/ExportarExcelboton';
 import PartidoSetsLineaDeTiempo from './PartidoSetsLineaDeTiempo';
 
-export default function ModalPartido({ partido, onClose, token, refrescarPartidoSeleccionado, eliminarSetDePartido, cargarPartidoPorId, agregarSetAPartido, actualizarSetDePartido }) {
+export default function ModalPartido({
+  partido,
+  onClose,
+  token,
+  refrescarPartidoSeleccionado,
+  eliminarSetDePartido,
+  cargarPartidoPorId,
+  agregarSetAPartido,
+  actualizarSetDePartido,
+}) {
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
   const [setsLocales, setSetsLocales] = useState(partido.sets || []);
-  const { jugadores } = useJugadores(token);
-  
+  const { jugadores } = useJugadores(token); // Ensure useJugadores is defined and used correctly
+
   useEffect(() => {
     setSetsLocales(partido.sets || []);
   }, [partido]);
 
   if (!partido) return null;
 
-  const eliminarSetLocal = (numeroSet) => {
-    setSetsLocales(prevSets => prevSets.filter(s => s.numeroSet !== numeroSet));
-  };
-
+  // This function is defined but not used in the provided JSX.
+  // Consider removing if not needed or add logic to use it.
+  // const eliminarSetLocal = (numeroSet) => {
+  //   setSetsLocales(prevSets => prevSets.filter(s => s.numeroSet !== numeroSet));
+  // };
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <CloseButton onClick={onClose} />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[1000] p-4"> {/* Overlay */}
+      <div className="bg-white rounded-lg p-6 md:p-8 w-full max-w-lg lg:max-w-xl xl:max-w-2xl max-h-[90vh] overflow-y-auto relative shadow-2xl"> {/* Modal Content */}
+        <CloseButton onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 text-3xl" /> {/* Adjusted CloseButton position and size */}
 
-        <h2>Partido</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b pb-3">Detalles del Partido</h2> {/* Title styling */}
 
-        <PartidoDatosGenerales partido={partido} />
-        <PartidoSetsLineaDeTiempo
-          sets={partido.sets}
-          equipoLocal={partido.equipoLocal}
-          equipoVisitante={partido.equipoVisitante}
-        />
+        <div className="space-y-6 mb-6"> {/* Container for main partido details */}
+          <PartidoDatosGenerales partido={partido} />
+          <PartidoSetsLineaDeTiempo
+            sets={partido.sets}
+            equipoLocal={partido.equipoLocal}
+            equipoVisitante={partido.equipoVisitante}
+          />
+        </div>
 
+        <div className="flex flex-col md:flex-row md:justify-end md:gap-4 space-y-3 md:space-y-0 mt-6 pt-4 border-t"> {/* Buttons container */}
+          <button onClick={() => setModalEstadisticasAbierto(true)}
+                  className=" px-4 py-2 bg-blue-600 text-white font-medium rounded-md
+                 hover:bg-blue-700 transition-colors duration-200
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    >
+            Cargar estadísticas
+          </button>
+          <ExportarExcelBoton partido={partido} className=" md:w-auto" />
+        </div>
 
-        <Button onClick={() => setModalEstadisticasAbierto(true)} variant="primary">
-          Cargar estadísticas
-        </Button>
-        <ExportarExcelBoton partido={partido} />
         {modalEstadisticasAbierto && (
           <ModalEstadisticasCaptura
             partido={partido}
@@ -54,7 +72,6 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
             eliminarSetDePartido={eliminarSetDePartido}
             cargarPartidoPorId={cargarPartidoPorId}
             actualizarSetsLocales={setSetsLocales}
-            
             actualizarSetDePartido={actualizarSetDePartido}
             refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
           />
@@ -63,44 +80,3 @@ export default function ModalPartido({ partido, onClose, token, refrescarPartido
     </div>
   );
 }
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top:0, left:0, right:0, bottom:0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display:'flex',
-    justifyContent:'center',
-    alignItems:'center',
-    zIndex: 1000
-  },
-  modal: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 20,
-    width: '90%',
-    maxWidth: 600,
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    position: 'relative'
-  },
-  cerrar: {
-    position: 'absolute',
-    top: '10px',
-    right: '15px',
-    fontSize: '22px',
-    background: 'none',
-    border: 'none',
-    color: '#555',
-    cursor: 'pointer',
-    transition: 'color 0.2s',
-  },
-  boton: {
-    backgroundColor: '#007bff',
-    color: 'white',
-    padding: '10px 15px',
-    border: 'none',
-    borderRadius: 5,
-    cursor: 'pointer',
-  }
-};
