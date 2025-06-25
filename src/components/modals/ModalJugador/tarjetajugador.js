@@ -13,7 +13,7 @@ export default function TarjetaJugador({
 
   return (
     <div
-      className="relative w-40 h-64 m-2 rounded-lg overflow-hidden shadow-xl cursor-pointer transition-all duration-300 ease-in-out bg-white flex flex-col justify-end
+      className="relative w-36 h-60 m-2 rounded-lg overflow-hidden shadow-xl cursor-pointer transition-all duration-300 ease-in-out bg-white flex flex-col justify-end
                  hover:scale-105 hover:shadow-2xl" // Añadimos efectos hover para un toque extra
       onClick={onClick}
     >

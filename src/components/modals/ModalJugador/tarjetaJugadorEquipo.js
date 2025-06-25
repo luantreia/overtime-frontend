@@ -43,7 +43,7 @@ const styles = {
     width: '140px',
     height: '240px',
     position: 'relative',
-    margin: '10px',
+    margin: '5px',
     borderRadius: '10px',
     overflow: 'hidden',
     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',

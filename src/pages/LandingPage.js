@@ -1,54 +1,39 @@
 // src/pages/LandingPage.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/common/FormComponents/Button';
 
-const NAVBAR_HEIGHT = 140; // ajustá según la altura real de tu navbar
+const NAVBAR_HEIGHT = '140px'; // Using string for CSS variable calculation if needed
 
 const LandingPage = () => {
   const navigate = useNavigate();
 
-  // Estilos comunes para los botones
-  const baseBtnStyle = {
-    padding: '0.75rem 1.5rem',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    transition: 'background-color 0.3s ease, color 0.3s ease',
-  };
-
   return (
     <div
-      style={{
-        height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#f5f5f5',
-        fontFamily: 'Arial, sans-serif',
-        padding: '20px',
-        textAlign: 'center',
-      }}
+      className="flex flex-col justify-center items-center bg-gray-100 p-5 text-center"
+      style={{ minHeight: `calc(100vh - ${NAVBAR_HEIGHT})` }}
     >
-      <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>Bienvenido a OVERTIME</h1>
-      <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+      <h1 className="text-5xl font-extrabold text-gray-800 mb-2 sm:text-6xl md:text-7xl">
+        Bienvenido a OVERTIME
+      </h1>
+      <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto sm:text-xl md:text-2xl">
         La forma más fácil de anotar y seguir tus partidos de dodgeball.
       </p>
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <Button
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Registrarse Button */}
+        <button
           onClick={() => navigate('/registro')}
-          variant='success'
+          className="px-8 py-4 bg-green-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-300 transform hover:scale-105"
         >
           Registrarse
-        </Button>
+        </button>
 
-        <Button
+        {/* Iniciar sesión Button */}
+        <button
           onClick={() => navigate('/login')}
-          variant='primary'
+          className="px-8 py-4 bg-blue-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 transform hover:scale-105"
         >
           Iniciar sesión
-        </Button>
+        </button>
       </div>
     </div>
   );

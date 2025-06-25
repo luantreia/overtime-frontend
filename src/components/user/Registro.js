@@ -68,8 +68,8 @@ const Registro = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
-      <form onSubmit={handleRegister} className="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm space-y-6">
+    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
+      <form onSubmit={handleRegister} className="w-full max-w-sm space-y-6">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Registrar Cuenta</h2>
 
         {/* Nombre Input */}

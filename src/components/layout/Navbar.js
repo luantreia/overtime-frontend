@@ -3,103 +3,131 @@ import logo from "../../logo.png";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const NavBar = () => {
   const { user } = useAuth();
-  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      console.log("Usuario desconectado");
+      console.log("User signed out successfully.");
       navigate("/login");
     } catch (error) {
-      console.error("Error al desconectar", error);
+      console.error("Error signing out:", error);
     }
-    setMenuAbierto(false);
+    setMenuOpen(false);
   };
 
-  const onSelect = (ruta) => {
-    navigate(ruta);
-    setMenuAbierto(false);
+  const handleNavigation = (path) => {
+    navigate(path);
+    setMenuOpen(false);
   };
 
-  const toggleMenu = () => setMenuAbierto(!menuAbierto);
+  const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  const botonesBase = [
-    { texto: "Jugadores", ruta: "/jugadores" },
-    { texto: "Equipos", ruta: "/equipos" },
-    { texto: "Partidos", ruta: "/partidos" },
+  const baseNavItems = [
+    { text: "Jugadores", path: "/jugadores" },
+    { text: "Equipos", path: "/equipos" },
+    { text: "Partidos", path: "/partidos" },
   ];
 
-  const botonesUsuario = user
+  const userNavItems = user
     ? [
-        { texto: "Anotar jugador", ruta: "/agregar-jugadores-multiple" },
-        { texto: "Anotar Equipo", ruta: "/agregar-equipo" },
-        { texto: "Agregar Partido", ruta: "/agregar-partido" },
-        { texto: "Mi perfil", ruta: "/perfil" },
+        { text: "Anotar jugador", path: "/agregar-jugadores-multiple" },
+        { text: "Anotar Equipo", path: "/agregar-equipo" },
+        { text: "Agregar Partido", path: "/agregar-partido" },
+        { text: "Mi perfil", path: "/perfil" },
       ]
     : [
-        { texto: "Iniciar sesión", ruta: "/login" },
-        { texto: "Registrarse", ruta: "/registro" },
+        { text: "Iniciar sesión", path: "/login" },
+        { text: "Registrarse", path: "/registro" },
       ];
 
+  const allNavItems = [...baseNavItems, ...userNavItems];
+
+  // Common button styles for navigation items
+  const navButtonBaseClasses = "block w-full text-white text-lg font-medium px-4 py-3 rounded-lg transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-800";
+
   return (
-    <header className="bg-slate-900 text-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
+    <header className="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-xl sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo */}
         <img
           src={logo}
-          alt="Logo Overtime"
-          className="h-12 w-auto cursor-pointer"
-          onClick={() => navigate("/")}
+          alt="Overtime Logo"
+          className="h-16 w-auto cursor-pointer object-contain transform hover:scale-105 transition-transform duration-200"
+          onClick={() => handleNavigation("/")}
         />
 
-        {/* Menú hamburguesa - solo en móvil */}
+        {/* Hamburger Menu Button - Always visible, refined animation */}
         <button
           onClick={toggleMenu}
-          className="md:hidden flex flex-col justify-center items-center gap-1 w-8 h-8 focus:outline-none"
-          aria-label="Toggle menu"
+          className="flex flex-col justify-center items-center gap-1.5 w-10 h-10 focus:outline-none focus:ring-2 focus:ring-slate-300 rounded-md transition-all duration-300 z-50"
+          aria-label="Toggle navigation menu"
         >
           <span
-            className={`block h-1 w-full bg-white rounded transition-transform duration-300 ${
-              menuAbierto ? "rotate-45 translate-y-2" : ""
+            className={`block h-1 w-8 bg-white rounded-full transition-transform duration-300 ease-in-out ${
+              menuOpen ? "rotate-45 translate-y-2.5" : ""
             }`}
           />
           <span
-            className={`block h-1 w-full bg-white rounded transition-opacity duration-300 ${
-              menuAbierto ? "opacity-0" : "opacity-100"
+            className={`block h-1 w-8 bg-white rounded-full transition-opacity duration-300 ease-in-out ${
+              menuOpen ? "opacity-0" : "opacity-100"
             }`}
           />
           <span
-            className={`block h-1 w-full bg-white rounded transition-transform duration-300 ${
-              menuAbierto ? "-rotate-45 -translate-y-2" : ""
+            className={`block h-1 w-8 bg-white rounded-full transition-transform duration-300 ease-in-out ${
+              menuOpen ? "-rotate-45 -translate-y-2.5" : ""
             }`}
           />
         </button>
 
-        {/* Navegación */}
+        {/* Mobile Menu Overlay - Smooth fade-in, now solely responsible for blur */}
+        {menuOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-md z-40 transition-opacity duration-300 ease-in-out opacity-0 animate-fade-in" // Adjusted opacity to 60%, blur to md
+            onClick={toggleMenu}
+            aria-hidden="true"
+          ></div>
+        )}
+
+        {/* Navigation - Sidebar only, elevated styling. NO BLUR HERE. */}
         <nav
-          className={`flex-col md:flex-row md:flex md:items-center md:gap-6 absolute md:static top-full left-0 w-full md:w-auto bg-slate-900 md:bg-transparent transition-all duration-300 ease-in-out overflow-hidden md:overflow-visible ${
-            menuAbierto ? "max-h-96 py-4 md:max-h-full" : "max-h-0"
-          }`}
+          className={`
+            fixed inset-y-0 right-0 w-72 transform transition-transform duration-300 ease-in-out 
+            bg-slate-800 // Removed backdrop-blur-md and opacity from here
+            py-10 px-8 flex flex-col space-y-5 
+            ${menuOpen ? "translate-x-0 z-50" : "translate-x-full"} 
+            shadow-2xl rounded-l-lg
+          `}
         >
-          {[...botonesBase, ...botonesUsuario].map(({ texto, ruta }) => (
+          {allNavItems.map(({ text, path }) => (
             <button
-              key={ruta}
-              onClick={() => onSelect(ruta)}
-              className="block w-full md:w-auto text-left px-6 py-2 md:px-3 rounded hover:bg-slate-700 transition-colors duration-200"
+              key={path}
+              onClick={() => handleNavigation(path)}
+              className={`
+                ${navButtonBaseClasses} 
+                text-left relative overflow-hidden group 
+                ${location.pathname === path ? "bg-slate-700 shadow-md transform scale-105" : "hover:bg-slate-700"}
+              `}
+              aria-current={location.pathname === path ? "page" : undefined}
             >
-              {texto}
+              {text}
+              {/* Animated underline for non-active links */}
+              {location.pathname !== path && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"></span>
+              )}
             </button>
           ))}
 
           {user && (
             <button
               onClick={handleLogout}
-              className="w-full md:w-auto mt-2 md:mt-0 px-6 py-2 bg-red-600 rounded hover:bg-red-700 transition-colors duration-200"
+              className="block w-full mt-8 p-3 bg-red-600 text-white text-lg font-medium rounded-lg hover:bg-red-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-slate-800 text-left transform hover:scale-105"
             >
               Cerrar sesión
             </button>

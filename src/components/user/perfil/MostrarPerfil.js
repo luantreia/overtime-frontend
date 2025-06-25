@@ -17,20 +17,18 @@ export default function MostrarPerfil({ datos, onEditar, onEliminar }) {
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-          <Button
+          <button
             onClick={onEditar}
-            variant="primary"
-            className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Editar perfil
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={onEliminar}
-            variant="danger"
-            className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Eliminar cuenta
-          </Button>
+          </button>
         </div>
     </div>
   );
