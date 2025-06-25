@@ -1,65 +1,30 @@
-
+// src/components/common/tarjetaequipo.js
 import React from 'react';
 
-
-function TarjetaEquipo({ nombre, onClick, escudo }) {
-
+export default function TarjetaEquipo({ nombre, onClick, escudo }) {
   const tieneEscudo = escudo && escudo.trim() !== '';
 
   return (
-    <div style={styles.card} onClick={onClick}>
+    <div
+      className="relative w-36 h-60 m-1 rounded-lg overflow-hidden shadow-xl cursor-pointer transition-all duration-300 ease-in-out bg-white flex flex-col justify-end
+                 hover:scale-105 hover:shadow-2xl" // Consistent hover effects
+      onClick={onClick}
+    >
       {tieneEscudo ? (
-        <img src={escudo} alt={nombre} style={styles.imagen}  />
+        <img
+          src={escudo}
+          alt={nombre}
+          className="absolute inset-0 w-full h-full object-cover z-10" // Similar image styling
+        />
       ) : (
-        <div style={styles.placeholder}>
-          <span style={styles.inicial}>{nombre[0]}</span>
+        <div className="absolute inset-0 w-full h-full bg-gray-600 flex items-center justify-center z-10"> {/* Placeholder background color adjusted to match example's primary/gray-600 vibe */}
+          <span className="text-6xl text-white font-bold">{nombre[0]}</span> {/* Initial text styling */}
         </div>
       )}
-      <div style={styles.overlay}>
-      <h3>{nombre}</h3>
+
+      <div className="relative z-20 bg-black bg-opacity-60 text-white p-3 text-center rounded-b-lg"> {/* Overlay styling similar to TarjetaJugador */}
+        <h3 className="m-0 text-lg font-bold drop-shadow-md">{nombre}</h3> {/* Text styling for name */}
       </div>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    width: '140px', 
-    height: '240px',
-    position: 'relative',
-    margin: '5px',
-    borderRadius: '10px',
-    overflow: 'hidden',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-    cursor: 'pointer', // El cursor se convierte en puntero para indicar que se puede hacer clic
-  },
-  imagen: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  placeholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'var(--color-primario)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '8px'
-  },
-  inicial: {
-    fontSize: '48px',
-    color: 'var(--color-fondo)'
-  },
-  overlay: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    color: 'var(--color-fondo)',
-    background: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
-    padding: '0px',
-    textAlign: 'center',
-  }
-};
-
-export default TarjetaEquipo;
