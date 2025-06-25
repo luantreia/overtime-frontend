@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import ModalLayout from '../../common/ModalLayout';
 import EncabezadoEstadisticas from './EncabezadoEstadisticas';
-import SelectorSet from './SelectorSet';
+import SelectorSet from './SelectorSet'; // This component now includes winner selection
 import EquiposEstadisticas from './EquipoEstadisticas';
-import SelectorGanadorSet from './SelectorGanadorSet';
-import Button from '../../common/FormComponents/Button';
+// Removed: import SelectorGanadorSet from './SelectorGanadorSet'; // No longer needed as it's inside SelectorSet
+
+// Removed: import Button from '../../common/FormComponents/Button'; // If you're removing all custom Buttons.
+// If your app still uses this Button component elsewhere, keep the import in other files.
+// For this file, the final save button is also a native button now.
+
 import { useSetSeleccionado } from '../../../hooks/useSetSeleccionado';
 
 export default function ModalEstadisticasCaptura({
@@ -16,7 +20,7 @@ export default function ModalEstadisticasCaptura({
   agregarSetAPartido,
   actualizarSetDePartido,
   refrescarPartidoSeleccionado,
-  eliminarSetDePartido // función para eliminar set, pasada desde ModalPartido
+  eliminarSetDePartido
 }) {
   const [numeroSetSeleccionado, setNumeroSetSeleccionado] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -156,7 +160,6 @@ export default function ModalEstadisticasCaptura({
     }
   };
 
-  // NUEVO: eliminar set seleccionado
   const eliminarSet = async () => {
     if (!numeroSetSeleccionado) return alert('Seleccione un set para eliminar');
 
@@ -187,7 +190,7 @@ export default function ModalEstadisticasCaptura({
     }
   };
 
-  if (!partidoLocal) return <p>Cargando partido...</p>;
+  if (!partidoLocal) return <p className="text-center text-gray-600 p-4">Cargando partido...</p>;
 
   const mapEquipo = (equipoId) =>
     estadisticasSet?.statsJugadoresSet
@@ -199,66 +202,69 @@ export default function ModalEstadisticasCaptura({
 
   return (
     <ModalLayout onClose={onClose}>
-      <EncabezadoEstadisticas onAgregarSet={handleAgregarSet} onClose={onClose} />
+      <EncabezadoEstadisticas onClose={onClose} /> {/* No longer passes onAgregarSet */}
 
-      <SelectorSet
-        sets={setsLocales}
-        numeroSetSeleccionado={numeroSetSeleccionado}
-        setNumeroSetSeleccionado={setNumeroSetSeleccionado}
-      />
+      <div className="space-y-4 px-4 pb-4">
+        <SelectorSet
+          sets={setsLocales}
+          numeroSetSeleccionado={numeroSetSeleccionado}
+          setNumeroSetSeleccionado={setNumeroSetSeleccionado}
+          onAgregarSet={handleAgregarSet}
+          eliminarSet={eliminarSet}
+          eliminando={eliminando}
+          // NEW PROPS FOR WINNER SELECTION:
+          estadisticasSet={estadisticasSet}
+          setGanadorSet={setGanadorSetLocal}
+          modalidad={partidoLocal.modalidad}
+        />
 
-      {/* Botón para eliminar set */}
-      {numeroSetSeleccionado && (
-        <div style={{ marginBottom: 12 }}>
-          <button
-            onClick={eliminarSet}
-            disabled={eliminando}
-            style={{
-              backgroundColor: '#e55353',
-              color: 'white',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: 6,
-              cursor: 'pointer'
-            }}
-            title={`Eliminar Set ${numeroSetSeleccionado}`}
-          >
-            {eliminando ? 'Eliminando...' : `Eliminar Set ${numeroSetSeleccionado}`}
-          </button>
-        </div>
-      )}
+        {/* This block is now handled within SelectorSet.js, so it's removed */}
+        {/* {numeroSetSeleccionado && ( ... )} */}
 
-      {!numeroSetSeleccionado && <p style={{ fontStyle: 'italic', color: '#555' }}>Seleccione un set...</p>}
+        {/* The 'Seleccione un set...' message might need adjustment if SelectorSet always shows something.
+            Keeping it for now as a fallback if no sets exist or nothing is selected. */}
+        {!numeroSetSeleccionado && (
+          <p className="italic text-gray-500 text-center py-4 bg-gray-100 rounded-md">
+            Seleccione un set para empezar la carga de estadísticas, o añada uno nuevo.
+          </p>
+        )}
 
-      {estadisticasSet && (
-        <>
-          <SelectorGanadorSet
-            ganadorSet={estadisticasSet.ganadorSet || 'pendiente'}
-            setGanadorSet={setGanadorSetLocal}
-            modalidad={partidoLocal.modalidad}
-          />
+        {/* SelectorGanadorSet is now inside SelectorSet, so it's removed here */}
+        {/* {estadisticasSet && ( <SelectorGanadorSet ... /> )} */}
 
-          <EquiposEstadisticas
-            equipoLocal={partidoLocal.equipoLocal}
-            equipoVisitante={partidoLocal.equipoVisitante}
-            estadisticas={{
-              local: mapEquipo(partidoLocal.equipoLocal._id),
-              visitante: mapEquipo(partidoLocal.equipoVisitante._id)
-            }}
-            onCambiarEstadistica={cambiarEstadistica}
-            onAsignarJugador={(equipo, index, jugadorId) => {
-              const equipoId = equipo === 'local'
-                ? partidoLocal.equipoLocal._id
-                : partidoLocal.equipoVisitante._id;
-              asignarJugador(index, jugadorId, equipoId);
-            }}
-          />
+        {estadisticasSet && (
+          <>
+            <EquiposEstadisticas
+              equipoLocal={partidoLocal.equipoLocal}
+              equipoVisitante={partidoLocal.equipoVisitante}
+              estadisticas={{
+                local: mapEquipo(partidoLocal.equipoLocal._id),
+                visitante: mapEquipo(partidoLocal.equipoVisitante._id)
+              }}
+              onCambiarEstadistica={cambiarEstadistica}
+              onAsignarJugador={(equipo, index, jugadorId) => {
+                const equipoId = equipo === 'local'
+                  ? partidoLocal.equipoLocal._id
+                  : partidoLocal.equipoVisitante._id;
+                asignarJugador(index, jugadorId, equipoId);
+              }}
+            />
 
-          <Button onClick={guardar} disabled={guardando} variant="success">
-            Guardar
-          </Button>
-        </>
-      )}
+            <button
+              onClick={guardar}
+              disabled={guardando}
+              className={`
+                mt-6 w-full py-2 px-4 rounded-lg font-semibold transition-colors duration-200
+                bg-green-600 text-white hover:bg-green-700
+                disabled:opacity-50 disabled:cursor-not-allowed
+                focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+              `}
+            >
+              {guardando ? 'Guardando...' : 'Guardar Estadísticas del Set'}
+            </button>
+          </>
+        )}
+      </div>
     </ModalLayout>
   );
 }
