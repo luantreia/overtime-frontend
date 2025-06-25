@@ -6,7 +6,7 @@ export default function TarjetaEquipo({ nombre, onClick, escudo }) {
 
   return (
     <div
-      className="relative w-32 h-56 m-0 rounded-lg overflow-hidden shadow-xl cursor-pointer transition-all duration-300 ease-in-out bg-white flex flex-col justify-end
+      className="relative w-36 h-60 m-0 rounded-lg overflow-hidden shadow-xl cursor-pointer transition-all duration-300 ease-in-out bg-white flex flex-col justify-end
                  hover:scale-105 hover:shadow-2xl" // Consistent hover effects
       onClick={onClick}
     >

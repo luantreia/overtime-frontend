@@ -133,7 +133,7 @@ export default function Jugadores() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <div className="selector" style={{ marginBottom: 16 }}>
         <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700">
           Ordenar por:
@@ -153,7 +153,7 @@ export default function Jugadores() {
         </select>
       </div>
 
-      <div className="lista" aria-live="polite">
+      <div className="lista px-0" aria-live="polite">
         {jugadoresPagina.map(j => (
           <TarjetaJugador
             key={j._id}

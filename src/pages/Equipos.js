@@ -85,7 +85,7 @@ export default function Equipos() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <div className="selector" style={{ marginBottom: 16 }}>
         <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700">
           Ordenar por:
@@ -102,7 +102,7 @@ export default function Equipos() {
         </select>
       </div>
 
-      <div className="lista" aria-live="polite">        
+      <div className="lista px-0" aria-live="polite">        
         {equiposPagina.map((equipo, index) => (
           <TarjetaEquipo
             key={equipo._id || index}
