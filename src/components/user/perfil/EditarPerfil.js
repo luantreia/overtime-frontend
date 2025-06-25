@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import Button from '../../common/FormComponents/Button';
+import Button from '../../common/FormComponents/Button'; // Ensure this path is correct
+
 export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
   const [nombre, setNombre] = useState(datos.nombre || '');
 
@@ -9,26 +10,29 @@ export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
   };
 
   return (
-    <div className='perfil-wrapper'>
-    <form onSubmit={handleSubmit} className='form'>
-      <h2>Editar Perfil</h2>
-      <div>
-        <label>Nombre:</label>
-        <input
-          type="text"
-          value={nombre}
-          onChange={e => setNombre(e.target.value)}
-          required
-        />
-      </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4" onClick={onCancelar}>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Editar Perfil</h2>
+        
+        <div className="mb-4">
+          <label htmlFor="nombre" className="block text-gray-700 text-sm font-bold mb-2">Nombre:</label>
+          <input
+            type="text"
+            id="nombre"
+            value={nombre}
+            onChange={e => setNombre(e.target.value)}
+            required
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-      <div style={{ marginTop: '1rem' }}>
-        <Button type="submit" variant='success'>Guardar</Button>
-        <Button type="button" onClick={onCancelar} variant='danger'>
-          Cancelar
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-end space-x-4 mt-6">
+          <Button type="submit" variant="success" className="px-6 py-3">Guardar</Button>
+          <Button type="button" onClick={onCancelar} variant="danger" className="px-6 py-3">
+            Cancelar
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
