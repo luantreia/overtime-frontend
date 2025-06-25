@@ -61,16 +61,18 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
   };
 
   return (
-      <div className="overlay" onClick={e => e.stopPropagation()}>
-        <form onSubmit={handleSubmit} className="form">
-          <h3 className="text">Editar jugador</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4" onClick={onCancelar}>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <h3 className="text-2xl font-bold mb-6 text-center text-gray-800">Editar jugador</h3>
 
+        <div className="space-y-4 mb-6">
           <InputText
             placeholder="Nombre"
             name="nombre"
             value={formData.nombre}
             onChange={handleChange}
             required
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <InputText
@@ -78,6 +80,7 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
             name="alias"
             value={formData.alias}
             onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <InputText
@@ -85,6 +88,7 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
             name="foto"
             value={formData.foto}
             onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <InputText
@@ -94,6 +98,7 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
             value={formData.fechaNacimiento}
             onChange={handleChange}
             required
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <SelectDropdown
@@ -106,13 +111,28 @@ export default function EditarJugador({ jugador, onGuardar, onCancelar }) {
               { label: 'Femenino', value: 'femenino' },
               { label: 'Otro', value: 'otro' },
             ]}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
+        </div>
 
-          <div>
-            <Button type="submit" variant="primary">Guardar</Button>
-            <Button type="button" variant="danger" onClick={onCancelar}>Cancelar</Button>
-          </div>
-        </form>
-      </div>
+        <div className="flex justify-end space-x-4">
+          <Button
+            type="submit"
+            variant="primary"
+            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Guardar
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={onCancelar}
+            className="px-6 py-3 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
