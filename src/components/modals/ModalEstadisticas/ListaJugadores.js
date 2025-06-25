@@ -41,7 +41,7 @@ export function ListaJugadores({
   return (
     <div className="p-1">
       <h3 className="text-lg font-semibold text-slate-800 mb-1">{equipoNombre}</h3>
-      <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 xs:grid-cols-6 md:grid-cols-6 gap-2">
         {estadisticasCompletas.map((jugadorObj, idx) => {
           const jugadorId = jugadorObj?.jugadorId || '';
           const stats = jugadorObj?.estadisticas || {};
