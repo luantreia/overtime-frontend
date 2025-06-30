@@ -54,6 +54,17 @@ export default function RadarPromedios({ resumen }) {
       rawPartido: partidoSeleccionado ? partidoSeleccionado.setsJugados : null,
     },
     {
+      subject: 'HOC',
+      Promedio: transformar(parseFloat(resumen.promedioHOC) || 0),
+      Partido: partidoSeleccionado && partidoSeleccionado.hoc !== null
+        ? transformar(parseFloat(partidoSeleccionado.hoc))
+        : null,
+      rawPromedio: parseFloat(resumen.promedioHOC) || 0,
+      rawPartido: partidoSeleccionado && partidoSeleccionado.hoc !== null
+        ? parseFloat(partidoSeleccionado.hoc)
+        : null,
+    },
+    {
       subject: 'Efectividad (%)',
       Promedio: transformar(parseFloat(resumen.efectividadPromedio) || 0),
       Partido: partidoSeleccionado && partidoSeleccionado.efectividad !== null
