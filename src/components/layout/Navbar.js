@@ -33,6 +33,8 @@ const NavBar = () => {
     { text: "Jugadores", path: "/jugadores" },
     { text: "Equipos", path: "/equipos" },
     { text: "Partidos", path: "/partidos" },
+   // { text: "Competencias", path: "/competencias" },
+   // { text: "Organizaciones", path: "/organizaciones" },
   ];
 
   const userNavItems = user
@@ -40,6 +42,8 @@ const NavBar = () => {
         { text: "Anotar jugador", path: "/agregar-jugadores-multiple" },
         { text: "Anotar Equipo", path: "/agregar-equipo" },
         { text: "Agregar Partido", path: "/agregar-partido" },
+      //  { text: "Agregar Competencia", path: "/agregar-competencia" },
+      //  { text: "Agregar Organizacion", path: "/agregar-organizacion" },
         { text: "Mi perfil", path: "/perfil" },
       ]
     : [
@@ -99,40 +103,46 @@ const NavBar = () => {
         <nav
           className={`
             fixed inset-y-0 right-0 w-72 transform transition-transform duration-300 ease-in-out 
-            bg-slate-800 // Removed backdrop-blur-md and opacity from here
-            py-10 px-8 flex flex-col space-y-5 
+            bg-slate-800 shadow-2xl rounded-l-lg
             ${menuOpen ? "translate-x-0 z-50" : "translate-x-full"} 
-            shadow-2xl rounded-l-lg
+            h-screen
+            flex flex-col
           `}
         >
-          {allNavItems.map(({ text, path }) => (
-            <button
-              key={path}
-              onClick={() => handleNavigation(path)}
-              className={`
-                ${navButtonBaseClasses} 
-                text-left relative overflow-hidden group 
-                ${location.pathname === path ? "bg-slate-700 shadow-md transform scale-105" : "hover:bg-slate-700"}
-              `}
-              aria-current={location.pathname === path ? "page" : undefined}
-            >
-              {text}
-              {/* Animated underline for non-active links */}
-              {location.pathname !== path && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"></span>
-              )}
-            </button>
-          ))}
+          {/* Contenedor scrollable de ítems */}
+          <div className="overflow-y-auto px-8 pt-10 pb-6 flex-1 space-y-5">
+            {allNavItems.map(({ text, path }) => (
+              <button
+                key={path}
+                onClick={() => handleNavigation(path)}
+                className={`
+                  ${navButtonBaseClasses} 
+                  text-left relative overflow-hidden group 
+                  ${location.pathname === path ? "bg-slate-700 shadow-md transform scale-105" : "hover:bg-slate-700"}
+                `}
+                aria-current={location.pathname === path ? "page" : undefined}
+              >
+                {text}
+                {location.pathname !== path && (
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"></span>
+                )}
+              </button>
+            ))}
+          </div>
 
+          {/* Botón de cerrar sesión (no scrolleable) */}
           {user && (
-            <button
-              onClick={handleLogout}
-              className="block w-full mt-8 p-3 bg-red-600 text-white text-lg font-medium rounded-lg hover:bg-red-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-slate-800 text-left transform hover:scale-105"
-            >
-              Cerrar sesión
-            </button>
+            <div className="px-8 pb-6">
+              <button
+                onClick={handleLogout}
+                className="block w-full p-3 bg-red-600 text-white text-lg font-medium rounded-lg hover:bg-red-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-slate-800 text-left transform hover:scale-105"
+              >
+                Cerrar sesión
+              </button>
+            </div>
           )}
         </nav>
+
       </div>
     </header>
   );

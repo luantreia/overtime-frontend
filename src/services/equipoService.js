@@ -1,6 +1,6 @@
 // src/services/equipoService.js
 
-const API_URL = 'https://overtime-backend.onrender.com/api';
+const API_URL = 'https://overtime-ddyl.onrender.com/api';
 
 export async function fetchEquipos(token) {
   const res = await fetch(`${API_URL}/equipos`, {

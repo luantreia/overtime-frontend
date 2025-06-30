@@ -19,6 +19,13 @@ export default function RadarPromedios({ resumen }) {
 
   const data = [
     {
+      subject: 'Throws',
+      Promedio: transformar(parseFloat(resumen.promedioThrows) || 0),
+      Partido: partidoSeleccionado ? transformar(partidoSeleccionado.throws) : null,
+      rawPromedio: parseFloat(resumen.promedioThrows) || 0,
+      rawPartido: partidoSeleccionado ? partidoSeleccionado.throws : null,
+    },
+    {
       subject: 'Hits',
       Promedio: transformar(parseFloat(resumen.promedioHits) || 0),
       Partido: partidoSeleccionado ? transformar(partidoSeleccionado.hits) : null,

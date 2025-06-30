@@ -2,10 +2,8 @@
 
 const API_URL = 'https://overtime-ddyl.onrender.com/api/partidos';
 
-export async function fetchPartidos(token) {
-  const res = await fetch(API_URL, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchPartidos() {
+  const res = await fetch(API_URL);
   if (!res.ok) throw new Error('Error al cargar partidos');
   return await res.json();
 }

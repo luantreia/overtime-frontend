@@ -20,7 +20,6 @@ export function usePartidos(token) {
   // Cargar todos los partidos
   useEffect(() => {
     console.log('Token recibido en usePartidos:', token);
-    if (!token) return;
 
     setLoading(true);
     fetchPartidos(token)

@@ -17,6 +17,8 @@ export function useJugadorEquipo({ equipoId, jugadorId }) {
     if (jugadorId) params.append('jugador', jugadorId);
     params.append('activo', 'true'); // para traer solo activos, opcional
 
+    console.log('Buscando relaciones con equipoId:', equipoId);
+
     const fetchRelaciones = async () => {
       setLoading(true);
       try {
