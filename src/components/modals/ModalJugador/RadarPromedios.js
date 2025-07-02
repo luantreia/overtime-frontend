@@ -85,12 +85,12 @@ export default function RadarPromedios({ resumen }) {
         <select
           value={partidoSeleccionadoId}
           onChange={e => setPartidoSeleccionadoId(e.target.value)}
-          className="block mx-auto  p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" // select
+          className="block w-full p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Seleccionar partido</option>
           {resumen.estadisticasPorPartido.map(p => (
-            <option key={p._id} value={p._id}>
-              {new Date(p.fecha).toLocaleDateString()} - {p.liga}
+            <option key={p._id} value={p._id} title={p.nombrePartido}>
+              {p.nombrePartido.length > 30 ? p.nombrePartido.slice(0, 30) + '…' : p.nombrePartido}
             </option>
           ))}
         </select>
