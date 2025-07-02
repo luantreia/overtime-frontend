@@ -86,6 +86,25 @@ export default function PartidoSetsLineaDeTiempo({ sets = [], equipoLocal, equip
           <div className="flex flex-wrap lg:flex-nowrap gap-4 mt-4 justify-center"> {/* estadisticasContainer */}
             {[equipoLocal, equipoVisitante].map((equipo) => {
               const stats = agruparPorEquipo(setSeleccionado.statsJugadoresSet)[equipo?._id] || [];
+              
+              const getJugadorId = (jugador) => typeof jugador === 'object' ? jugador?._id : jugador;
+
+              const obtenerCambiosDeJugadores = (setAnterior, setActual) => {
+                const idsAnteriores = new Set(setAnterior?.statsJugadoresSet?.map(j => getJugadorId(j.jugador)) || []);
+                const idsActuales = new Set(setActual?.statsJugadoresSet?.map(j => getJugadorId(j.jugador)) || []);
+
+                const nuevos = [...idsActuales].filter(id => !idsAnteriores.has(id));
+                const removidos = [...idsAnteriores].filter(id => !idsActuales.has(id));
+
+                return { nuevos, removidos };
+              };
+
+              const setAnterior = sets
+                .filter(s => s.numeroSet < setSeleccionado?.numeroSet)
+                .sort((a, b) => b.numeroSet - a.numeroSet)[0];
+
+              const cambiosJugadores = obtenerCambiosDeJugadores(setAnterior, setSeleccionado);
+
               return (
                 <div key={equipo?._id} className="flex-1 min-w-[280px] max-w-full bg-white p-3 rounded-md shadow-sm border border-gray-100"> {/* equipoBox */}
                   <h5 className="text-md font-bold text-gray-800 mb-3 text-center">{equipo?.nombre || 'Equipo Desconocido'}</h5>
@@ -104,10 +123,16 @@ export default function PartidoSetsLineaDeTiempo({ sets = [], equipoLocal, equip
                         {stats.length > 0 ? (
                           stats.map((stat, idx) => (
                             <tr key={idx} className="bg-white border-b hover:bg-gray-50">
-                              <td className="py-2 px-2 font-medium text-gray-900 whitespace-nowrap">
+                              <td className="py-2 px-2 font-medium text-gray-900 whitespace-nowrap flex items-center gap-1">
                                 {typeof stat.jugador === 'object' && stat.jugador
                                   ? stat.jugador.alias || stat.jugador.nombre
                                   : obtenerNombreJugador(stat.jugador)}
+                                {cambiosJugadores.nuevos.includes(getJugadorId(stat.jugador)) && (
+                                  <span className="text-green-600" title="Ingreso jugador">⬆</span>
+                                )}
+                                {cambiosJugadores.removidos.includes(getJugadorId(stat.jugador)) && (
+                                  <span className="text-red-600" title="Egreso jugador">⬇</span>
+                                )}
                               </td>
                               <td className="py-2 px-2">{stat.estadisticas?.throws ?? 0}</td>
                               <td className="py-2 px-2">{stat.estadisticas?.hits ?? 0}</td>
@@ -120,6 +145,7 @@ export default function PartidoSetsLineaDeTiempo({ sets = [], equipoLocal, equip
                             <td colSpan={5} className="py-4 px-2 text-center italic text-gray-400">Sin estadísticas</td>
                           </tr>
                         )}
+                        
                       </tbody>
                     </table>
                   </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ModalEstadisticasCaptura from '../ModalEstadisticas/ModalEstadisticas';
 import PartidoDatosGenerales from './PartidoDatosGenerales';
-import PartidoSetsResumen from './PartidoSetsResumen'; // This component is not used in the JSX, consider removing if not needed.
 import Button from '../../common/FormComponents/Button';
 import useJugadores from '../../../hooks/useJugadores';
 import CloseButton from '../../common/FormComponents/CloseButton';
