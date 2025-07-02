@@ -1,14 +1,39 @@
-// components/modals/ModalEquipo/SeccionEstadisticas.js
 import React from 'react';
+import useResumenEstadisticasEquipo from '../../../hooks/useResumenEstadisticas/useResumenEstadisticasEquipo';
+import RadarPromedios from '../ModalJugador/RadarPromedios';
 
-export default function SeccionEstadisticas({ copas, puntos, racha }) {
+export default function SeccionEstadisticas({ equipoId }) {
+  const { resumen, loading, error } = useResumenEstadisticasEquipo(equipoId);
+
+  if (loading) {
+    return (
+      
+      <section className="bg-gray-100 rounded-xl p-4 mt-2.5 shadow-sm">
+        <p className="text-gray-600">Cargando estadísticas del equipo...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="bg-gray-100 rounded-xl p-4 mt-2.5 shadow-sm">
+        <p className="text-red-600">Error: {error}</p>
+      </section>
+    );
+  }
+
+  if (!resumen) {
+    return (
+      <section className="bg-gray-100 rounded-xl p-4 mt-2.5 shadow-sm">
+        <p className="text-gray-600">No hay estadísticas disponibles para este equipo.</p>
+      </section>
+    );
+  }
+
   return (
-    <div className="w-full lg:w-[calc(33.33%-10px)] bg-gray-100 p-4 rounded-lg shadow-sm">
-      <h3 className="text-xl font-bold mb-2">Estadísticas Clave</h3>
-      <p><span role="img" aria-label="copas">🏆</span> Copas: {copas || 0}</p>
-      <p><span role="img" aria-label="puntos">💥</span> Puntos: {puntos || 0}</p>
-      <p><span role="img" aria-label="fuego">🔥</span> Racha: {racha || 'N/A'}</p>
-    </div>
+    <section className="w-full lg:w-[calc(40%-10px)] bg-gray-100 p-4 rounded-lg shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Estadísticas del equipo</h3>
+      <RadarPromedios resumen={resumen} />
+    </section>
   );
 }
-

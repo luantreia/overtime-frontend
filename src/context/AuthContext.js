@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
+import { esperarYDespertarBackend } from '../utils/backendUtils';
 
 const AuthContext = createContext();
 export { AuthContext }; // <-- 👈 NECESARIO para usar useContext(AuthContext)
@@ -42,6 +43,12 @@ export function AuthProvider({ children }) {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      esperarYDespertarBackend();
+    }
+  }, [user]);
 
 
   return (

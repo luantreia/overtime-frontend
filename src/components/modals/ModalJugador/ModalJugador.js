@@ -7,7 +7,7 @@ import SeccionEquiposJugador from './SeccionEquiposJugador';
 import SeccionEstadisticasJugador from './SeccionEstadisticasJugador'; // This component is imported but not used, consider removing if not needed.
 import { useAuth } from '../../../context/AuthContext';
 import RadarPromedios from './RadarPromedios';
-import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticasJugador';
+import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticas/useResumenEstadisticasJugador';
 
 export default function ModalJugador({ jugador, onClose, onJugadorActualizado }) {
   const [modoEdicion, setModoEdicion] = useState(false);

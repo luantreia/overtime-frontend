@@ -9,6 +9,7 @@ import SeccionJugadores from './SeccionJugadores';
 import ModalJugador from '../ModalJugador/ModalJugador';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import AsignarJugadoresEquipo from './AsignarJugadoresEquipo';
+import { usePartidosDeEquipo } from '../../../hooks/usePartidosDeEquipo';
 // No longer importing Button as per our previous discussion
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {
@@ -17,6 +18,7 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [modalEditarEquipo, setModalEditarEquipo] = useState(false);
   const [modalAsignarJugadores, setModalAsignarJugadores] = useState(false);
   const [jugadoresVersion, setJugadoresVersion] = useState(0); // This state is for triggering updates
+  const { partidos: partidosDelEquipo, loading: loadingPartidos } = usePartidosDeEquipo(equipo._id);
 
   useEffect(() => {
     setEquipo(equipoProp);
@@ -46,12 +48,8 @@ function ModalEquipo({ equipo: equipoProp, onClose }) {
         <img src={equipo.foto} alt={equipo.nombre} className="w-full max-h-[300px] object-cover rounded-lg mb-5" />
 
         <div className="flex flex-wrap gap-5">
-          <SeccionResultados resultados={equipo.resultados} />
-          <SeccionEstadisticas
-            copas={equipo.copas}
-            puntos={equipo.puntos}
-            racha={equipo.racha}
-          />
+          <SeccionResultados resultados={partidosDelEquipo}  />
+          <SeccionEstadisticas equipoId={equipo._id} />
           <SeccionJugadores
             equipoId={equipo._id}
             setModalJugador={setModalJugador}

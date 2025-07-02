@@ -85,7 +85,7 @@ export default function RadarPromedios({ resumen }) {
         <select
           value={partidoSeleccionadoId}
           onChange={e => setPartidoSeleccionadoId(e.target.value)}
-          className="block mx-auto mb-5 p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" // select
+          className="block mx-auto  p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" // select
         >
           <option value="">Seleccionar partido</option>
           {resumen.estadisticasPorPartido.map(p => (
@@ -96,7 +96,7 @@ export default function RadarPromedios({ resumen }) {
         </select>
       )}
 
-      <ResponsiveContainer width="100%" height={350}>
+      <ResponsiveContainer width="100%" height={300}>
         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
           <PolarGrid stroke="#e2e8f0" /> {/* stroke="#ccc" */}
           <PolarAngleAxis dataKey="subject" tick={{ fill: '#333', fontSize: 12 }} />
