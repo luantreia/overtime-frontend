@@ -130,13 +130,39 @@ export default function ModalEstadisticasCaptura({
       const refreshed = await refrescarPartidoSeleccionado(partidoId);
       setPartidoLocal(refreshed);
       alert('Estadísticas guardadas correctamente');
-      onClose();
     } catch (e) {
       console.error('Error guardando estadísticas:', e);
       alert('Error al guardar estadísticas');
     } finally {
       setGuardando(false);
     }
+  };
+
+  const copiarJugadoresDeSetAnterior = () => {
+    if (!estadisticasSet) return;
+
+    const actual = estadisticasSet.numeroSet;
+    const anterior = setsLocales
+      .filter(set => set.numeroSet < actual)
+      .sort((a, b) => b.numeroSet - a.numeroSet)[0]; // el anterior inmediato
+
+    if (!anterior || !anterior.statsJugadoresSet?.length) {
+      alert('No hay jugadores en el set anterior para copiar.');
+      return;
+    }
+
+    const jugadoresCopiados = anterior.statsJugadoresSet.map(j => ({
+      jugador: typeof j.jugador === 'object' ? j.jugador._id : j.jugador,
+      equipo: j.equipo,
+      estadisticas: {
+        throws: 0,
+        hits: 0,
+        outs: 0,
+        catches: 0
+      }
+    }));
+
+    actualizarSetSeleccionado({ statsJugadoresSet: jugadoresCopiados });
   };
 
   const handleAgregarSet = async () => {
@@ -216,6 +242,7 @@ export default function ModalEstadisticasCaptura({
           estadisticasSet={estadisticasSet}
           setGanadorSet={setGanadorSetLocal}
           modalidad={partidoLocal.modalidad}
+          onGuardarSet={guardar}
         />
 
         {/* This block is now handled within SelectorSet.js, so it's removed */}
@@ -231,7 +258,14 @@ export default function ModalEstadisticasCaptura({
 
         {/* SelectorGanadorSet is now inside SelectorSet, so it's removed here */}
         {/* {estadisticasSet && ( <SelectorGanadorSet ... /> )} */}
-
+        {numeroSetSeleccionado && setsLocales.length > 1 && (
+          <button
+            onClick={copiarJugadoresDeSetAnterior}
+            className="text-sm text-blue-600 underline hover:text-blue-800 transition-colors duration-200 ml-2"
+          >
+            Copiar jugadores del set anterior
+          </button>
+        )}
         {estadisticasSet && (
           <>
             <EquiposEstadisticas

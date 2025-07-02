@@ -10,7 +10,9 @@ export default function SelectorSet({
   eliminando,
   estadisticasSet,
   setGanadorSet,
-  modalidad
+  modalidad,
+  onGuardar,
+  onGuardarSet
 }) {
   const opcionesSets = sets.map(s => ({
     value: s.numeroSet.toString(),
@@ -101,6 +103,18 @@ export default function SelectorSet({
               </label>
             ))}
           </div>
+            {estadisticasSet && onGuardarSet && (
+              <div className="mt-6">
+                <button
+                  onClick={onGuardarSet}
+                  className="w-full py-2 px-4 bg-green-600 text-white rounded-lg font-semibold
+                            hover:bg-green-700 transition-colors duration-200
+                            focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  Guardar Set
+                </button>
+              </div>
+            )}
         </div>
       )}
     </div>
