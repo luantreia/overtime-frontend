@@ -17,11 +17,20 @@ export function useEquipoCompetencia(competenciaId) {
     setError(null);
 
     try {
-        const headers = {};
-        const res = await fetch(`${API_URL}/equipos-competencia?competencia=${competenciaId}`, {
-            headers,
-        });
-      if (!res.ok) throw new Error('Error cargando equipos');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_URL}/equipos-competencia?competencia=${competenciaId}`, {
+        headers,
+      });
+
+      if (!res.ok) {
+        const texto = await res.text();
+        throw new Error(`(${res.status}) ${res.statusText} - ${texto}`);
+      }
+
       const data = await res.json();
       setEquiposCompetencia(data);
     } catch (err) {

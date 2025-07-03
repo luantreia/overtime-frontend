@@ -33,8 +33,8 @@ const NavBar = () => {
     { text: "Jugadores", path: "/jugadores" },
     { text: "Equipos", path: "/equipos" },
     { text: "Partidos", path: "/partidos" },
-   // { text: "Competencias", path: "/competencias" },
-   // { text: "Organizaciones", path: "/organizaciones" },
+    { text: "Competencias", path: "/competencias" },
+    { text: "Organizaciones", path: "/organizaciones" },
   ];
 
   const userNavItems = user
@@ -42,8 +42,8 @@ const NavBar = () => {
         { text: "Anotar jugador", path: "/agregar-jugadores-multiple" },
         { text: "Anotar Equipo", path: "/agregar-equipo" },
         { text: "Agregar Partido", path: "/agregar-partido" },
-      //  { text: "Agregar Competencia", path: "/agregar-competencia" },
-      //  { text: "Agregar Organizacion", path: "/agregar-organizacion" },
+        { text: "Agregar Competencia", path: "/agregar-competencia" },
+        { text: "Agregar Organizacion", path: "/agregar-organizacion" },
         { text: "Mi perfil", path: "/perfil" },
       ]
     : [

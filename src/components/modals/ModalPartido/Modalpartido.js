@@ -6,6 +6,7 @@ import useJugadores from '../../../hooks/useJugadores';
 import CloseButton from '../../common/FormComponents/CloseButton';
 import ExportarExcelBoton from '../../common/FormComponents/ExportarExcelboton';
 import PartidoSetsLineaDeTiempo from './PartidoSetsLineaDeTiempo';
+import PartidoDatosGeneralesEditable from './PartidoDatosGeneralesEditable';
 
 export default function ModalPartido({
   partido,
@@ -15,11 +16,13 @@ export default function ModalPartido({
   eliminarSetDePartido,
   cargarPartidoPorId,
   agregarSetAPartido,
+  editarPartidoExistente,
   actualizarSetDePartido,
 }) {
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
   const [setsLocales, setSetsLocales] = useState(partido.sets || []);
   const { jugadores } = useJugadores(token); // Ensure useJugadores is defined and used correctly
+  const [modoEdicion, setModoEdicion] = useState(false);
 
   useEffect(() => {
     setSetsLocales(partido.sets || []);
@@ -41,7 +44,29 @@ export default function ModalPartido({
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b pb-3">Detalles del Partido</h2> {/* Title styling */}
 
         <div className="space-y-6 mb-6"> {/* Container for main partido details */}
-          <PartidoDatosGenerales partido={partido} />
+          {modoEdicion ? (
+            <PartidoDatosGeneralesEditable
+              datosIniciales={partido}
+              onGuardar={async (datosActualizados) => {
+                const payload = {
+                  ...datosActualizados,
+                  fecha: datosActualizados.fecha ? new Date(datosActualizados.fecha) : null,
+                };
+                await editarPartidoExistente(partido._id, payload);
+                await refrescarPartidoSeleccionado(); // para recargar desde backend si querés
+                setModoEdicion(false);
+              }}
+              onCancelar={() => setModoEdicion(false)}
+            />
+          ) : (
+            <PartidoDatosGenerales partido={partido} />
+          )}
+          <button
+            onClick={() => setModoEdicion(prev => !prev)}
+            className="bg-green-600 text-white hover:bg-green-700"
+          >
+            {modoEdicion ? 'Cancelar edición' : 'Editar Datos'}
+          </button>
           <PartidoSetsLineaDeTiempo
             sets={partido.sets}
             equipoLocal={partido.equipoLocal}
