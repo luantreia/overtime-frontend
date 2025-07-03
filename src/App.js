@@ -30,7 +30,7 @@ function App() {
         <Route path="/agregar-jugadores-multiple" element={<AgregarJugador />} />
         <Route path="/agregar-equipo" element={<AgregarEquipo />} />
         <Route path="/agregar-partido" element={<AgregarPartido />} />
-        {/*<Route path="/agregar-organizacion" element={<AgregarOrganizacion />} />*/} 
+        <Route path="/agregar-organizacion" element={<AgregarOrganizacion />} /> 
         <Route path="/competencias" element={<Competencias />} />                       
         <Route path="/agregar-competencia" element={<FormularioCompetencia />} />
         <Route path="/organizaciones" element={<Organizaciones />} />
