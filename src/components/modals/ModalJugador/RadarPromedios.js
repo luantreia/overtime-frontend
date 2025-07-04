@@ -33,18 +33,18 @@ export default function RadarPromedios({ resumen }) {
       rawPartido: partidoSeleccionado ? partidoSeleccionado.hits : null,
     },
     {
-      subject: 'Outs',
-      Promedio: transformar(parseFloat(resumen.promedioOuts) || 0),
-      Partido: partidoSeleccionado ? transformar(partidoSeleccionado.outs) : null,
-      rawPromedio: parseFloat(resumen.promedioOuts) || 0,
-      rawPartido: partidoSeleccionado ? partidoSeleccionado.outs : null,
-    },
-    {
       subject: 'Catches',
       Promedio: transformar(parseFloat(resumen.promedioCatches) || 0),
       Partido: partidoSeleccionado ? transformar(partidoSeleccionado.catches) : null,
       rawPromedio: parseFloat(resumen.promedioCatches) || 0,
       rawPartido: partidoSeleccionado ? partidoSeleccionado.catches : null,
+    },
+    {
+      subject: 'Outs',
+      Promedio: transformar(parseFloat(resumen.promedioOuts) || 0),
+      Partido: partidoSeleccionado ? transformar(partidoSeleccionado.outs) : null,
+      rawPromedio: parseFloat(resumen.promedioOuts) || 0,
+      rawPartido: partidoSeleccionado ? partidoSeleccionado.outs : null,
     },
     {
       subject: 'Sets jugados',
