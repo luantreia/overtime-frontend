@@ -1,84 +1,75 @@
-// src/components/common/TarjetaJugador.js
 import React from 'react';
 
-export default function tarjetaJugadorEquipo({ relacion, onClick }) {
-  const jugador = relacion?.jugador;
-  const equipo = relacion?.equipo;
-  const tieneFoto = jugador?.foto?.trim() !== '';
+export default function TarjetaJugadorEquipo({ jugador, relacion, onClick }) {
+  if (!jugador || !relacion) return null;
 
-  const calcularEdad = (fechaNacimiento) => {
-    if (!fechaNacimiento) return null;
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const m = hoy.getMonth() - nacimiento.getMonth();
-    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
-    return edad;
-  };
+  const {
+    nombre,
+    edad,
+    nacionalidad,
+    foto: fotoJugador,
+  } = jugador;
+
+  const {
+    foto: fotoRelacion,
+    numero,
+    rol,
+    equipo,
+  } = relacion;
+
+  const imagen = fotoRelacion || fotoJugador;
+  const tieneImagen = imagen && imagen.trim() !== '';
+  const escudo = equipo?.escudo;
+  const colorBorde = equipo?.colores?.primario || 'white';
 
   return (
-    <div style={styles.card} onClick={onClick}>
-      {tieneFoto ? (
-        <img src={jugador.foto} alt={jugador.nombre} style={styles.imagen} />
-      ) : (
-        <div style={styles.placeholder}>
-          <span style={styles.inicial}>{jugador.nombre[0]}</span>
+    <div
+      className="relative w-36 h-60 overflow-hidden shadow-xl border-4 hover:scale-105 transition cursor-pointer"
+      onClick={onClick}
+      style={{
+        borderColor: colorBorde,
+        borderRadius: 12,
+        boxShadow: '0 6px 12px rgba(0,0,0,0.4)',
+      }}
+    >
+      {/* Imagen de fondo */}
+      {tieneImagen && (
+        <img
+          src={imagen}
+          alt={`Jugador ${nombre}`}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+
+      {/* Gradiente oscuro para contraste */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
+
+      {/* Escudo en la esquina superior */}
+      {escudo && (
+        <div className="absolute top-1 left-1 z-20 bg-white p-[2px] shadow-md border border-gray-200 rounded-sm">
+          <img
+            src={escudo}
+            alt="Escudo del equipo"
+            className="w-7 h-7 object-contain"
+          />
         </div>
       )}
 
-      <div style={styles.overlay}>
-        <h3>{jugador.nombre}</h3>
-        <p style={styles.meta}>Edad: {calcularEdad(jugador.fechaNacimiento) || 'N/A'}</p>
-        <p style={styles.meta}>Equipo: {equipo?.nombre || 'Sin equipo'}</p>
-        <p style={styles.meta}>Rol: {relacion.rol || 'jugador'}</p>
-        <p style={styles.meta}>Modalidad: {relacion.modalidad || '-'}</p>
+      {/* Contenido textual sobre la imagen */}
+      <div className="relative z-20 h-full flex flex-col justify-end p-2 text-white text-center">
+        <h3 className="text-md font-bold leading-tight">{nombre}</h3>
+        {numero && (
+          <p className="text-sm font-medium">#{numero}</p>
+        )}
+        {rol && (
+          <p className="text-xs italic text-yellow-300">{rol}</p>
+        )}
+        {(edad || nacionalidad) && (
+          <p className="text-xs text-gray-200">
+            {edad ? `${edad} años` : ''}{edad && nacionalidad ? ' · ' : ''}{nacionalidad || ''}
+          </p>
+        )}
       </div>
     </div>
   );
 }
-
-
-const styles = {
-  card: {
-    width: '140px',
-    height: '240px',
-    position: 'relative',
-    margin: '5px',
-    borderRadius: '10px',
-    overflow: 'hidden',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease-in-out',
-  },
-  imagen: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  placeholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#888',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inicial: {
-    fontSize: '48px',
-    color: 'var(--color-fondo)',
-  },
-  overlay: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    background: 'rgba(0, 0, 0, 0.5)',
-    color: 'var(--color-fondo)',
-    textAlign: 'center',
-    padding: '6px 0',
-  },
-  edad: {
-    fontSize: '14px',
-    margin: '4px 0 0',
-    color: '#ddd',
-  },
-};

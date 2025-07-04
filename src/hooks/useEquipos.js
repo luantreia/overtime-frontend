@@ -34,8 +34,9 @@ export default function useEquipos(token) {
     setEquipos((prev) =>
       prev.map((eq) => (eq._id === id ? actualizado : eq))
     );
+    return actualizado;  // <--- Aquí agregaría este return
   };
-
+  
   const eliminar = async (id) => {
     await eliminarEquipo(id, token);
     setEquipos((prev) => prev.filter((eq) => eq._id !== id));

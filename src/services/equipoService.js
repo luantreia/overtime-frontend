@@ -26,16 +26,28 @@ export async function agregarEquipo(equipo, token) {
 }
 
 export async function editarEquipo(id, equipo, token) {
-  const res = await fetch(`${API_URL}/equipos/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(equipo),
-  });
-  if (!res.ok) throw new Error('Error al editar equipo');
-  return await res.json();
+  try {
+    const res = await fetch(`${API_URL}/equipos/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(equipo),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('❌ Error al editar equipo (res no ok):', data);
+      throw new Error(data.message || 'Error al editar equipo');
+    }
+
+    return data;
+  } catch (err) {
+    console.error('❌ Error en fetch editarEquipo:', err);
+    throw err;
+  }
 }
 
 export async function eliminarEquipo(id, token) {

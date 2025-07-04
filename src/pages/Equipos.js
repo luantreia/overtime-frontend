@@ -1,41 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import TarjetaEquipo from '../components/modals/ModalEquipo/tarjetaequipo.js';
 import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
+import useEquipos from '../hooks/useEquipos.js';
+import { useAuth } from '../context/AuthContext.js';
+
+const ITEMS_POR_PAGINA = 20;
 
 export default function Equipos() {
-  const [equipos, setEquipos] = useState([]);
-  const [equiposOrdenados, setEquiposOrdenados] = useState([]);
+  const { token } = useAuth();
+  const { equipos, editar, loading, error } = useEquipos(token);
+
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
   const [orden, setOrden] = useState('aleatorio');
-
-  
+  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [paginaActual, setPaginaActual] = useState(1);
-  const itemsPorPagina = 10;
 
-  useEffect(() => {
-    const fetchEquipos = async () => {
-      try {
-        const response = await fetch('https://overtime-ddyl.onrender.com/api/equipos');
-        const data = await response.json();
-        setEquipos(data);
-      } catch (error) {
-        console.error('Error al obtener equipos:', error);
-      }
-    };
-
-    fetchEquipos();
-  }, []);
-
-  useEffect(() => {
-    if (equipos.length > 0) {
-      const ordenados = ordenarEquipos([...equipos], orden);
-      setEquiposOrdenados(ordenados);
-      setPaginaActual(1); // reinicia a la primera página si cambia el orden
+  // 🔎 Filtrar por tipo
+  const equiposFiltrados = useMemo(() => {
+    if (filtroTipo === 'selecciones') {
+      return equipos.filter(e => e.esSeleccionNacional);
     }
-  }, [equipos, orden]);
+    if (filtroTipo === 'clubes') {
+      return equipos.filter(e => !e.esSeleccionNacional);
+    }
+    return equipos;
+  }, [equipos, filtroTipo]);
 
-  const ordenarEquipos = (lista, criterio) => {
-    switch (criterio) {
+  // 🔢 Ordenar equipos
+  const equiposOrdenados = useMemo(() => {
+    const lista = [...equiposFiltrados];
+    switch (orden) {
       case 'nombre_asc':
         return lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
       case 'nombre_desc':
@@ -44,68 +38,85 @@ export default function Equipos() {
       default:
         return lista.sort(() => Math.random() - 0.5);
     }
-  };
+  }, [equiposFiltrados, orden]);
+
+  // 📄 Paginación
+  const totalPaginas = Math.ceil(equiposOrdenados.length / ITEMS_POR_PAGINA);
+  const equiposPagina = equiposOrdenados.slice(
+    (paginaActual - 1) * ITEMS_POR_PAGINA,
+    paginaActual * ITEMS_POR_PAGINA
+  );
+
+  const renderPaginacion = () => (
+    <nav className="flex flex-wrap justify-center mt-6 gap-2">
+      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numero) => (
+        <button
+          key={numero}
+          onClick={() => setPaginaActual(numero)}
+          disabled={numero === paginaActual}
+          className={`px-3 py-1 rounded-lg border ${
+            numero === paginaActual
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+          }`}
+        >
+          {numero}
+        </button>
+      ))}
+    </nav>
+  );
 
   const handleOrdenChange = (e) => {
     setOrden(e.target.value);
+    setPaginaActual(1);
   };
 
-  const indiceUltimo = paginaActual * itemsPorPagina;
-  const indiceInicio = (paginaActual - 1) * itemsPorPagina;
-  const equiposPagina = equiposOrdenados.slice(indiceInicio, indiceInicio + itemsPorPagina);
-  
-  const totalPaginas = Math.ceil(equiposOrdenados.length / itemsPorPagina);
-  
-
-  const renderPaginacion = () => {
-    const botones = [];
-    for (let i = 1; i <= totalPaginas; i++) {
-      botones.push(
-        <button
-          key={i}
-          onClick={() => setPaginaActual(i)}
-          disabled={i === paginaActual}
-          style={{
-            margin: '0 4px',
-            padding: '6px 12px',
-            borderRadius: '6px',
-            border: i === paginaActual ? '2px solid var(--color-secundario)' : '1px solid #ccc',
-            backgroundColor: i === paginaActual ? 'var(--color-secundario)' : 'white',
-            color: i === paginaActual ? 'white' : 'black',
-            cursor: i === paginaActual ? 'default' : 'pointer',
-          }}
-          aria-current={i === paginaActual ? 'page' : undefined}
-          aria-label={`Página ${i}`}
-        >
-          {i}
-        </button>
-      );
-    }
-    return botones;
+  const handleFiltroChange = (e) => {
+    setFiltroTipo(e.target.value);
+    setPaginaActual(1);
   };
 
   return (
-    <div className="p-2">
-      <div className="selector" style={{ marginBottom: 16 }}>
-        <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700">
-          Ordenar por:
-        </label>
-        <select
-          id="orden"
-          value={orden}
-          onChange={handleOrdenChange}
-          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="aleatorio">Orden aleatorio</option>
-          <option value="nombre_asc">Nombre (A-Z)</option>
-          <option value="nombre_desc">Nombre (Z-A)</option>
-        </select>
+    <div className="p-4 ">
+      <div className="selector">
+        {/* Ordenar */}
+        <div>
+          <label htmlFor="orden" className="block mb-1 font-semibold text-gray-700">Ordenar por:</label>
+          <select
+            id="orden"
+            value={orden}
+            onChange={handleOrdenChange}
+            className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="aleatorio">Aleatorio</option>
+            <option value="nombre_asc">Nombre (A-Z)</option>
+            <option value="nombre_desc">Nombre (Z-A)</option>
+          </select>
+        </div>
+
+        {/* Filtro tipo */}
+        <div>
+          <label htmlFor="filtroTipo" className="block mb-1 font-semibold text-gray-700">Filtrar por tipo:</label>
+          <select
+            id="filtroTipo"
+            value={filtroTipo}
+            onChange={handleFiltroChange}
+            className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="todos">Todos</option>
+            <option value="selecciones">Selecciones Nacionales</option>
+            <option value="clubes">Clubes / Otros</option>
+          </select>
+        </div>
       </div>
 
-      <div className="lista px-0" aria-live="polite">        
-        {equiposPagina.map((equipo, index) => (
+      {loading && <p className="text-gray-500">Cargando equipos...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+
+      <div className="lista px-0" aria-live="polite">
+        {equiposPagina.map((equipo) => (
           <TarjetaEquipo
-            key={equipo._id || index}
+            key={equipo._id}
             nombre={equipo.nombre}
             escudo={equipo.escudo}
             onClick={() => setEquipoSeleccionado(equipo)}
@@ -113,16 +124,13 @@ export default function Equipos() {
         ))}
       </div>
 
-      <nav
-        aria-label="Paginación de jugadores"
-        style={{ textAlign: 'center', marginTop: 20, marginBottom: 40 }}
-      >
-        {renderPaginacion()}
-      </nav>  
+      {renderPaginacion()}
+
       {equipoSeleccionado && (
         <ModalEquipo
           equipo={equipoSeleccionado}
           onClose={() => setEquipoSeleccionado(null)}
+          onEditarEquipo={editar}
         />
       )}
     </div>
