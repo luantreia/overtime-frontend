@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ModalLayout from '../../common/ModalLayout';
 import EncabezadoEstadisticas from './EncabezadoEstadisticas';
-import SelectorSet from './SelectorSet'; // This component now includes winner selection
+import SelectorSet from './SelectorSet'; 
 import EquiposEstadisticas from './EquipoEstadisticas';
-// Removed: import SelectorGanadorSet from './SelectorGanadorSet'; // No longer needed as it's inside SelectorSet
-
-// Removed: import Button from '../../common/FormComponents/Button'; // If you're removing all custom Buttons.
-// If your app still uses this Button component elsewhere, keep the import in other files.
-// For this file, the final save button is also a native button now.
-
 import { useSetSeleccionado } from '../../../hooks/useSetSeleccionado';
 
 export default function ModalEstadisticasCaptura({
@@ -144,7 +138,7 @@ export default function ModalEstadisticasCaptura({
     const actual = estadisticasSet.numeroSet;
     const anterior = setsLocales
       .filter(set => set.numeroSet < actual)
-      .sort((a, b) => b.numeroSet - a.numeroSet)[0]; // el anterior inmediato
+      .sort((a, b) => b.numeroSet - a.numeroSet)[0];
 
     if (!anterior || !anterior.statsJugadoresSet?.length) {
       alert('No hay jugadores en el set anterior para copiar.');
@@ -238,7 +232,7 @@ export default function ModalEstadisticasCaptura({
           onAgregarSet={handleAgregarSet}
           eliminarSet={eliminarSet}
           eliminando={eliminando}
-          // NEW PROPS FOR WINNER SELECTION:
+          // PROPS FOR WINNER SELECTION:
           estadisticasSet={estadisticasSet}
           setGanadorSet={setGanadorSetLocal}
           modalidad={partidoLocal.modalidad}

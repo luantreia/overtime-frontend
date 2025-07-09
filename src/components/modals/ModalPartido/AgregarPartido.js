@@ -1,79 +1,131 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth';
+import { usePartidos } from '../../../hooks/usePartidos';
+import { useFases } from '../../../hooks/useFases';
+import { useParticipacionFase } from '../../../hooks/useParticipacionFase';
 
 const AgregarPartido = () => {
+  // Estados formulario
+  const [competencias, setCompetencias] = useState([]);
   const [liga, setLiga] = useState('');
   const [modalidad, setModalidad] = useState('');
   const [categoria, setCategoria] = useState('');
   const [fecha, setFecha] = useState('');
+  const [faseSeleccionada, setFaseSeleccionada] = useState('');
   const [equipoLocal, setEquipoLocal] = useState('');
   const [equipoVisitante, setEquipoVisitante] = useState('');
-  const [equipos, setEquipos] = useState([]);
-  const [token, setToken] = useState('');
-  const [uid, setUid] = useState('');
+  const [equiposFase, setEquiposFase] = useState([]);
 
-  const modalidadOptions = [
-    { value: 'Foam', label: 'Foam' },
-    { value: 'Cloth', label: 'Cloth' },
-  ];
+  // Firebase user y token
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const [token, setToken] = useState(null);
 
-  const categoriaOptions = [
-    { value: 'Masculino', label: 'Masculino' },
-    { value: 'Femenino', label: 'Femenino' },
-    { value: 'Mixto', label: 'Mixto' },
-    { value: 'Libre', label: 'Libre' }
-  ];
-
+  // Obtener token cuando usuario cambia
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        try {
-          const idToken = await getIdToken(user, true);
-          setToken(idToken);
-          setUid(user.uid);
-        } catch (error) {
-          console.error("Error al obtener el token:", error);
-          setToken('');
-          setUid('');
-        }
-      } else {
-        setToken('');
-        setUid('');
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    if (user) {
+      getIdToken(user).then(setToken);
+    } else {
+      setToken(null);
+    }
+  }, [user]);
 
+  // Hooks externos
+  const { fases, loading: loadingFases, error: errorFases } = useFases(liga);
+  const { participaciones, fetchParticipaciones, loading: loadingParticipaciones, error: errorParticipaciones } = useParticipacionFase();
+  const { crearNuevoPartido, loading: loadingPartido, error: errorPartido } = usePartidos(token);
+
+  // Cargar competencias al montar
   useEffect(() => {
-    const fetchEquipos = async () => {
+    const fetchCompetencias = async () => {
       try {
-        const res = await fetch('https://overtime-ddyl.onrender.com/api/equipos');
+        const res = await fetch('https://overtime-ddyl.onrender.com/api/competencias');
         const data = await res.json();
-        setEquipos(data);
+        setCompetencias(data);
       } catch (error) {
-        console.error('Error al obtener equipos:', error);
+        console.error('Error al obtener competencias:', error);
       }
     };
-    fetchEquipos();
+    fetchCompetencias();
   }, []);
 
+  // Cuando cambia la liga, setear modalidad y categoría y resetear dependientes
+  useEffect(() => {
+    if (!liga) {
+      setModalidad('');
+      setCategoria('');
+      setFaseSeleccionada('');
+      setEquiposFase([]);
+      setEquipoLocal('');
+      setEquipoVisitante('');
+      return;
+    }
+    const competencia = competencias.find(c => c._id === liga);
+    if (competencia) {
+      setModalidad(competencia.modalidad);
+      setCategoria(competencia.categoria);
+    } else {
+      setModalidad('');
+      setCategoria('');
+    }
+    setFaseSeleccionada('');
+    setEquiposFase([]);
+    setEquipoLocal('');
+    setEquipoVisitante('');
+  }, [liga, competencias]);
+
+  // Cuando cambia fase, cargar participaciones (equipos en fase)
+  useEffect(() => {
+    if (faseSeleccionada) {
+      fetchParticipaciones({ fase: faseSeleccionada });
+    } else {
+      setEquiposFase([]);
+      setEquipoLocal('');
+      setEquipoVisitante('');
+    }
+  }, [faseSeleccionada, fetchParticipaciones]);
+
+  // Actualizar equiposFase a partir de participaciones
+  useEffect(() => {
+    if (!participaciones || participaciones.length === 0) {
+      setEquiposFase([]);
+      return;
+    }
+    const equiposConNombre = participaciones.map(pf => {
+      const eqCompetencia = pf.equipoCompetencia;
+      const equipo = eqCompetencia?.equipo;
+      return {
+        _id: equipo?._id || eqCompetencia?._id || 'id-desconocido',
+        nombre: equipo?.nombre || 'Equipo sin nombre',
+      };
+    });
+    setEquiposFase(equiposConNombre);
+    setEquipoLocal('');
+    setEquipoVisitante('');
+  }, [participaciones]);
+
+  // Cambiar liga
+  const handleCompetenciaChange = (e) => {
+    setLiga(e.target.value);
+  };
+
+  // Submit form: crear partido usando hook usePartidos
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!liga.trim()) return alert('Debes ingresar el nombre de la liga.');
+    if (liga !== '' && !liga.trim()) return alert('Debes seleccionar la liga.');
     if (!modalidad) return alert('Debes seleccionar una modalidad.');
     if (!categoria) return alert('Debes seleccionar una categoría.');
     if (!fecha) return alert('Debes seleccionar una fecha.');
     if (!equipoLocal) return alert('Debes seleccionar el equipo local.');
     if (!equipoVisitante) return alert('Debes seleccionar el equipo visitante.');
     if (equipoLocal === equipoVisitante) return alert('El equipo local y el equipo visitante no pueden ser el mismo.');
+    if (liga !== '' && !faseSeleccionada) return alert('Debes seleccionar una fase.');
 
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) return alert('Debes estar autenticado para agregar un partido.');
-
-    const token = await getIdToken(user);
+    if (!token) {
+      alert('Debes estar autenticado para agregar un partido.');
+      return;
+    }
 
     const hoy = new Date();
     const fechaPartido = new Date(fecha);
@@ -81,7 +133,8 @@ const AgregarPartido = () => {
     const estado = fechaPartido < hoy ? 'finalizado' : 'programado';
 
     const partido = {
-      liga,
+      competencia: liga || null,
+      fase: liga ? faseSeleccionada || null : null,
       modalidad,
       categoria,
       fecha: fechaPartido.toISOString(),
@@ -90,33 +143,20 @@ const AgregarPartido = () => {
       estado,
     };
 
-    try {
-      const response = await fetch('https://overtime-ddyl.onrender.com/api/partidos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(partido),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+    await crearNuevoPartido(partido, (creado) => {
+      if (creado) {
         alert('Partido agregado exitosamente');
+        // Limpiar formulario
         setLiga('');
         setModalidad('');
         setCategoria('');
         setFecha('');
+        setFaseSeleccionada('');
         setEquipoLocal('');
         setEquipoVisitante('');
-      } else {
-        alert(`Error al agregar partido: ${data.error || data.message || 'Desconocido'}`);
+        setEquiposFase([]);
       }
-    } catch (error) {
-      console.error('Error al hacer la solicitud:', error);
-      alert('Hubo un error al agregar el partido');
-    }
+    });
   };
 
   return (
@@ -125,32 +165,62 @@ const AgregarPartido = () => {
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* Liga */}
-        <input
-          name="liga"
-          placeholder="Nombre de la Liga"
+        {/* Competencia (Liga) */}
+        <select
+          name="competencia"
           value={liga}
-          onChange={e => setLiga(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={handleCompetenciaChange}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
-        />
+        >
+          <option value="">Amistoso (sin competencia)</option>
+          {competencias.map(c => (
+            <option key={c._id} value={c._id}>{c.nombre}</option>
+          ))}
+        </select>
+
+        {/* Fase */}
+        {liga && (
+          <>
+            {loadingFases && <p>Cargando fases...</p>}
+            {errorFases && <p className="text-red-600">Error al cargar fases: {errorFases}</p>}
+
+            {fases.length > 0 ? (
+              <select
+                name="fase"
+                value={faseSeleccionada}
+                onChange={e => setFaseSeleccionada(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="" disabled>Seleccionar Fase</option>
+                {fases.map(f => (
+                  <option key={f._id} value={f._id}>{f.nombre}</option>
+                ))}
+              </select>
+            ) : (
+              <p>No hay fases disponibles para esta competencia.</p>
+            )}
+          </>
+        )}
 
         {/* Modalidad */}
         <div className="block text-gray-700">
           <span>Modalidad:</span>
           <div className="mt-1 flex flex-col sm:flex-row sm:gap-6 gap-3">
-            {modalidadOptions.map(({ value, label }) => (
-              <label key={value} className="inline-flex items-center cursor-pointer">
+            {['Foam', 'Cloth'].map((mod) => (
+              <label key={mod} className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="modalidad"
-                  value={value}
-                  checked={modalidad === value}
+                  value={mod}
+                  checked={modalidad === mod}
                   onChange={e => setModalidad(e.target.value)}
                   className="form-radio text-blue-600"
+                  disabled={!!liga}
                   required
                 />
-                <span className="ml-2">{label}</span>
+                <span className="ml-2">{mod}</span>
               </label>
             ))}
           </div>
@@ -160,18 +230,19 @@ const AgregarPartido = () => {
         <div className="block text-gray-700 mt-5">
           <span>Categoría:</span>
           <div className="mt-1 flex flex-col sm:flex-row sm:gap-6 gap-3">
-            {categoriaOptions.map(({ value, label }) => (
-              <label key={value} className="inline-flex items-center cursor-pointer">
+            {['Masculino', 'Femenino', 'Mixto', 'Libre'].map((cat) => (
+              <label key={cat} className="inline-flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="categoria"
-                  value={value}
-                  checked={categoria === value}
+                  value={cat}
+                  checked={categoria === cat}
                   onChange={e => setCategoria(e.target.value)}
                   className="form-radio text-green-600"
+                  disabled={!!liga}
                   required
                 />
-                <span className="ml-2">{label}</span>
+                <span className="ml-2">{cat}</span>
               </label>
             ))}
           </div>
@@ -195,9 +266,10 @@ const AgregarPartido = () => {
           onChange={e => setEquipoLocal(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
+          disabled={!faseSeleccionada}
         >
           <option value="" disabled>Seleccionar Equipo Local</option>
-          {equipos.map(eq => (
+          {equiposFase.map(eq => (
             <option key={eq._id} value={eq._id}>{eq.nombre}</option>
           ))}
         </select>
@@ -209,9 +281,10 @@ const AgregarPartido = () => {
           onChange={e => setEquipoVisitante(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
+          disabled={!faseSeleccionada}
         >
           <option value="" disabled>Seleccionar Equipo Visitante</option>
-          {equipos.map(eq => (
+          {equiposFase.map(eq => (
             <option key={eq._id} value={eq._id}>{eq.nombre}</option>
           ))}
         </select>
@@ -220,9 +293,14 @@ const AgregarPartido = () => {
         <button
           type="submit"
           className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loadingPartido || loadingParticipaciones}
         >
-          Anotar Partido
+          {loadingPartido ? 'Guardando...' : 'Anotar Partido'}
         </button>
+
+        {(errorPartido || errorParticipaciones) && (
+          <p className="text-red-600 mt-2 text-center">{errorPartido || errorParticipaciones}</p>
+        )}
       </form>
     </div>
   );

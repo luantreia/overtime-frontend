@@ -71,6 +71,7 @@ export default function ModalPartido({
             sets={partido.sets}
             equipoLocal={partido.equipoLocal}
             equipoVisitante={partido.equipoVisitante}
+            jugadores={jugadores}
           />
         </div>
 
