@@ -11,47 +11,48 @@ export default function PhysicsBall() {
   const [gameOver, setGameOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Estado físico de la pelota
+  const isTouchDevice = useRef(false);
+
   const ball = useRef({
     x: 100,
     y: 100,
     radius: 15,
     vx: 0,
     vy: 0,
-    ay: 0.6, // gravedad
+    ay: 0.6,
   });
 
-  // Estado de drag para lanzar
   const drag = useRef({
     dragging: false,
     start: null,
     current: null,
   });
 
-  // Ajustar tamaño canvas de forma responsiva
   useEffect(() => {
+    isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
     function updateSize() {
       if (!containerRef.current) return;
       const maxWidth = containerRef.current.clientWidth;
-      const width = Math.min(600, maxWidth);
-      const height = (width * 2) / 3;
+      const width = Math.min(600, maxWidth, window.innerWidth * 0.95);
+      const height = Math.min(window.innerHeight * 0.65, width * 0.9);
       setCanvasSize({ width, height });
 
-      ball.current.radius = Math.max(12, width / 40);
+      ball.current.radius = isTouchDevice.current ? Math.max(16, width / 25) : Math.max(12, width / 40);
       ball.current.x = width / 6;
       ball.current.y = height / 4;
       ball.current.vx = 0;
       ball.current.vy = 0;
     }
+
     updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Función para crear un objetivo en posiciones aleatorias dentro del canvas
   const createTarget = () => {
     const margin = 50;
-    const radius = Math.max(10, canvasSize.width / 50);
+    const radius = isTouchDevice.current ? Math.max(14, canvasSize.width / 35) : Math.max(10, canvasSize.width / 50);
     return {
       x: margin + Math.random() * (canvasSize.width - 2 * margin),
       y: margin + Math.random() * (canvasSize.height - 2 * margin),
@@ -59,16 +60,15 @@ export default function PhysicsBall() {
     };
   };
 
-  // Inicializar objetivos
   useEffect(() => {
     if (!gameOver) {
       const initialTargets = [];
       for (let i = 0; i < 5; i++) initialTargets.push(createTarget());
       setTargets(initialTargets);
+      setTimeLeft(isTouchDevice.current ? 15 : 10);
     }
   }, [canvasSize, gameOver]);
 
-  // Timer de cuenta regresiva
   useEffect(() => {
     if (gameOver) return;
     if (timeLeft <= 0) {
@@ -79,7 +79,6 @@ export default function PhysicsBall() {
     return () => clearTimeout(timer);
   }, [timeLeft, gameOver]);
 
-  // Spawn de nuevos objetivos cada 5 segundos si hay menos de 5
   useEffect(() => {
     if (gameOver) return;
     const spawnInterval = setInterval(() => {
@@ -91,7 +90,6 @@ export default function PhysicsBall() {
     return () => clearInterval(spawnInterval);
   }, [gameOver, canvasSize]);
 
-  // Física y dibujo
   useEffect(() => {
     if (gameOver) return;
 
@@ -101,7 +99,6 @@ export default function PhysicsBall() {
     function draw() {
       ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // Dibujo pelota
       ctx.beginPath();
       ctx.fillStyle = '#e53935';
       ctx.shadowColor = 'rgba(0,0,0,0.3)';
@@ -112,7 +109,6 @@ export default function PhysicsBall() {
       ctx.fill();
       ctx.closePath();
 
-      // Línea de lanzamiento si está draggeando
       if (drag.current.dragging && drag.current.start && drag.current.current) {
         ctx.beginPath();
         ctx.strokeStyle = '#1e88e5';
@@ -122,7 +118,6 @@ export default function PhysicsBall() {
         ctx.stroke();
       }
 
-      // Dibujar objetivos
       targets.forEach(({ x, y, radius }) => {
         ctx.beginPath();
         ctx.fillStyle = '#43a047';
@@ -133,20 +128,17 @@ export default function PhysicsBall() {
         ctx.closePath();
       });
 
-      // Puntaje y tiempo
-      ctx.font = `${Math.max(16, canvasSize.width / 35)}px Arial`;
+      const fontSize = Math.max(14, canvasSize.width / 25);
+      ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = '#333';
       ctx.fillText(`Puntaje: ${score}`, 10, 30);
       ctx.fillText(`Tiempo: ${timeLeft}s`, 10, 60);
     }
 
     function updatePhysics() {
-      if (drag.current.dragging) return; // pausa física durante drag
+      if (drag.current.dragging) return;
 
-      // Actualizar velocidad con gravedad
       ball.current.vy += ball.current.ay;
-
-      // Actualizar posición
       ball.current.x += ball.current.vx;
       ball.current.y += ball.current.vy;
 
@@ -157,7 +149,6 @@ export default function PhysicsBall() {
       const bounceFactor = 0.7;
       const friction = 0.98;
 
-      // Rebotes con paredes y suelo
       if (ball.current.y + r > h) {
         ball.current.y = h - r;
         ball.current.vy = -ball.current.vy * bounceFactor;
@@ -176,20 +167,17 @@ export default function PhysicsBall() {
         ball.current.vx = -ball.current.vx * bounceFactor;
       }
 
-      // Pequeñas velocidades se detienen
       if (Math.abs(ball.current.vx) < 0.05) ball.current.vx = 0;
       if (Math.abs(ball.current.vy) < 0.05) ball.current.vy = 0;
 
-      // Detectar colisión con objetivos
       for (let i = targets.length - 1; i >= 0; i--) {
         const t = targets[i];
         const dist = Math.hypot(ball.current.x - t.x, ball.current.y - t.y);
         if (dist < r + t.radius) {
           setScore((prev) => prev + 1);
-          setTimeLeft((prev) => prev + 4); // +10 segundos por objetivo
+          setTimeLeft((prev) => prev + 4);
           setTargets((prev) => prev.filter((_, idx) => idx !== i));
 
-          // Rebote al chocar con objetivo
           ball.current.vx = -ball.current.vx * 0.8;
           ball.current.vy = -ball.current.vy * 0.8;
           break;
@@ -198,7 +186,6 @@ export default function PhysicsBall() {
     }
 
     let animationId;
-
     function loop() {
       updatePhysics();
       draw();
@@ -206,11 +193,9 @@ export default function PhysicsBall() {
     }
 
     loop();
-
     return () => cancelAnimationFrame(animationId);
   }, [targets, score, timeLeft, gameOver, canvasSize]);
 
-  // Obtener posición relativa al canvas para mouse y touch
   const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     let clientX, clientY;
@@ -227,7 +212,6 @@ export default function PhysicsBall() {
     };
   };
 
-  // Eventos drag & drop
   const handleDown = (e) => {
     if (gameOver) return;
     e.preventDefault();
@@ -256,8 +240,7 @@ export default function PhysicsBall() {
     const dx = drag.current.current.x - drag.current.start.x;
     const dy = drag.current.current.y - drag.current.start.y;
 
-    // Escala fuerza según tamaño canvas para consistencia
-    const forceScale = canvasSize.width / 23000;
+    const forceScale = canvasSize.width / 16000;
     ball.current.vx = dx * 2 * forceScale;
     ball.current.vy = dy * 2 * forceScale;
 
@@ -267,15 +250,14 @@ export default function PhysicsBall() {
     setIsDragging(false);
   };
 
-  // Reiniciar juego
   const resetGame = () => {
     setScore(0);
-    setTimeLeft(10);
     setGameOver(false);
+    setTimeLeft(isTouchDevice.current ? 15 : 10);
     ball.current = {
       x: canvasSize.width / 6,
       y: canvasSize.height / 4,
-      radius: Math.max(12, canvasSize.width / 40),
+      radius: isTouchDevice.current ? Math.max(16, canvasSize.width / 25) : Math.max(12, canvasSize.width / 40),
       vx: 0,
       vy: 0,
       ay: 0.6,
@@ -290,7 +272,7 @@ export default function PhysicsBall() {
       ref={containerRef}
       style={{ maxWidth: 600, margin: 'auto', userSelect: 'none', padding: 10, textAlign: 'center' }}
     >
-      <h2>Lanza la pelota y golpea los objetivos</h2>
+      <h2 style={{ fontSize: Math.max(18, canvasSize.width / 20) }}>Lanza la pelota y golpea los objetivos</h2>
       <p style={{ marginTop: 8, fontStyle: 'italic', color: '#555' }}>
         Los jugadores se están cargando, jugá mientras esperás...
       </p>
@@ -325,7 +307,7 @@ export default function PhysicsBall() {
           <button
             onClick={resetGame}
             style={{
-              padding: '10px 20px',
+              padding: '12px 24px',
               fontSize: 16,
               borderRadius: 8,
               border: 'none',
