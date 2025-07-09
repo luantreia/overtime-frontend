@@ -7,7 +7,7 @@ import {
   eliminarEquipo,
 } from '../services/equipoService';
 
-export default function useEquipos(token) {
+export default function useEquipos() {
   const [equipos, setEquipos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ export default function useEquipos(token) {
   const cargarEquipos = async () => {
     try {
       setLoading(true);
-      const data = await fetchEquipos(token);
+      const data = await fetchEquipos(); // 👈 sin token
       setEquipos(data);
     } catch (err) {
       setError(err.message);
@@ -24,34 +24,29 @@ export default function useEquipos(token) {
     }
   };
 
-  const agregar = async (equipo) => {
-    const nuevo = await agregarEquipo(equipo, token);
-    setEquipos((prev) => [...prev, nuevo]);
-  };
-
-  const editar = async (id, equipo) => {
-    const actualizado = await editarEquipo(id, equipo, token);
-    setEquipos((prev) =>
-      prev.map((eq) => (eq._id === id ? actualizado : eq))
-    );
-    return actualizado;  // <--- Aquí agregaría este return
-  };
-  
-  const eliminar = async (id) => {
-    await eliminarEquipo(id, token);
-    setEquipos((prev) => prev.filter((eq) => eq._id !== id));
-  };
-
   useEffect(() => {
-    if (token) cargarEquipos();
-  }, [token]);
+    cargarEquipos(); // 👈 cargar siempre
+  }, []);
 
   return {
     equipos,
     loading,
     error,
-    agregar,
-    editar,
-    eliminar,
+    agregar: async (equipo, token) => {
+      const nuevo = await agregarEquipo(equipo, token);
+      setEquipos((prev) => [...prev, nuevo]);
+    },
+    editar: async (id, equipo, token) => {
+      const actualizado = await editarEquipo(id, equipo, token);
+      setEquipos((prev) =>
+        prev.map((eq) => (eq._id === id ? actualizado : eq))
+      );
+      return actualizado;
+    },
+    eliminar: async (id, token) => {
+      await eliminarEquipo(id, token);
+      setEquipos((prev) => prev.filter((eq) => eq._id !== id));
+    },
   };
 }
+

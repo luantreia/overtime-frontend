@@ -2,12 +2,8 @@
 
 const API_URL = 'https://overtime-ddyl.onrender.com/api';
 
-export async function fetchEquipos(token) {
-  const res = await fetch(`${API_URL}/equipos`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function fetchEquipos() {
+  const res = await fetch(`${API_URL}/equipos`); // 👈 sin headers
   if (!res.ok) throw new Error('Error al cargar equipos');
   return await res.json();
 }
