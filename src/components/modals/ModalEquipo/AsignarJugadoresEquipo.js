@@ -11,7 +11,7 @@ export default function AsignarJugadoresEquipo({ equipoId, onAsignar, onCancelar
   const [seleccionado, setSeleccionado] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { asociarJugador } = useJugadorEquipo({ equipoId }); // usamos el hook
+  const { asociarJugador } = useJugadorEquipo({ equipoId, token }); // usamos el hook
 
   useEffect(() => {
     const cargarTodos = async () => {

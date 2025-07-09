@@ -1,8 +1,10 @@
+// Componente AgregarPartido.js
 import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth';
 import { usePartidos } from '../../../hooks/usePartidos';
 import { useFases } from '../../../hooks/useFases';
 import { useParticipacionFase } from '../../../hooks/useParticipacionFase';
+import useEquipos from '../../../hooks/useEquipos';
 
 const AgregarPartido = () => {
   // Estados formulario
@@ -12,9 +14,9 @@ const AgregarPartido = () => {
   const [categoria, setCategoria] = useState('');
   const [fecha, setFecha] = useState('');
   const [faseSeleccionada, setFaseSeleccionada] = useState('');
+  const [equiposFase, setEquiposFase] = useState([]);
   const [equipoLocal, setEquipoLocal] = useState('');
   const [equipoVisitante, setEquipoVisitante] = useState('');
-  const [equiposFase, setEquiposFase] = useState([]);
 
   // Firebase user y token
   const auth = getAuth();
@@ -32,8 +34,20 @@ const AgregarPartido = () => {
 
   // Hooks externos
   const { fases, loading: loadingFases, error: errorFases } = useFases(liga);
-  const { participaciones, fetchParticipaciones, loading: loadingParticipaciones, error: errorParticipaciones } = useParticipacionFase();
+  const {
+    participaciones,
+    fetchParticipaciones,
+    loading: loadingParticipaciones,
+    error: errorParticipaciones,
+  } = useParticipacionFase();
   const { crearNuevoPartido, loading: loadingPartido, error: errorPartido } = usePartidos(token);
+
+  // Hook para todos los equipos cuando amistoso (liga === '')
+  const {
+    equipos: equiposGlobales,
+    loading: loadingEquiposGlobales,
+    error: errorEquiposGlobales,
+  } = useEquipos(token);
 
   // Cargar competencias al montar
   useEffect(() => {
@@ -52,6 +66,7 @@ const AgregarPartido = () => {
   // Cuando cambia la liga, setear modalidad y categoría y resetear dependientes
   useEffect(() => {
     if (!liga) {
+      // Amistoso
       setModalidad('');
       setCategoria('');
       setFaseSeleccionada('');
@@ -60,6 +75,8 @@ const AgregarPartido = () => {
       setEquipoVisitante('');
       return;
     }
+
+    // Competencia
     const competencia = competencias.find(c => c._id === liga);
     if (competencia) {
       setModalidad(competencia.modalidad);
@@ -68,22 +85,23 @@ const AgregarPartido = () => {
       setModalidad('');
       setCategoria('');
     }
+
     setFaseSeleccionada('');
     setEquiposFase([]);
     setEquipoLocal('');
     setEquipoVisitante('');
   }, [liga, competencias]);
 
-  // Cuando cambia fase, cargar participaciones (equipos en fase)
+  // Cuando cambia fase, cargar participaciones (equipos en fase) solo si hay competencia seleccionada
   useEffect(() => {
-    if (faseSeleccionada) {
+    if (liga && faseSeleccionada) {
       fetchParticipaciones({ fase: faseSeleccionada });
     } else {
       setEquiposFase([]);
       setEquipoLocal('');
       setEquipoVisitante('');
     }
-  }, [faseSeleccionada, fetchParticipaciones]);
+  }, [liga, faseSeleccionada, fetchParticipaciones]);
 
   // Actualizar equiposFase a partir de participaciones
   useEffect(() => {
@@ -91,6 +109,7 @@ const AgregarPartido = () => {
       setEquiposFase([]);
       return;
     }
+
     const equiposConNombre = participaciones.map(pf => {
       const eqCompetencia = pf.equipoCompetencia;
       const equipo = eqCompetencia?.equipo;
@@ -99,17 +118,21 @@ const AgregarPartido = () => {
         nombre: equipo?.nombre || 'Equipo sin nombre',
       };
     });
+
     setEquiposFase(equiposConNombre);
     setEquipoLocal('');
     setEquipoVisitante('');
   }, [participaciones]);
 
-  // Cambiar liga
+  // Equipos que se mostrarán en los selects
+  const equiposParaSeleccion = liga ? equiposFase : equiposGlobales;
+
+  // Manejadores
   const handleCompetenciaChange = (e) => {
     setLiga(e.target.value);
   };
 
-  // Submit form: crear partido usando hook usePartidos
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -121,7 +144,6 @@ const AgregarPartido = () => {
     if (!equipoVisitante) return alert('Debes seleccionar el equipo visitante.');
     if (equipoLocal === equipoVisitante) return alert('El equipo local y el equipo visitante no pueden ser el mismo.');
     if (liga !== '' && !faseSeleccionada) return alert('Debes seleccionar una fase.');
-
     if (!token) {
       alert('Debes estar autenticado para agregar un partido.');
       return;
@@ -146,15 +168,14 @@ const AgregarPartido = () => {
     await crearNuevoPartido(partido, (creado) => {
       if (creado) {
         alert('Partido agregado exitosamente');
-        // Limpiar formulario
         setLiga('');
         setModalidad('');
         setCategoria('');
         setFecha('');
         setFaseSeleccionada('');
+        setEquiposFase([]);
         setEquipoLocal('');
         setEquipoVisitante('');
-        setEquiposFase([]);
       }
     });
   };
@@ -171,7 +192,7 @@ const AgregarPartido = () => {
           value={liga}
           onChange={handleCompetenciaChange}
           className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
+          required={liga !== ''} 
         >
           <option value="">Amistoso (sin competencia)</option>
           {competencias.map(c => (
@@ -179,7 +200,7 @@ const AgregarPartido = () => {
           ))}
         </select>
 
-        {/* Fase */}
+        {/* Fase: solo si elegí competencia */}
         {liga && (
           <>
             {loadingFases && <p>Cargando fases...</p>}
@@ -191,7 +212,7 @@ const AgregarPartido = () => {
                 value={faseSeleccionada}
                 onChange={e => setFaseSeleccionada(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                required={!!liga}
               >
                 <option value="" disabled>Seleccionar Fase</option>
                 {fases.map(f => (
@@ -266,10 +287,10 @@ const AgregarPartido = () => {
           onChange={e => setEquipoLocal(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
-          disabled={!faseSeleccionada}
+          disabled={liga && !faseSeleccionada}
         >
           <option value="" disabled>Seleccionar Equipo Local</option>
-          {equiposFase.map(eq => (
+          {equiposParaSeleccion.map(eq => (
             <option key={eq._id} value={eq._id}>{eq.nombre}</option>
           ))}
         </select>
@@ -281,10 +302,10 @@ const AgregarPartido = () => {
           onChange={e => setEquipoVisitante(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
-          disabled={!faseSeleccionada}
+          disabled={liga && !faseSeleccionada}
         >
           <option value="" disabled>Seleccionar Equipo Visitante</option>
-          {equiposFase.map(eq => (
+          {equiposParaSeleccion.map(eq => (
             <option key={eq._id} value={eq._id}>{eq.nombre}</option>
           ))}
         </select>
@@ -293,13 +314,15 @@ const AgregarPartido = () => {
         <button
           type="submit"
           className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loadingPartido || loadingParticipaciones}
+          disabled={loadingPartido || loadingParticipaciones || loadingEquiposGlobales}
         >
           {loadingPartido ? 'Guardando...' : 'Anotar Partido'}
         </button>
 
-        {(errorPartido || errorParticipaciones) && (
-          <p className="text-red-600 mt-2 text-center">{errorPartido || errorParticipaciones}</p>
+        {(errorPartido || errorParticipaciones || errorEquiposGlobales) && (
+          <p className="text-red-600 mt-2 text-center">
+            {errorPartido || errorParticipaciones || errorEquiposGlobales}
+          </p>
         )}
       </form>
     </div>

@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 
 const API_URL = 'https://overtime-ddyl.onrender.com/api/jugador-equipo';
 
-export function useJugadorEquipo({ equipoId, jugadorId, token } = {}) {
+export function useJugadorEquipo({ equipoId, jugadorId, token} = {}) {
   const [relaciones, setRelaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cargar relaciones con filtros
   useEffect(() => {
-    if ((!equipoId && !jugadorId) || !token) {
+    if (!equipoId && !jugadorId) {
       setRelaciones([]);
       setLoading(false);
       return;
@@ -23,11 +22,7 @@ export function useJugadorEquipo({ equipoId, jugadorId, token } = {}) {
     const fetchRelaciones = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}?${params.toString()}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(`${API_URL}?${params.toString()}`);
         if (!res.ok) throw new Error('Error al obtener relaciones');
         const data = await res.json();
         setRelaciones(data);
@@ -41,7 +36,8 @@ export function useJugadorEquipo({ equipoId, jugadorId, token } = {}) {
     };
 
     fetchRelaciones();
-  }, [equipoId, jugadorId, token]);
+  }, [equipoId, jugadorId]);
+
 
   // Asociar jugador a equipo
   const asociarJugador = async ({ jugador, equipo }) => {

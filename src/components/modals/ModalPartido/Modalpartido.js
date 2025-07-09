@@ -61,12 +61,15 @@ export default function ModalPartido({
           ) : (
             <PartidoDatosGenerales partido={partido} />
           )}
-          <button
-            onClick={() => setModoEdicion(prev => !prev)}
-            className="bg-green-600 text-white hover:bg-green-700"
-          >
-            {modoEdicion ? 'Cancelar edición' : 'Editar Datos'}
-          </button>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setModoEdicion(prev => !prev)}
+                className={`px-4 py-2 rounded-md font-semibold text-white transition-colors duration-200
+                  ${modoEdicion ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-600 hover:bg-green-700'}`}
+              >
+                {modoEdicion ? 'Cancelar edición' : 'Editar Datos'}
+              </button>
+            </div>
           <PartidoSetsLineaDeTiempo
             sets={partido.sets}
             equipoLocal={partido.equipoLocal}
