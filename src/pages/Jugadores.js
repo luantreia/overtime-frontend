@@ -183,7 +183,6 @@ export default function Jugadores() {
           onJugadorActualizado={handleJugadorActualizado}
         />
       )}
-      <PhysicsBall />
     </div>
   );
 }
