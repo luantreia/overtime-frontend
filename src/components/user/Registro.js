@@ -1,9 +1,10 @@
+// src/components/auth/Registro.js
+
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, getIdToken } from 'firebase/auth';
 import { auth } from '../../firebase';
-
-// Assuming ErrorMessage will remain a component if you want to reuse its specific styling/logic
 import ErrorMessage from '../common/FormComponents/ErrorMessage';
+import { useNavigate } from 'react-router-dom';
 
 const Registro = () => {
   const [nombre, setNombre] = useState('');
@@ -12,6 +13,7 @@ const Registro = () => {
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -31,7 +33,7 @@ const Registro = () => {
         },
         body: JSON.stringify({
           email: user.email,
-          rol: 'lector', // Default role for new registrations
+          rol: 'lector',
           nombre: nombre.trim(),
           _id: user.uid
         })
@@ -39,27 +41,24 @@ const Registro = () => {
 
       if (!res.ok) {
         const errorData = await res.json();
-        // If an account already exists with the email but user tries to register again,
-        // Firebase handles this, but backend might also return an error if
-        // the user already exists in your DB even if Firebase allows registration (unlikely scenario with proper setup)
         throw new Error(errorData.error || 'Error al guardar el usuario en la base de datos.');
       }
 
-      setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.');
+      setMensaje('¡Registro exitoso! Redirigiendo...');
       setNombre('');
       setEmail('');
       setPassword('');
+      setTimeout(() => navigate('/inicio'), 1500); // Redirigir tras 1.5 segundos
     } catch (err) {
-      // More user-friendly Firebase error messages
       let displayError = 'Error al registrar la cuenta.';
       if (err.code === 'auth/email-already-in-use') {
-        displayError = '❌ El correo electrónico ya está registrado. Por favor, usa otro o inicia sesión.';
+        displayError = '❌ El correo electrónico ya está registrado.';
       } else if (err.code === 'auth/invalid-email') {
         displayError = '❌ El formato del correo electrónico no es válido.';
       } else if (err.code === 'auth/weak-password') {
         displayError = '❌ La contraseña debe tener al menos 6 caracteres.';
       } else {
-        displayError = `❌ ${err.message}`; // Fallback for other errors
+        displayError = `❌ ${err.message}`;
       }
       setError(displayError);
     } finally {
@@ -72,7 +71,6 @@ const Registro = () => {
       <form onSubmit={handleRegister} className="w-full max-w-sm space-y-6">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Registrar Cuenta</h2>
 
-        {/* Nombre Input */}
         <div>
           <label htmlFor="nombre" className="sr-only">Nombre</label>
           <input
@@ -86,7 +84,6 @@ const Registro = () => {
           />
         </div>
 
-        {/* Correo Input */}
         <div>
           <label htmlFor="email" className="sr-only">Correo</label>
           <input
@@ -101,14 +98,13 @@ const Registro = () => {
           />
         </div>
 
-        {/* Contraseña Input */}
         <div>
           <label htmlFor="password" className="sr-only">Contraseña</label>
           <input
             id="password"
             type="password"
             placeholder="Contraseña"
-            autoComplete="new-password" // Use 'new-password' for registration forms
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -116,11 +112,9 @@ const Registro = () => {
           />
         </div>
 
-        {/* Error and Success Messages */}
         {error && <ErrorMessage mensaje={error} className="mt-4 text-center text-red-600" />}
         {mensaje && <p className="mt-4 text-center text-green-600 font-medium">{mensaje}</p>}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
