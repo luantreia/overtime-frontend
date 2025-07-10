@@ -48,7 +48,7 @@ const Registro = () => {
       setNombre('');
       setEmail('');
       setPassword('');
-      setTimeout(() => navigate('/inicio'), 1500); // Redirigir tras 1.5 segundos
+      setTimeout(() => navigate('/'), 1500); // Redirigir tras 1.5 segundos
     } catch (err) {
       let displayError = 'Error al registrar la cuenta.';
       if (err.code === 'auth/email-already-in-use') {

@@ -18,7 +18,7 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setMensaje('✅ Inicio de sesión exitoso');
-      setTimeout(() => navigate('/inicio'), 1000); // Redirigir tras 1 segundo
+      setTimeout(() => navigate('/'), 1000); // Redirigir tras 1 segundo
     } catch (error) {
       let errorMessage = 'Ocurrió un error al iniciar sesión.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
