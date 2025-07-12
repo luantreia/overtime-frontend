@@ -8,6 +8,9 @@ export default function PanelAdmin() {
   const { user } = useAuth();
   const [jugadores, setJugadores] = useState([]);
   const [equipos, setEquipos] = useState([]);
+  const [organizaciones, setOrganizaciones] = useState([]);
+  const [partidos, setPartidos] = useState([]);
+  const [competencias, setCompetencias] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const esAdminGlobal = user?.rol === 'admin';
@@ -17,20 +20,35 @@ export default function PanelAdmin() {
       try {
         const token = await user.getIdToken();
 
-        const [resJugadores, resEquipos] = await Promise.all([
+        const [
+          resJugadores,
+          resEquipos,
+          resOrganizaciones,
+          resPartidos,
+          resCompetencias
+        ] = await Promise.all([
           fetch('https://overtime-ddyl.onrender.com/api/jugadores/admin', {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch('https://overtime-ddyl.onrender.com/api/equipos/admin', {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          fetch('https://overtime-ddyl.onrender.com/api/organizaciones/admin', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('https://overtime-ddyl.onrender.com/api/partidos/admin', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('https://overtime-ddyl.onrender.com/api/competencias/admin', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
-        const jugadoresData = await resJugadores.json();
-        const equiposData = await resEquipos.json();
-
-        setJugadores(jugadoresData);
-        setEquipos(equiposData);
+        setJugadores(await resJugadores.json());
+        setEquipos(await resEquipos.json());
+        setOrganizaciones(await resOrganizaciones.json());
+        setPartidos(await resPartidos.json());
+        setCompetencias(await resCompetencias.json());
       } catch (err) {
         console.error('Error al cargar datos administrativos:', err);
       } finally {
@@ -72,44 +90,46 @@ export default function PanelAdmin() {
             rutaAgregar="/agregar-equipo"
             esAdminGlobal={esAdminGlobal}
           />
-          <div className="flex justify-between items-center mt-8">
-            <h2 className="text-2xl font-semibold text-gray-800">Otras acciones</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <AdminLink to="/agregar-partido" text="Agregar Partido" />
-            <AdminLink to="/agregar-competencia" text="Agregar Competencia" />
-            {esAdminGlobal && (
-              <AdminLink to="/agregar-organizacion" text="Agregar Organización" />
-            )}
-          </div>
+          <SeccionEntidadConAgregar
+            titulo="Organizaciones en control"
+            items={organizaciones}
+            tipo="organizacion"
+            rutaAgregar="/agregar-organizacion"
+            esAdminGlobal={esAdminGlobal}
+          />
+          <SeccionEntidadConAgregar
+            titulo="Partidos en control"
+            items={partidos}
+            tipo="partido"
+            rutaAgregar="/agregar-partido"
+            esAdminGlobal={esAdminGlobal}
+          />
+          <SeccionEntidadConAgregar
+            titulo="Administrador de Competencias"
+            items={competencias}
+            tipo="competencia"
+            rutaAgregar="/agregar-competencia"
+            esAdminGlobal={esAdminGlobal}
+          />
         </div>
       )}
     </div>
   );
 }
 
-function AdminLink({ to, text }) {
-  return (
-    <Link
-      to={to}
-      className="block w-full bg-slate-800 hover:bg-slate-700 text-white text-lg font-semibold py-4 px-6 rounded-lg text-center shadow transition-transform transform hover:scale-105"
-    >
-      {text}
-    </Link>
-  );
-}
-
 function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlobal }) {
+  if (!items.length) return null;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold text-gray-800">{titulo}</h2>
         <Link
           to={rutaAgregar}
-          className="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-full text-xl font-bold flex items-center justify-center"
+          className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-1.5 rounded-md text-lg font-semibold flex items-center justify-center shadow-md transition-transform transform hover:scale-105"
           title={`Agregar ${tipo}`}
         >
-          +
+          <span className="material-icons">add</span>
         </Link>
       </div>
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -119,7 +139,7 @@ function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlo
             to={`/${tipo}s/${item._id}`}
             className="block bg-gray-100 hover:bg-gray-200 p-4 rounded shadow text-gray-800"
           >
-            <h3 className="text-lg font-bold">{item.nombre}</h3>
+            <h3 className="text-lg font-bold">{item.nombre || item.titulo || `ID: ${item._id}`}</h3>
             {esAdminGlobal && (
               <p className="text-sm text-gray-500">ID: {item._id}</p>
             )}
