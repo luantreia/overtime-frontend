@@ -17,6 +17,8 @@ import AgregarOrganizacion from './components/modals/ModalOrganizacion/AgregarOr
 import Organizaciones from './pages/Organizaciones';
 import Competencias from './pages/Competencias';
 import FormularioCompetencia from './components/modals/ModalCompetencia/agregarCompetencia';
+import PanelAdmin from './components/user/perfil/PanelAdmin';
+import OpcionesAvanzadas from './pages/admin/OpcionesAvanzadas';
 
 function App() {
   return (
@@ -38,6 +40,9 @@ function App() {
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/admin" element={<PanelAdmin />} />
+        <Route path="/admin/opciones" element={<OpcionesAvanzadas />} />
+
         {/* Agrega más rutas según lo que necesites */}
       </Routes>
     </div>
