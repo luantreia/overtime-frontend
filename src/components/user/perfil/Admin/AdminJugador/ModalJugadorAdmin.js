@@ -94,8 +94,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'No se pudo agregar administrador');
 
-        setAdmins(data.administradores); // importante: acceder a la propiedad correcta
-        setNuevoAdmin('');
+        setAdmins(Array.isArray(data.administradores) ? data.administradores : []);        setNuevoAdmin('');
     } catch (err) {
         alert(`Error al agregar administrador: ${err.message}`);
     }
@@ -112,7 +111,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error al quitar administrador');
-      setAdmins(data);
+      setAdmins(Array.isArray(data.administradores) ? data.administradores : []);
     } catch (err) {
       alert(err.message);
     }
@@ -173,34 +172,48 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
         )}
       </section>
 
-      {/* Administradores */}
-      <section className="mb-6">
+    {/* Administradores */}
+    <section className="mb-6">
         <h3 className="text-xl font-semibold mb-2">Administradores</h3>
-        {admins.length === 0 ? (
-          <p className="mb-2 text-gray-600">No hay administradores asignados.</p>
-        ) : (
-          <ul className="mb-2 max-h-40 overflow-auto border rounded">
-            {admins.map(a => (
-              <li key={a._id || a} className="flex justify-between items-center border-b py-1 px-2 last:border-b-0">
+
+        {Array.isArray(admins) && admins.length > 0 ? (
+            <ul className="mb-2 max-h-40 overflow-auto border rounded">
+            {admins.map((a) => (
+                <li
+                key={a._id || a}
+                className="flex justify-between items-center border-b py-1 px-2 last:border-b-0"
+                >
                 <span>{a.email || a.nombre || a}</span>
-                <button className="btn-danger text-xs" onClick={() => quitarAdmin(a._id || a)}>Quitar</button>
-              </li>
+                <button
+                    className="btn-danger text-xs"
+                    onClick={() => quitarAdmin(a._id || a)}
+                >
+                    Quitar
+                </button>
+                </li>
             ))}
-          </ul>
+            </ul>
+        ) : (
+            <p className="mb-2 text-gray-600">No hay administradores asignados.</p>
         )}
+
         <div className="flex gap-2">
-          <input
+            <input
             type="email"
             placeholder="Email del nuevo admin"
             value={nuevoAdmin}
-            onChange={e => setNuevoAdmin(e.target.value)}
+            onChange={(e) => setNuevoAdmin(e.target.value)}
             className="input flex-grow"
-          />
-          <button className="btn-primary" onClick={agregarAdmin} disabled={!nuevoAdmin.trim()}>
+            />
+            <button
+            className="btn-primary"
+            onClick={agregarAdmin}
+            disabled={!nuevoAdmin.trim()}
+            >
             Agregar
-          </button>
+            </button>
         </div>
-      </section>
+    </section>
 
       {/* Contratos */}
       <section className="mb-4">
