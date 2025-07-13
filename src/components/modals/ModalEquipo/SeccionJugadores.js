@@ -23,6 +23,7 @@ export default function SeccionJugadores({
               key={relacion._id}
               jugador={relacion.jugador}
               relacion={relacion}
+              equipo={relacion.equipo}
               onClick={() => setModalJugador(relacion)}
             />
           ))}
