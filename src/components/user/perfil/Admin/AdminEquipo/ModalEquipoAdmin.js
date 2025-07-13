@@ -55,7 +55,15 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
     try {
       const body = {
         ...formData,
-        colores: formData.colores.split(',').map(c => c.trim()),
+        colores: formData.colores
+          ? formData.colores.split(',').map(c => c.trim()).filter(Boolean)
+          : [],
+        federacion: formData.federacion && formData.federacion !== '' ? formData.federacion : null,
+        escudo: formData.escudo || '',
+        tipo: formData.tipo || 'club',
+        pais: formData.pais || '',
+        nombre: formData.nombre?.trim() || '',
+        esSeleccionNacional: !!formData.esSeleccionNacional,
       };
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/equipos/${equipoId}`, {
         method: 'PUT',
