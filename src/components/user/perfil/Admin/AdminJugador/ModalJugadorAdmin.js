@@ -1,5 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
+import SolicitudesContrato from '../solicitudesContrato';
+import TarjetaJugadorEquipo from '../../../../modals/ModalJugador/tarjetaJugadorEquipo';
+
+function calcularEdad(fechaNacimiento) {
+  if (!fechaNacimiento) return 'N/A';
+  const nacimiento = new Date(fechaNacimiento);
+  if (isNaN(nacimiento.getTime())) return 'N/A';
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const m = hoy.getMonth() - nacimiento.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+  return edad;
+}
 
 export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
   const [jugador, setJugador] = useState(null);
@@ -140,7 +155,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
           <ul className="mt-2 space-y-1">
             <li><strong>Alias:</strong> {jugador.alias || '-'}</li>
             <li><strong>Fecha de nacimiento:</strong> {jugador.fechaNacimiento?.substring(0, 10) || '-'}</li>
-            <li><strong>Edad:</strong> {jugador.edad || 'N/A'}</li>
+            <li><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</li>
             <li><strong>Nacionalidad:</strong> {jugador.nacionalidad || '-'}</li>
             <li><strong>Género:</strong> {jugador.genero}</li>
             <li>
@@ -216,23 +231,46 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
     </section>
 
       {/* Contratos */}
-      <section className="mb-4">
+      <section className="mb-6">
         <h3 className="text-xl font-semibold mb-2">Relaciones jugador-equipo</h3>
         {contratos.length === 0 ? (
           <p>No tiene relaciones activas.</p>
         ) : (
-          <ul className="space-y-2 max-h-60 overflow-auto">
+          <div
+            className="
+              flex flex-wrap gap-4
+              max-h-[280px] overflow-y-auto
+              py-2 px-1
+              bg-gray-50 rounded-md
+              border border-gray-200
+            "
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#cbd5e1 transparent',
+            }}
+          >
             {contratos.map(c => (
-              <li key={c._id} className="border p-2 rounded">
-                <p><strong>Equipo:</strong> {c.equipo?.nombre || '-'}</p>
-                <p><strong>Desde:</strong> {c.fechaInicio ? new Date(c.fechaInicio).toLocaleDateString() : '-'}</p>
-                <p><strong>Hasta:</strong> {c.fechaFin ? new Date(c.fechaFin).toLocaleDateString() : '-'}</p>
-                <p><strong>Estado:</strong> {c.estado || '-'}</p>
-              </li>
+              <TarjetaJugadorEquipo
+                key={c._id}
+                jugador={{
+                  nombre: jugador.nombre,
+                  edad: calcularEdad(jugador.fechaNacimiento),
+                  nacionalidad: jugador.nacionalidad,
+                  foto: jugador.foto,
+                }}
+                relacion={{
+                  equipo: c.equipo,
+                  numero: c.numero,
+                  rol: c.rol,
+                  foto: c.foto,
+                }}
+              />
             ))}
-          </ul>
+          </div>
         )}
       </section>
+      <SolicitudesContrato jugadorId={jugadorId} token={token} />
+
     </ModalBase>
   );
 }

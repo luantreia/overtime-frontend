@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import EditarEquipo from './EditarEquipo';
 import EncabezadoEquipo from './EncabezadoEquipo';
 import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
@@ -8,27 +7,22 @@ import CloseButton from '../../common/FormComponents/CloseButton';
 import AsignarJugadoresEquipo from './AsignarJugadoresEquipo';
 import { usePartidosDeEquipo } from '../../../hooks/usePartidosDeEquipo';
 import { useAuth } from '../../../context/AuthContext';
-
-// Importamos el hook
 import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
-
 import ModalJugadorEquipo from '../ModalJugador/ModalJugadorEquipo';
 
-function ModalEquipo({ equipo: equipoProp, onClose, onEditarEquipo }) {
+function ModalEquipo({ equipo: equipoProp, onClose }) {
   const [equipo, setEquipo] = useState(equipoProp);
   const [modalJugador, setModalJugador] = useState(null);
-  const [modalEditarEquipo, setModalEditarEquipo] = useState(false);
   const [modalAsignarJugadores, setModalAsignarJugadores] = useState(false);
   const [jugadoresVersion, setJugadoresVersion] = useState(0);
-  const { user, rol, token } = useAuth();
+  const { token } = useAuth();
 
-  const colorPrimario = equipo?.colores?.[0] || '#1e3a8a'; // azul por defecto
+  const colorPrimario = equipo?.colores?.[0] || '#1e3a8a';
   const colorSecundario = equipo?.colores?.[1] || '#ffffff';
 
   const {
     relaciones,
     loading: loadingRelaciones,
-    error: errorRelaciones,
     actualizarRelacion,
   } = useJugadorEquipo({ equipoId: equipo?._id, token });
 
@@ -39,21 +33,6 @@ function ModalEquipo({ equipo: equipoProp, onClose, onEditarEquipo }) {
   }, [equipoProp]);
 
   if (!equipoProp || !equipoProp._id) return null;
-
-  const handleGuardar = async (datosActualizados) => {
-    try {
-      const actualizado = await onEditarEquipo(equipo?._id, datosActualizados);
-      setEquipo(actualizado);
-      setModalEditarEquipo(false);
-    } catch (err) {
-      console.error('Error al editar equipo:', err);
-      alert('Error al guardar los cambios.');
-    }
-  };
-
-  const handleCerrarSubmodal = () => {
-    setModalEditarEquipo(false);
-  };
 
   return (
     <div
@@ -68,13 +47,8 @@ function ModalEquipo({ equipo: equipoProp, onClose, onEditarEquipo }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-5">
-          
           <CloseButton onClick={onClose} />
-          
-          <EncabezadoEquipo
-            equipo={equipo}
-            onEditar={() => setModalEditarEquipo(true)}
-          />
+          <EncabezadoEquipo equipo={equipo} />
 
           <div className="flex flex-wrap gap-5">
             <SeccionResultados resultados={partidosDelEquipo} />
@@ -90,7 +64,6 @@ function ModalEquipo({ equipo: equipoProp, onClose, onEditarEquipo }) {
           </div>
         </div>
 
-        {/* Submodales */}
         {modalAsignarJugadores && (
           <div
             className="fixed inset-0 bg-black bg-opacity-60 z-[1100] flex justify-center items-center p-2.5"
@@ -113,32 +86,16 @@ function ModalEquipo({ equipo: equipoProp, onClose, onEditarEquipo }) {
           <ModalJugadorEquipo
             relacion={modalJugador}
             onClose={() => setModalJugador(null)}
-            onJugadorActualizado={(actualizada) => {
+            onJugadorActualizado={() => {
               setModalJugador(null);
               setJugadoresVersion((v) => v + 1);
             }}
             actualizarRelacion={actualizarRelacion}
           />
         )}
-
-        {modalEditarEquipo && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-60 z-[1100] flex justify-center items-center p-2.5"
-            onClick={handleCerrarSubmodal}
-          >
-            <div className="bg-white p-8 rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <EditarEquipo
-                equipo={equipo}
-                onGuardar={handleGuardar}
-                onCancelar={() => setModalEditarEquipo(false)}
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 }
-
 
 export default ModalEquipo;

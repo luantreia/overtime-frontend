@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
+import SolicitudesContrato from '../solicitudesContrato.js';
 
 export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
   const [equipo, setEquipo] = useState(null);
@@ -190,6 +191,7 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
           </button>
         </div>
       </section>
+      <SolicitudesContrato equipoId={equipoId} token={token} />
     </ModalBase>
   );
 }
