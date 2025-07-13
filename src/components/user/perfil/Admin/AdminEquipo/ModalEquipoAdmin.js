@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import SolicitudesContrato from '../solicitudesContrato.js';
-import TarjetaJugadorEquipo from '../../../../modals/ModalJugador/tarjetaJugadorEquipo';
 import { useAuth } from '../../../../../context/AuthContext.js';
-
 
 function calcularEdad(fechaNacimiento) {
   if (!fechaNacimiento) return 'N/A';
@@ -12,12 +10,9 @@ function calcularEdad(fechaNacimiento) {
   const hoy = new Date();
   let edad = hoy.getFullYear() - nacimiento.getFullYear();
   const m = hoy.getMonth() - nacimiento.getMonth();
-  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
-    edad--;
-  }
+  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
   return edad;
 }
-
 
 export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
   const { user } = useAuth();
@@ -31,10 +26,11 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
   const [nuevoAdmin, setNuevoAdmin] = useState('');
   const [error, setError] = useState(null);
   const [jugadoresEquipo, setJugadoresEquipo] = useState([]);
+  const [editandoContratoId, setEditandoContratoId] = useState(null);
+  const [contratoEditado, setContratoEditado] = useState({});
 
   const cargarDatos = useCallback(async () => {
     if (!equipoId || !token) return;
-
     setLoading(true);
     try {
       const [resEquipo, resJugadores] = await Promise.all([
@@ -45,9 +41,7 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
-
-      if (!resEquipo.ok) throw new Error('No se pudo cargar el equipo');
-      if (!resJugadores.ok) throw new Error('No se pudieron cargar los jugadores del equipo');
+      if (!resEquipo.ok || !resJugadores.ok) throw new Error('Error al cargar datos');
 
       const dataEquipo = await resEquipo.json();
       const dataJugadores = await resJugadores.json();
@@ -88,10 +82,8 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
     try {
       const body = {
         ...formData,
-        colores: formData.colores
-          ? formData.colores.split(',').map(c => c.trim()).filter(Boolean)
-          : [],
-        federacion: formData.federacion && formData.federacion !== '' ? formData.federacion : null,
+        colores: formData.colores?.split(',').map(c => c.trim()).filter(Boolean) || [],
+        federacion: formData.federacion || null,
         escudo: formData.escudo || '',
         tipo: formData.tipo || 'club',
         pais: formData.pais || '',
@@ -150,14 +142,37 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
     }
   };
 
+  const guardarContratoEditado = async (id) => {
+    try {
+      const res = await fetch(`https://overtime-ddyl.onrender.com/api/jugador-equipo/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...contratoEditado,
+          rol: contratoEditado.rol || '',
+          numero: contratoEditado.numero || '',
+        }),
+      });
+      if (!res.ok) throw new Error('Error al actualizar contrato');
+      setEditandoContratoId(null);
+      setContratoEditado({});
+      cargarDatos();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <ModalBase title="Cargando..." onClose={onClose}><p>Cargando equipo...</p></ModalBase>;
   if (error) return <ModalBase title="Error" onClose={onClose}><p>{error}</p></ModalBase>;
 
   return (
     <ModalBase title={`Equipo: ${equipo.nombre}`} onClose={onClose}>
-      {/* Datos Básicos */}
+      {/* Datos del equipo */}
       <section className="mb-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <h3 className="text-xl font-semibold">Datos del equipo</h3>
           {editando ? (
             <div className="space-x-2">
@@ -168,7 +183,6 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
             <button className="btn-primary" onClick={() => setEditando(true)}>Editar</button>
           )}
         </div>
-
         {!editando ? (
           <ul className="mt-2 space-y-1">
             <li><strong>Nombre:</strong> {equipo.nombre}</li>
@@ -211,46 +225,148 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
           </ul>
         )}
         <div className="flex gap-2">
-          <input
-            type="email"
-            placeholder="Email del nuevo admin"
-            value={nuevoAdmin}
-            onChange={e => setNuevoAdmin(e.target.value)}
-            className="input flex-grow"
-          />
-          <button className="btn-primary" onClick={agregarAdmin} disabled={!nuevoAdmin.trim()}>
-            Agregar
-          </button>
+          <input type="email" placeholder="Email del nuevo admin" value={nuevoAdmin} onChange={e => setNuevoAdmin(e.target.value)} className="input flex-grow" />
+          <button className="btn-primary" onClick={agregarAdmin} disabled={!nuevoAdmin.trim()}>Agregar</button>
         </div>
       </section>
-      {/* Jugadores del equipo */}
-      <section className="p-2">
-        <h3 className="text-xl font-semibold mb-2">Jugadores del equipo</h3>
+
+      {/* Contratos de jugadores */}
+      <section className="mb-6">
+        <h3 className="text-xl font-semibold mb-4">Contratos activos</h3>
         {jugadoresEquipo.length === 0 ? (
-          <p>No hay jugadores asociados actualmente.</p>
+          <p className="text-gray-600">No hay jugadores asociados actualmente.</p>
         ) : (
-          <div className="lista px-0" aria-live="polite">
-            {jugadoresEquipo.map(c => (
-              <TarjetaJugadorEquipo
-                key={c._id}
-                jugador={{
-                  nombre: c.jugador?.nombre || 'Sin nombre',
-                  edad: calcularEdad(c.jugador?.fechaNacimiento),
-                  nacionalidad: c.jugador?.nacionalidad,
-                  foto: c.jugador?.foto,
-                }}
-                relacion={{
-                  equipo: equipo,
-                  numero: c.numero,
-                  rol: c.rol,
-                  foto: c.foto,
-                }}
-              />
-            ))}
+          <div className="w-full overflow-x-auto rounded-lg border border-gray-300">
+            <table className="min-w-[800px] table-auto text-sm text-left">
+              <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-2">Nombre</th>
+                  <th className="px-4 py-2">Edad</th>
+                  <th className="px-4 py-2">Rol</th>
+                  <th className="px-4 py-2">Número</th>
+                  <th className="px-4 py-2">Estado</th>
+                  <th className="px-4 py-2">Foto</th>
+                  <th className="px-4 py-2">Desde</th>
+                  <th className="px-4 py-2">Hasta</th>
+                  <th className="px-4 py-2">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {jugadoresEquipo.map((c) => (
+                  <tr key={c._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 whitespace-nowrap">{c.jugador?.nombre}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{calcularEdad(c.jugador?.fechaNacimiento)}</td>
+                    <td className="px-4 py-2">
+                      {editandoContratoId === c._id ? (
+                        <input
+                          type="text"
+                          className="input"
+                          value={contratoEditado.rol || ''}
+                          onChange={e => setContratoEditado({ ...contratoEditado, rol: e.target.value })}
+                        />
+                      ) : c.rol || '-'}
+                    </td>
+                    <td className="px-4 py-2">
+                      {editandoContratoId === c._id ? (
+                        <input
+                          type="number"
+                          className="input w-20"
+                          value={contratoEditado.numero || ''}
+                          onChange={e => setContratoEditado({ ...contratoEditado, numero: e.target.value })}
+                        />
+                      ) : c.numero || '-'}
+                    </td>
+                    <td className="px-4 py-2 capitalize">
+                      {editandoContratoId === c._id ? (
+                        <select
+                          className="input"
+                          value={contratoEditado.estado || c.estado}
+                          onChange={e => setContratoEditado({ ...contratoEditado, estado: e.target.value })}
+                        >
+                          <option value="aceptado">Aceptado</option>
+                          <option value="finalizado">Finalizado</option>
+                        </select>
+                      ) : c.estado}
+                    </td>
+                    <td className="px-4 py-2">
+                      {editandoContratoId === c._id ? (
+                        <input
+                          type="text"
+                          placeholder="URL foto"
+                          className="input"
+                          value={contratoEditado.foto || ''}
+                          onChange={e => setContratoEditado({ ...contratoEditado, foto: e.target.value })}
+                        />
+                      ) : (
+                        c.foto ? <a href={c.foto} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">ver</a> : '-'
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      {editandoContratoId === c._id ? (
+                        <input
+                          type="date"
+                          className="input"
+                          value={contratoEditado.desde || ''}
+                          onChange={e => setContratoEditado({ ...contratoEditado, desde: e.target.value })}
+                        />
+                      ) : (
+                        c.desde ? new Date(c.desde).toLocaleDateString() : '-'
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      {editandoContratoId === c._id ? (
+                        <input
+                          type="date"
+                          className="input"
+                          value={contratoEditado.hasta || ''}
+                          onChange={e => setContratoEditado({ ...contratoEditado, hasta: e.target.value })}
+                        />
+                      ) : (
+                        c.hasta ? new Date(c.hasta).toLocaleDateString() : '-'
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {['aceptado', 'finalizado'].includes(c.estado) ? (
+                        editandoContratoId === c._id ? (
+                          <div className="flex gap-2">
+                            <button onClick={() => guardarContratoEditado(c._id)} className="btn-primary btn-xs">Guardar</button>
+                            <button onClick={() => { setEditandoContratoId(null); setContratoEditado({}); }} className="btn-secondary btn-xs">Cancelar</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditandoContratoId(c._id);
+                              setContratoEditado({
+                                rol: c.rol || '',
+                                numero: c.numero || '',
+                                estado: c.estado,
+                                foto: c.foto || '',
+                                desde: c.desde?.slice(0, 10) || '',
+                                hasta: c.hasta?.slice(0, 10) || ''
+                              });
+                            }}
+                            className="btn-outline btn-xs"
+                          >
+                            Editar
+                          </button>
+                        )
+                      ) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
-      <SolicitudesContrato equipoId={equipoId} token={token} usuarioId={usuarioId} rol={rol}  />
+
+
+      {/* Solicitudes de contrato */}
+      <SolicitudesContrato equipoId={equipoId} token={token} usuarioId={usuarioId} rol={rol} />
+      
+
+
+      
     </ModalBase>
   );
 }
