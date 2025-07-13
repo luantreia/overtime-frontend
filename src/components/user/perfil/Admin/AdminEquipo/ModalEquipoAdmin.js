@@ -1,8 +1,28 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import SolicitudesContrato from '../solicitudesContrato.js';
+import TarjetaJugadorEquipo from '../../../../modals/ModalJugador/tarjetaJugadorEquipo';
+import { useAuth } from '../../../../../context/AuthContext.js';
+
+
+function calcularEdad(fechaNacimiento) {
+  if (!fechaNacimiento) return 'N/A';
+  const nacimiento = new Date(fechaNacimiento);
+  if (isNaN(nacimiento.getTime())) return 'N/A';
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const m = hoy.getMonth() - nacimiento.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+  return edad;
+}
+
 
 export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
+  const { user } = useAuth();
+  const usuarioId = user?.uid;
+  const rol = user?.rol;
   const [equipo, setEquipo] = useState(null);
   const [formData, setFormData] = useState({});
   const [editando, setEditando] = useState(false);
@@ -10,28 +30,40 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
   const [admins, setAdmins] = useState([]);
   const [nuevoAdmin, setNuevoAdmin] = useState('');
   const [error, setError] = useState(null);
+  const [jugadoresEquipo, setJugadoresEquipo] = useState([]);
 
   const cargarDatos = useCallback(async () => {
     if (!equipoId || !token) return;
 
     setLoading(true);
     try {
-      const res = await fetch(`https://overtime-ddyl.onrender.com/api/equipos/${equipoId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('No se pudo cargar el equipo');
+      const [resEquipo, resJugadores] = await Promise.all([
+        fetch(`https://overtime-ddyl.onrender.com/api/equipos/${equipoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`https://overtime-ddyl.onrender.com/api/jugador-equipo?equipo=${equipoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      const data = await res.json();
-      setEquipo(data);
-      setAdmins(data.administradores || []);
+      if (!resEquipo.ok) throw new Error('No se pudo cargar el equipo');
+      if (!resJugadores.ok) throw new Error('No se pudieron cargar los jugadores del equipo');
+
+      const dataEquipo = await resEquipo.json();
+      const dataJugadores = await resJugadores.json();
+
+      setEquipo(dataEquipo);
+      setAdmins(dataEquipo.administradores || []);
+      setJugadoresEquipo(dataJugadores);
+
       setFormData({
-        nombre: data.nombre || '',
-        escudo: data.escudo || '',
-        tipo: data.tipo || '',
-        colores: data.colores?.join(', ') || '',
-        esSeleccionNacional: data.esSeleccionNacional || false,
-        pais: data.pais || '',
-        federacion: data.federacion || '',
+        nombre: dataEquipo.nombre || '',
+        escudo: dataEquipo.escudo || '',
+        tipo: dataEquipo.tipo || '',
+        colores: dataEquipo.colores?.join(', ') || '',
+        esSeleccionNacional: dataEquipo.esSeleccionNacional || false,
+        pais: dataEquipo.pais || '',
+        federacion: dataEquipo.federacion || '',
       });
     } catch (err) {
       setError(err.message);
@@ -191,7 +223,34 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
           </button>
         </div>
       </section>
-      <SolicitudesContrato equipoId={equipoId} token={token} />
+      {/* Jugadores del equipo */}
+      <section className="p-2">
+        <h3 className="text-xl font-semibold mb-2">Jugadores del equipo</h3>
+        {jugadoresEquipo.length === 0 ? (
+          <p>No hay jugadores asociados actualmente.</p>
+        ) : (
+          <div className="lista px-0" aria-live="polite">
+            {jugadoresEquipo.map(c => (
+              <TarjetaJugadorEquipo
+                key={c._id}
+                jugador={{
+                  nombre: c.jugador?.nombre || 'Sin nombre',
+                  edad: calcularEdad(c.jugador?.fechaNacimiento),
+                  nacionalidad: c.jugador?.nacionalidad,
+                  foto: c.jugador?.foto,
+                }}
+                relacion={{
+                  equipo: equipo,
+                  numero: c.numero,
+                  rol: c.rol,
+                  foto: c.foto,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+      <SolicitudesContrato equipoId={equipoId} token={token} usuarioId={usuarioId} rol={rol}  />
     </ModalBase>
   );
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import SolicitudesContrato from '../solicitudesContrato';
 import TarjetaJugadorEquipo from '../../../../modals/ModalJugador/tarjetaJugadorEquipo';
+import { useAuth } from '../../../../../context/AuthContext.js';
 
 function calcularEdad(fechaNacimiento) {
   if (!fechaNacimiento) return 'N/A';
@@ -17,6 +18,9 @@ function calcularEdad(fechaNacimiento) {
 }
 
 export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
+  const { user } = useAuth();
+  const usuarioId = user?.uid;
+  const rol = user?.rol;
   const [jugador, setJugador] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(false);
@@ -269,7 +273,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
           </div>
         )}
       </section>
-      <SolicitudesContrato jugadorId={jugadorId} token={token} />
+      <SolicitudesContrato jugadorId={jugadorId} token={token} usuarioId={usuarioId} rol={rol} />
 
     </ModalBase>
   );
