@@ -1,11 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import SolicitudesContrato from '../solicitudesContrato.js';
+import SolicitudesContratoEquipoCompetencia from '../SolicitudesContratoEquipoCompetencia';
 import { useAuth } from '../../../../../context/AuthContext.js';
 
 import SeccionDatosEquipo from './SeccionDatosEquipo';
 import SeccionAdministradoresEquipo from './SeccionAdministradoresEquipo';
-import SeccionContratosJugadorEquipo from './SeccionContratosJugadorEquipo';
+import SeccionContratosJugadorEquipo from './SeccionContratosJugadoresEquipo.js';
+import SeccionContratosEquipoCompetencias from './SeccionContratosEquipoCompetencias';
+
+const SECCIONES = [
+  { key: 'datos', label: 'Datos' },
+  { key: 'admins', label: 'Administradores' },
+  { key: 'contratos', label: 'Jugadores' },
+  { key: 'competencias', label: 'Competencias' },
+];
 
 export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
   const { user } = useAuth();
@@ -22,6 +31,7 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
   const [jugadoresEquipo, setJugadoresEquipo] = useState([]);
   const [editandoContratoId, setEditandoContratoId] = useState(null);
   const [contratoEditado, setContratoEditado] = useState({});
+  const [seccionActiva, setSeccionActiva] = useState('datos');
 
   const cargarDatos = useCallback(async () => {
     if (!equipoId || !token) return;
@@ -164,34 +174,83 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
 
   return (
     <ModalBase title={`Equipo: ${equipo.nombre}`} onClose={onClose}>
-      <SeccionDatosEquipo
-        equipo={equipo}
-        formData={formData}
-        editando={editando}
-        onChange={handleInput}
-        onGuardar={guardarCambios}
-        onCancelar={() => setEditando(false)}
-        onEditar={() => setEditando(true)}
-      />
+      {/* Navegación */}
+      <div className="flex gap-2 mb-4 border-b pb-2">
+        {SECCIONES.map(({ key, label }) => (
+          <button
+            key={key}
+            className={`px-3 py-1 rounded font-semibold ${seccionActiva === key ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            onClick={() => setSeccionActiva(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      <SeccionAdministradoresEquipo
-        admins={admins}
-        nuevoAdmin={nuevoAdmin}
-        onNuevoAdminChange={e => setNuevoAdmin(e.target.value)}
-        onAgregarAdmin={agregarAdmin}
-        onQuitarAdmin={quitarAdmin}
-      />
+      {/* Sección activa */}
+      <div className="space-y-4">
+        {seccionActiva === 'datos' && (
+          <SeccionDatosEquipo
+            equipo={equipo}
+            formData={formData}
+            editando={editando}
+            onChange={handleInput}
+            onGuardar={guardarCambios}
+            onCancelar={() => setEditando(false)}
+            onEditar={() => setEditando(true)}
+          />
+        )}
 
-      <SeccionContratosJugadorEquipo
-        jugadoresEquipo={jugadoresEquipo}
-        editandoContratoId={editandoContratoId}
-        contratoEditado={contratoEditado}
-        setContratoEditado={setContratoEditado}
-        setEditandoContratoId={setEditandoContratoId}
-        guardarContratoEditado={guardarContratoEditado}
-      />
+        {seccionActiva === 'admins' && (
+          <SeccionAdministradoresEquipo
+            admins={admins}
+            nuevoAdmin={nuevoAdmin}
+            onNuevoAdminChange={e => setNuevoAdmin(e.target.value)}
+            onAgregarAdmin={agregarAdmin}
+            onQuitarAdmin={quitarAdmin}
+          />
+        )}
 
-      <SolicitudesContrato equipoId={equipoId} token={token} usuarioId={usuarioId} rol={rol} />
+        {seccionActiva === 'contratos' && (
+          <>
+            <SeccionContratosJugadorEquipo
+              jugadoresEquipo={jugadoresEquipo}
+              editandoContratoId={editandoContratoId}
+              contratoEditado={contratoEditado}
+              setContratoEditado={setContratoEditado}
+              setEditandoContratoId={setEditandoContratoId}
+              guardarContratoEditado={guardarContratoEditado}
+            />
+
+            <div className="mt-6 border-t pt-4">
+              <h4 className="text-lg font-semibold mb-2">Solicitudes de Contrato</h4>
+              <SolicitudesContrato
+                equipoId={equipoId}
+                token={token}
+                usuarioId={usuarioId}
+                rol={rol}
+              />
+            </div>
+          </>
+        )}
+        {seccionActiva === 'competencias' && (
+          <>
+            <SeccionContratosEquipoCompetencias 
+              equipoId={equipoId} token={token} 
+            />
+
+            <div className="mt-6 border-t pt-4">
+                <h4 className="text-lg font-semibold mb-2">Solicitudes de Contrato</h4>
+                <SolicitudesContratoEquipoCompetencia
+                  equipoId={equipoId}
+                  token={token}
+                  usuarioId={usuarioId}
+                  rol={rol}
+                />
+            </div>
+          </>
+        )}
+      </div>
     </ModalBase>
   );
 }

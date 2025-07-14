@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import ModalFaseAdmin from './AdminFase/ModalFaseAdmin';
 
 const TIPOS = ['liga', 'grupo', 'eliminacion', 'amistoso'];
 
 export default function SeccionFasesCompetencia({ competenciaId, token }) {
   const [fases, setFases] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [faseSeleccionada, setFaseSeleccionada] = useState(null); // ✅ NUEVO
+  const [loadingFases, setLoadingFases] = useState(false);
+  const [errorFases, setErrorFases] = useState(null);
 
   const [nuevaFase, setNuevaFase] = useState({
     nombre: '',
@@ -17,27 +15,53 @@ export default function SeccionFasesCompetencia({ competenciaId, token }) {
   });
   const [guardando, setGuardando] = useState(false);
 
-  const cargarFases = async () => {
-    if (!competenciaId || !token) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`https://overtime-ddyl.onrender.com/api/fases?competencia=${competenciaId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Error al cargar fases');
-      const data = await res.json();
-      setFases(data);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [faseSeleccionada, setFaseSeleccionada] = useState(null);
+  const [participaciones, setParticipaciones] = useState([]);
+  const [loadingParticipaciones, setLoadingParticipaciones] = useState(false);
 
   useEffect(() => {
     cargarFases();
   }, [competenciaId, token]);
+
+  const cargarFases = async () => {
+    if (!competenciaId || !token) return;
+    setLoadingFases(true);
+    setErrorFases(null);
+    try {
+      const res = await fetch(`https://overtime-ddyl.onrender.com/api/fases?competencia=${competenciaId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al cargar fases');
+      setFases(data);
+    } catch (e) {
+      setErrorFases(e.message);
+    } finally {
+      setLoadingFases(false);
+    }
+  };
+
+  const cargarParticipaciones = async (faseId) => {
+    if (!faseId || !token) return;
+    setLoadingParticipaciones(true);
+    try {
+      const res = await fetch(`https://overtime-ddyl.onrender.com/api/participaciones?fase=${faseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setParticipaciones(data);
+    } catch (e) {
+      console.error('Error al cargar participaciones:', e);
+      setParticipaciones([]);
+    } finally {
+      setLoadingParticipaciones(false);
+    }
+  };
+
+  const seleccionarFase = (faseId) => {
+    setFaseSeleccionada(faseId);
+    cargarParticipaciones(faseId);
+  };
 
   const eliminarFase = async (id) => {
     if (!window.confirm('¿Eliminar esta fase? Esta acción es irreversible.')) return;
@@ -46,11 +70,10 @@ export default function SeccionFasesCompetencia({ competenciaId, token }) {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al eliminar fase');
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar fase');
       await cargarFases();
+      if (faseSeleccionada === id) setFaseSeleccionada(null);
     } catch (e) {
       alert(e.message);
     }
@@ -92,18 +115,17 @@ export default function SeccionFasesCompetencia({ competenciaId, token }) {
     <section className="mb-6">
       <h3 className="text-xl font-semibold mb-2">Fases de la Competencia</h3>
 
-      {loading && <p>Cargando fases...</p>}
-      {error && <p className="text-red-600 mb-2">{error}</p>}
+      {loadingFases && <p>Cargando fases...</p>}
+      {errorFases && <p className="text-red-600 mb-2">{errorFases}</p>}
+      {!loadingFases && fases.length === 0 && <p className="text-gray-600 mb-2">No hay fases cargadas.</p>}
 
-      {!loading && fases.length === 0 && <p className="text-gray-600 mb-2">No hay fases cargadas.</p>}
-
-      {!loading && fases.length > 0 && (
+      {!loadingFases && fases.length > 0 && (
         <ul className="mb-4 border rounded max-h-48 overflow-auto">
           {fases.map((fase) => (
             <li
               key={fase._id}
               className="flex justify-between items-center border-b px-2 py-1 last:border-b-0 hover:bg-gray-100 cursor-pointer"
-              onClick={() => setFaseSeleccionada(fase._id)} // ✅ ABRIR MODAL
+              onClick={() => seleccionarFase(fase._id)}
             >
               <div>
                 <strong>{fase.nombre}</strong> ({fase.tipo})
@@ -113,7 +135,7 @@ export default function SeccionFasesCompetencia({ competenciaId, token }) {
               <button
                 className="btn-danger text-xs"
                 onClick={(e) => {
-                  e.stopPropagation(); // ⛔ evitar que se abra el modal al hacer clic en "Eliminar"
+                  e.stopPropagation();
                   eliminarFase(fase._id);
                 }}
               >
@@ -186,14 +208,44 @@ export default function SeccionFasesCompetencia({ competenciaId, token }) {
       </div>
 
       {faseSeleccionada && (
-        <ModalFaseAdmin
-          faseId={faseSeleccionada}
-          token={token}
-          onClose={() => {
-            setFaseSeleccionada(null);
-            cargarFases(); // recargar al cerrar el modal
-          }}
-        />
+        <div className="mt-6">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="font-semibold">Participantes de la fase</h4>
+            <button onClick={() => setFaseSeleccionada(null)} className="text-blue-600 underline text-sm">Cerrar</button>
+          </div>
+          {loadingParticipaciones ? (
+            <p>Cargando participantes...</p>
+          ) : participaciones.length === 0 ? (
+            <p className="text-gray-600">No hay equipos participando en esta fase.</p>
+          ) : (
+            <table className="w-full text-sm border rounded">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-2 py-1 text-left">Equipo</th>
+                  <th className="px-2 py-1 text-center">PJ</th>
+                  <th className="px-2 py-1 text-center">PG</th>
+                  <th className="px-2 py-1 text-center">PE</th>
+                  <th className="px-2 py-1 text-center">PP</th>
+                  <th className="px-2 py-1 text-center">Pts</th>
+                  <th className="px-2 py-1 text-center">+/-</th>
+                </tr>
+              </thead>
+              <tbody>
+                {participaciones.map((p) => (
+                  <tr key={p._id} className="border-t hover:bg-gray-50">
+                    <td className="px-2 py-1">{p.equipoCompetenciaData?.equipoData?.nombre || 'Equipo'}</td>
+                    <td className="px-2 py-1 text-center">{p.partidosJugados}</td>
+                    <td className="px-2 py-1 text-center">{p.partidosGanados}</td>
+                    <td className="px-2 py-1 text-center">{p.partidosEmpatados}</td>
+                    <td className="px-2 py-1 text-center">{p.partidosPerdidos}</td>
+                    <td className="px-2 py-1 text-center font-semibold">{p.puntos}</td>
+                    <td className="px-2 py-1 text-center">{p.diferenciaPuntos}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
     </section>
   );

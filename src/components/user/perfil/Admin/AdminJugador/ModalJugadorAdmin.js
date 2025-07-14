@@ -1,26 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
+import { useAuth } from '../../../../../context/AuthContext';
+import SeccionDatosJugador from './SeccionDatosJugador';
+import SeccionAdministradoresJugador from './SeccionAdministradoresJugador';
+import SeccionContratosJugador from './SeccionContratosJugadorEquipos';
 import SolicitudesContrato from '../solicitudesContrato';
-import TarjetaJugadorEquipo from '../../../../modals/ModalJugador/tarjetaJugadorEquipo';
-import { useAuth } from '../../../../../context/AuthContext.js';
 
-function calcularEdad(fechaNacimiento) {
-  if (!fechaNacimiento) return 'N/A';
-  const nacimiento = new Date(fechaNacimiento);
-  if (isNaN(nacimiento.getTime())) return 'N/A';
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - nacimiento.getFullYear();
-  const m = hoy.getMonth() - nacimiento.getMonth();
-  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
-    edad--;
-  }
-  return edad;
-}
+const SECCIONES = [
+  { key: 'datos', label: 'Datos' },
+  { key: 'admins', label: 'Administradores' },
+  { key: 'contratos', label: 'Contratos' },
+];
 
 export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
   const { user } = useAuth();
   const usuarioId = user?.uid;
   const rol = user?.rol;
+
+  const [seccionActiva, setSeccionActiva] = useState('datos');
   const [jugador, setJugador] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(false);
@@ -74,7 +71,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
     cargarDatos();
   }, [cargarDatos]);
 
-  const handleInput = e => {
+  const handleInput = (e) => {
     const { name, value } = e.target;
     setFormData(f => ({ ...f, [name]: value }));
   };
@@ -98,26 +95,25 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
     }
   };
 
-    const agregarAdmin = async () => {
+  const agregarAdmin = async () => {
     if (!nuevoAdmin.trim()) return;
     try {
-        const res = await fetch(`https://overtime-ddyl.onrender.com/api/jugadores/${jugadorId}/administradores`, {
+      const res = await fetch(`https://overtime-ddyl.onrender.com/api/jugadores/${jugadorId}/administradores`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ email: nuevoAdmin.trim() }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'No se pudo agregar administrador');
-
-        setAdmins(Array.isArray(data.administradores) ? data.administradores : []);        setNuevoAdmin('');
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo agregar administrador');
+      setAdmins(Array.isArray(data.administradores) ? data.administradores : []);
+      setNuevoAdmin('');
     } catch (err) {
-        alert(`Error al agregar administrador: ${err.message}`);
+      alert(`Error al agregar administrador: ${err.message}`);
     }
-    };
+  };
 
   const quitarAdmin = async (adminId) => {
     if (!window.confirm('¿Quitar este administrador?')) return;
@@ -141,137 +137,63 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
 
   return (
     <ModalBase title={`Jugador: ${jugador.nombre}`} onClose={onClose}>
-      {/* Datos básicos */}
-      <section className="mb-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold">Datos Básicos</h3>
-          {editando ? (
-            <div className="space-x-2">
-              <button className="btn-primary" onClick={guardarCambios}>Guardar</button>
-              <button className="btn-secondary" onClick={() => setEditando(false)}>Cancelar</button>
-            </div>
-          ) : (
-            <button className="btn-primary" onClick={() => setEditando(true)}>Editar</button>
-          )}
-        </div>
+      {/* Navegación */}
+      <div className="flex gap-2 mb-4 border-b pb-2">
+        {SECCIONES.map(({ key, label }) => (
+          <button
+            key={key}
+            className={`px-3 py-1 rounded font-semibold ${seccionActiva === key ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            onClick={() => setSeccionActiva(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {!editando ? (
-          <ul className="mt-2 space-y-1">
-            <li><strong>Alias:</strong> {jugador.alias || '-'}</li>
-            <li><strong>Fecha de nacimiento:</strong> {jugador.fechaNacimiento?.substring(0, 10) || '-'}</li>
-            <li><strong>Edad:</strong> {calcularEdad(jugador.fechaNacimiento)}</li>
-            <li><strong>Nacionalidad:</strong> {jugador.nacionalidad || '-'}</li>
-            <li><strong>Género:</strong> {jugador.genero}</li>
-            <li>
-              <strong>Foto:</strong>{' '}
-              {jugador.foto ? (
-                <a href={jugador.foto} target="_blank" rel="noopener noreferrer">ver</a>
-              ) : (
-                'No disponible'
-              )}
-            </li>
-          </ul>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-            {['nombre', 'alias', 'fechaNacimiento', 'nacionalidad', 'foto'].map(field => (
-              <div key={field}>
-                <label className="font-medium capitalize">{field}</label>
-                <input className="input" name={field} value={formData[field]} onChange={handleInput} />
-              </div>
-            ))}
-            <div>
-              <label className="font-medium">Género</label>
-              <select className="input" name="genero" value={formData.genero} onChange={handleInput}>
-                <option value="masculino">Masculino</option>
-                <option value="femenino">Femenino</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </section>
+      {/* Contenido de sección activa */}
+      {seccionActiva === 'datos' && (
+        <SeccionDatosJugador
+          jugador={jugador}
+          formData={formData}
+          editando={editando}
+          onChange={handleInput}
+          onGuardar={guardarCambios}
+          onCancelar={() => setEditando(false)}
+          onEditar={() => setEditando(true)}
+        />
+      )}
 
-    {/* Administradores */}
-    <section className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Administradores</h3>
+      {seccionActiva === 'admins' && (
+        <SeccionAdministradoresJugador
+          admins={admins}
+          nuevoAdmin={nuevoAdmin}
+          onNuevoAdminChange={(e) => setNuevoAdmin(e.target.value)}
+          onAgregarAdmin={agregarAdmin}
+          onQuitarAdmin={quitarAdmin}
+        />
+      )}
 
-        {Array.isArray(admins) && admins.length > 0 ? (
-            <ul className="mb-2 max-h-40 overflow-auto border rounded">
-            {admins.map((a) => (
-                <li
-                key={a._id || a}
-                className="flex justify-between items-center border-b py-1 px-2 last:border-b-0"
-                >
-                <span>{a.email || a.nombre || a}</span>
-                <button
-                    className="btn-danger text-xs"
-                    onClick={() => quitarAdmin(a._id || a)}
-                >
-                    Quitar
-                </button>
-                </li>
-            ))}
-            </ul>
-        ) : (
-            <p className="mb-2 text-gray-600">No hay administradores asignados.</p>
-        )}
+      {seccionActiva === 'contratos' && (
+        <>
+          <SeccionContratosJugador
+            contratos={contratos}
+            jugadorId={jugadorId}
+            token={token}
+            usuarioId={usuarioId}
+            rol={rol}
+          />
 
-        <div className="flex gap-2">
-            <input
-            type="email"
-            placeholder="Email del nuevo admin"
-            value={nuevoAdmin}
-            onChange={(e) => setNuevoAdmin(e.target.value)}
-            className="input flex-grow"
+          <div className="mt-6 border-t pt-4">
+            <h4 className="text-lg font-semibold mb-2">Solicitudes de Contrato</h4>
+            <SolicitudesContrato
+              jugadorId={jugadorId}
+              token={token}
+              usuarioId={usuarioId}
+              rol={rol}
             />
-            <button
-            className="btn-primary"
-            onClick={agregarAdmin}
-            disabled={!nuevoAdmin.trim()}
-            >
-            Agregar
-            </button>
-        </div>
-    </section>
-
-      {/* Contratos */}
-      <section className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Relaciones jugador-equipo</h3>
-
-        {contratos.length === 0 ? (
-          <p>No tiene relaciones activas.</p>
-        ) : (
-          <div className="overflow-x-auto border rounded-md">
-            <table className="min-w-full divide-y divide-gray-300 text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">Equipo</th>
-                  <th className="px-3 py-2 text-left font-medium">Rol</th>
-                  <th className="px-3 py-2 text-left font-medium">Número</th>
-                  <th className="px-3 py-2 text-left font-medium">Estado</th>
-                  <th className="px-3 py-2 text-left font-medium">Desde</th>
-                  <th className="px-3 py-2 text-left font-medium">Hasta</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {contratos.map(c => (
-                  <tr key={c._id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2">{c.equipo?.nombre || 'Equipo desconocido'}</td>
-                    <td className="px-3 py-2">{c.rol || '-'}</td>
-                    <td className="px-3 py-2">{c.numero || '-'}</td>
-                    <td className="px-3 py-2 capitalize">{c.estado || '-'}</td>
-                    <td className="px-3 py-2">{c.desde ? c.desde.substring(0, 10) : '-'}</td>
-                    <td className="px-3 py-2">{c.hasta ? c.hasta.substring(0, 10) : '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
-        )}
-      </section>
-
-      <SolicitudesContrato jugadorId={jugadorId} token={token} usuarioId={usuarioId} rol={rol} />
-
+        </>
+      )}
     </ModalBase>
   );
 }
