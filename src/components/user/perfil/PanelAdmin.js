@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import ModalJugadorAdmin from './Admin/AdminJugador/ModalJugadorAdmin';
 import ModalEquipoAdmin from './Admin/AdminEquipo/ModalEquipoAdmin';
 import ModalOrganizacionAdmin from './Admin/AdminOrganizacion/ModalOrganizacionAdmin';
-import ModalPartidoAdmin from './Admin/AdminPartido/ModalPartidoAdmin';
 import ModalCompetenciaAdmin from './Admin/AdminCompetencia/ModalCompetenciaAdmin';
 
 export default function PanelAdmin() {
@@ -14,13 +13,10 @@ export default function PanelAdmin() {
   const [jugadores, setJugadores] = useState([]);
   const [equipos, setEquipos] = useState([]);
   const [organizaciones, setOrganizaciones] = useState([]);
-  const [partidos, setPartidos] = useState([]);
   const [competencias, setCompetencias] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados para modales, guardamos el id seleccionado y el tipo para saber qué modal mostrar
   const [modalActivo, setModalActivo] = useState({ tipo: null, id: null });
-
   const [token, setToken] = useState(null);
 
   const esAdminGlobal = user?.rol === 'admin';
@@ -29,28 +25,21 @@ export default function PanelAdmin() {
     if (!user) return;
 
     const cargarDatos = async () => {
+      setLoading(true);
       try {
         const t = await user.getIdToken();
         setToken(t);
 
-        const [
-          resJugadores,
-          resEquipos,
-          resOrganizaciones,
-          resPartidos,
-          resCompetencias,
-        ] = await Promise.all([
+        const [resJugadores, resEquipos, resOrganizaciones, resCompetencias] = await Promise.all([
           fetch('https://overtime-ddyl.onrender.com/api/jugadores/admin', { headers: { Authorization: `Bearer ${t}` } }),
           fetch('https://overtime-ddyl.onrender.com/api/equipos/admin', { headers: { Authorization: `Bearer ${t}` } }),
           fetch('https://overtime-ddyl.onrender.com/api/organizaciones/admin', { headers: { Authorization: `Bearer ${t}` } }),
-          fetch('https://overtime-ddyl.onrender.com/api/partidos/admin', { headers: { Authorization: `Bearer ${t}` } }),
           fetch('https://overtime-ddyl.onrender.com/api/competencias/admin', { headers: { Authorization: `Bearer ${t}` } }),
         ]);
 
         setJugadores(await resJugadores.json());
         setEquipos(await resEquipos.json());
         setOrganizaciones(await resOrganizaciones.json());
-        setPartidos(await resPartidos.json());
         setCompetencias(await resCompetencias.json());
       } catch (error) {
         console.error('Error al cargar datos administrativos:', error);
@@ -62,15 +51,8 @@ export default function PanelAdmin() {
     cargarDatos();
   }, [user]);
 
-  // Abrir modal
-  const abrirModal = (tipo, id) => {
-    setModalActivo({ tipo, id });
-  };
-
-  // Cerrar modal
-  const cerrarModal = () => {
-    setModalActivo({ tipo: null, id: null });
-  };
+  const abrirModal = (tipo, id) => setModalActivo({ tipo, id });
+  const cerrarModal = () => setModalActivo({ tipo: null, id: null });
 
   return (
     <div className="max-w-6xl mx-auto mt-12 p-4 sm:p-8 bg-white rounded-xl shadow-lg relative">
@@ -102,28 +84,20 @@ export default function PanelAdmin() {
             onItemClick={(id) => abrirModal('equipo', id)}
           />
           <SeccionEntidadConAgregar
+            titulo="Competencias en control"
+            items={competencias}
+            tipo="competencia"
+            rutaAgregar="/agregar-competencia"
+            esAdminGlobal={esAdminGlobal}
+            onItemClick={(id) => abrirModal('competencia', id)}
+          />
+          <SeccionEntidadConAgregar
             titulo="Organizaciones en control"
             items={organizaciones}
             tipo="organizacion"
             rutaAgregar="/agregar-organizacion"
             esAdminGlobal={esAdminGlobal}
             onItemClick={(id) => abrirModal('organizacion', id)}
-          />
-          <SeccionEntidadConAgregar
-            titulo="Partidos en control"
-            items={partidos}
-            tipo="partido"
-            rutaAgregar="/agregar-partido"
-            esAdminGlobal={esAdminGlobal}
-            onItemClick={(id) => abrirModal('partido', id)}
-          />
-          <SeccionEntidadConAgregar
-            titulo="Administrador de Competencias"
-            items={competencias}
-            tipo="competencia"
-            rutaAgregar="/agregar-competencia"
-            esAdminGlobal={esAdminGlobal}
-            onItemClick={(id) => abrirModal('competencia', id)}
           />
         </div>
       )}
@@ -137,9 +111,6 @@ export default function PanelAdmin() {
       )}
       {modalActivo.tipo === 'organizacion' && modalActivo.id && token && (
         <ModalOrganizacionAdmin organizacionId={modalActivo.id} token={token} onClose={cerrarModal} />
-      )}
-      {modalActivo.tipo === 'partido' && modalActivo.id && token && (
-        <ModalPartidoAdmin partidoId={modalActivo.id} token={token} onClose={cerrarModal} />
       )}
       {modalActivo.tipo === 'competencia' && modalActivo.id && token && (
         <ModalCompetenciaAdmin competenciaId={modalActivo.id} token={token} onClose={cerrarModal} />

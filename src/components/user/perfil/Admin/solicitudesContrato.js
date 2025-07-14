@@ -11,26 +11,26 @@ export default function SolicitudesContrato({ jugadorId, equipoId, token, usuari
   const esDesdeJugador = !!jugadorId;
   const apiBase = 'https://overtime-ddyl.onrender.com/api';
 
-  // --- Cargar solicitudes filtradas por jugadorId o equipoId
+  // --- Cargar solicitudes que el usuario puede ver (filtradas en backend)
   useEffect(() => {
     if (!token) return;
     setLoading(true);
 
-    fetch(`${apiBase}/jugador-equipo/solicitudes`, {
-      headers: { Authorization: `Bearer ${token}` },
+  fetch(`${apiBase}/jugador-equipo/solicitudes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        setSolicitudes(data);
+      } else {
+        setError('La respuesta del servidor no es una lista válida');
+        setSolicitudes([]);
+      }
     })
-      .then(res => res.json())
-      .then(data => {
-        const filtradas = data.filter(s => {
-          if (jugadorId) return s.jugador?._id === jugadorId;
-          if (equipoId) return s.equipo?._id === equipoId;
-          return false;
-        });
-        setSolicitudes(filtradas);
-      })
-      .catch(() => setError('Error cargando solicitudes'))
-      .finally(() => setLoading(false));
-  }, [jugadorId, equipoId, token]);
+    .catch(() => setError('Error cargando solicitudes'))
+    .finally(() => setLoading(false));
+  }, [token]);
 
   // --- Cargar opciones para nueva solicitud (equipos si viene de jugador, jugadores si viene de equipo)
   useEffect(() => {
