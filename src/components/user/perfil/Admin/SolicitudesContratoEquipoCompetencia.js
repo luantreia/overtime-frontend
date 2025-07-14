@@ -12,25 +12,32 @@ export default function SolicitudesContratoEquipoCompetencia({ equipoId, compete
   const apiBase = 'https://overtime-ddyl.onrender.com/api';
 
   // --- Cargar solicitudes que el usuario puede ver (filtradas en backend)
-  useEffect(() => {
+    useEffect(() => {
     if (!token) return;
     setLoading(true);
 
-    fetch(`${apiBase}/equipos-competencia/solicitudes`, {
-      headers: { Authorization: `Bearer ${token}` },
+    // Construir URL con query param si hay equipoId o competenciaId
+    const query = equipoId
+        ? `?equipo=${equipoId}`
+        : competenciaId
+        ? `?competencia=${competenciaId}`
+        : '';
+
+    fetch(`${apiBase}/equipos-competencia/solicitudes${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => res.json())
-      .then(data => {
+        .then(res => res.json())
+        .then(data => {
         if (Array.isArray(data)) {
-          setSolicitudes(data);
+            setSolicitudes(data);
         } else {
-          setError('La respuesta del servidor no es una lista válida');
-          setSolicitudes([]);
+            setError('La respuesta del servidor no es una lista válida');
+            setSolicitudes([]);
         }
-      })
-      .catch(() => setError('Error cargando solicitudes'))
-      .finally(() => setLoading(false));
-  }, [token]);
+        })
+        .catch(() => setError('Error cargando solicitudes'))
+        .finally(() => setLoading(false));
+    }, [token, equipoId, competenciaId]);
 
   // --- Cargar opciones para nueva solicitud (competencias si es equipo, equipos si es competencia)
   useEffect(() => {
