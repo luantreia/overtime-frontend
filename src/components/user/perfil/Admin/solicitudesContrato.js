@@ -16,7 +16,13 @@ export default function SolicitudesContrato({ jugadorId, equipoId, token, usuari
     if (!token) return;
     setLoading(true);
 
-  fetch(`${apiBase}/jugador-equipo/solicitudes`, {
+    const query = equipoId
+    ? `?equipo=${equipoId}`
+    : jugadorId
+    ? `?jugador=${jugadorId}`
+    : '';
+
+  fetch(`${apiBase}/jugador-equipo/solicitudes${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
     .then(res => res.json())

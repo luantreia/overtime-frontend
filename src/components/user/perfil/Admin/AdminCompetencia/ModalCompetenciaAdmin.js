@@ -78,7 +78,7 @@ export default function ModalCompetenciaAdmin({ competenciaId, token, onClose })
             <div className="mt-6 border-t pt-4">
                 <h4 className="text-lg font-semibold mb-2">Solicitudes de Contrato</h4>
                 <SolicitudesContratoEquipoCompetencia
-                  competenciaIdId={competenciaId}
+                  competenciaId={competenciaId}
                   token={token}
                   usuarioId={usuarioId}
                   rol={rol}
