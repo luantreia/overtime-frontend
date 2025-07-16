@@ -1,26 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ModalBase from '../../ModalBase';
 import SeccionFasesTemporada from './SeccionFasesTemporada';
 import SeccionEquiposTemporada from './SeccionEquiposTemporada';
 
+const SECCIONES = [
+  { key: 'fases', label: 'Fases' },
+  { key: 'equipos', label: 'Equipos' },
+  // puedes agregar más secciones aquí si quieres
+];
+
 export default function ModalTemporadaAdmin({ competenciaId, temporada, onClose, token }) {
+  const [seccionActiva, setSeccionActiva] = useState('fases');
+
   if (!temporada) return null;
 
   return (
     <ModalBase open={!!temporada} onClose={onClose} title={`Temporada: ${temporada?.nombre}`}>
-      <div className="space-y-6">
-        {/* Info básica de la temporada */}
-        <div>
-          <h4 className="font-semibold">Descripción</h4>
-          <p>{temporada.descripcion || '-'}</p>
-          <p className="text-sm text-gray-500">
-            {temporada.fechaInicio?.slice(0, 10)} - {temporada.fechaFin?.slice(0, 10)}
-          </p>
-        </div>
+      {/* Navegación */}
+      <div className="flex gap-2 mb-4 border-b pb-2">
+        {SECCIONES.map(({ key, label }) => (
+          <button
+            key={key}
+            className={`px-3 py-1 rounded font-semibold ${
+              seccionActiva === key ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
+            }`}
+            onClick={() => setSeccionActiva(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* Sección para gestionar fases */}
-        <SeccionFasesTemporada temporada temporadaId={temporada._id} token={token} />
-        <SeccionEquiposTemporada competenciaId={competenciaId} temporada={temporada} temporadaId={temporada._id} token={token} />
+      {/* Contenido por sección */}
+      <div className="space-y-6">
+        {seccionActiva === 'fases' && (
+          <SeccionFasesTemporada temporada={temporada} temporadaId={temporada._id} token={token} />
+        )}
+
+        {seccionActiva === 'equipos' && (
+          <SeccionEquiposTemporada competenciaId={competenciaId} temporada={temporada} temporadaId={temporada._id} token={token} />
+        )}
       </div>
     </ModalBase>
   );
