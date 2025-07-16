@@ -5,13 +5,15 @@ import SeccionAdministradoresCompetencia from './SeccionAdministradoresCompetenc
 import SeccionFasesCompetencia from './SeccionFasesCompetencia';
 import SeccionContratosEquiposCompetencia from './SeccionContratosEquiposCompetencia';
 import SolicitudesContratoEquipoCompetencia from '../SolicitudesContratoEquipoCompetencia';
+import SeccionTemporadasCompetencia from './SeccionTemporadasCompetencia';
+
 import { useAuth } from '../../../../../context/AuthContext.js';
 
 const SECCIONES = [
   { key: 'datos', label: 'Datos' },
   { key: 'admins', label: 'Administradores' },
   { key: 'equipos', label: 'Equipos' },
-  { key: 'fases', label: 'Fases' },
+  { key: 'temporadas', label: 'Temporadas' },
 ];
 
 export default function ModalCompetenciaAdmin({ competenciaId, token, onClose }) {
@@ -87,9 +89,10 @@ export default function ModalCompetenciaAdmin({ competenciaId, token, onClose })
             
           </>          
         )}
-        {seccionActiva === 'fases' && (
-          <SeccionFasesCompetencia competenciaId={competencia._id} token={token} />
+        {seccionActiva === 'temporadas' && (
+          < SeccionTemporadasCompetencia competenciaId={competencia._id} token={token} />
         )}
+
       </div>
     </ModalBase>
   );

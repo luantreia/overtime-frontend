@@ -13,8 +13,8 @@ export default function SolicitudesContratoEquipoCompetencia({ equipoId, compete
 
   // --- Cargar solicitudes que el usuario puede ver (filtradas en backend)
     useEffect(() => {
-    if (!token) return;
-    setLoading(true);
+        if (!token) return;
+        setLoading(true);
 
     // Construir URL con query param si hay equipoId o competenciaId
     const query = equipoId

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import SolicitudesContratoEquipoCompetencia from '../SolicitudesContratoEquipoCompetencia';
 
 export default function SeccionContratosEquipoCompetencias({ equipoId, token, usuarioId }) {
   const [participaciones, setParticipaciones] = useState([]);

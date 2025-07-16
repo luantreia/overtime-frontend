@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 
+const estados = ['programada', 'en_curso', 'finalizada', 'cancelada', 'en_creacion'];
+const tipos = ['liga', 'torneo', 'otro'];
+
 export default function SeccionDatosCompetencia({ competencia, token, onUpdate }) {
   const [editando, setEditando] = useState(false);
   const [formData, setFormData] = useState({
     nombre: competencia.nombre || '',
-    estado: competencia.estado || '',
-    pais: competencia.pais || '',
-    tipo: competencia.tipo || '',
+    estado: competencia.estado || 'en_creacion',
+    tipo: competencia.tipo || 'otro',
   });
 
   const handleInput = (e) => {
@@ -50,17 +52,30 @@ export default function SeccionDatosCompetencia({ competencia, token, onUpdate }
         <ul className="mt-2 space-y-1">
           <li><strong>Nombre:</strong> {competencia.nombre}</li>
           <li><strong>Estado:</strong> {competencia.estado || '-'}</li>
-          <li><strong>País:</strong> {competencia.pais || '-'}</li>
           <li><strong>Tipo:</strong> {competencia.tipo || '-'}</li>
         </ul>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-          {['nombre', 'estado', 'pais', 'tipo'].map(field => (
-            <div key={field}>
-              <label className="font-medium capitalize">{field}</label>
-              <input className="input" name={field} value={formData[field]} onChange={handleInput} />
-            </div>
-          ))}
+          <div>
+            <label className="font-medium capitalize">Nombre</label>
+            <input className="input" name="nombre" value={formData.nombre} onChange={handleInput} />
+          </div>
+          <div>
+            <label className="font-medium capitalize">Estado</label>
+            <select name="estado" value={formData.estado} onChange={handleInput} className="input">
+              {estados.map(e => (
+                <option key={e} value={e}>{e}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="font-medium capitalize">Tipo</label>
+            <select name="tipo" value={formData.tipo} onChange={handleInput} className="input">
+              {tipos.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
     </section>
