@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ModalBase from '../../ModalBase';
 import SeccionFasesTemporada from './SeccionFasesTemporada';
-import SeccionEquiposTemporada from './SeccionEquiposTemporada';
+import SeccionParticipacionTemporada from './SeccionParticipacionTemporada';
 
 const SECCIONES = [
   { key: 'fases', label: 'Fases' },
@@ -38,7 +38,7 @@ export default function ModalTemporadaAdmin({ competenciaId, temporada, onClose,
         )}
 
         {seccionActiva === 'equipos' && (
-          <SeccionEquiposTemporada competenciaId={competenciaId} temporada={temporada} temporadaId={temporada._id} token={token} />
+          <SeccionParticipacionTemporada temporadaId={temporada._id} token={token} />
         )}
       </div>
     </ModalBase>

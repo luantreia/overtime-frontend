@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import ModalPartidoFaseAdmin from '../AdminPartidoFases/ModalPartidoAdmin';
+import ModalPartidoAdmin from '../AdminPartidoFases/ModalPartidoAdmin';
 
 export default function SeccionPartidosFase({ faseId, token }) {
   const [partidos, setPartidos] = useState([]);
@@ -251,7 +251,7 @@ export default function SeccionPartidosFase({ faseId, token }) {
       </ul>
 
     {mostrarFormulario && (
-    <ModalPartidoFaseAdmin
+    <ModalPartidoAdmin
         partido={partidoSeleccionado}
         faseId={faseId}
         token={token}

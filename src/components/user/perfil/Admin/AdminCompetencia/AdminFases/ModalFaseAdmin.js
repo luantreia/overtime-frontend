@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../../ModalBase';
 import SeccionDatosFase from './SeccionDatosFase';
-import SeccionEquiposFase from './SeccionEquiposFase';
+import SeccionParticipacionFase from './SeccionParticipacionFase';
 import SeccionPartidosFase from './SeccionPartidosFase';  // Importa estos componentes
 import SeccionTablaFase from './SeccionTablaFase';
 
@@ -64,7 +64,7 @@ export default function ModalFaseAdmin({ fase: faseProp, temporadaId, token, onC
           />
         )}
         {seccionActiva === 'equipos' && fase?._id && (
-          <SeccionEquiposFase
+          <SeccionParticipacionFase
             faseId={fase._id}
             temporadaId={temporadaId}
             token={token}

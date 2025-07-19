@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ModalBase from '../../ModalBase';
-import SeccionDatosPartido from './SeccionDatosDatosPartido';
+import SeccionDatosPartido from './SeccionDatosPartido';
 import SeccionEquiposPartido from './SeccionEquiposPartido';
 
 const SECCIONES = [
