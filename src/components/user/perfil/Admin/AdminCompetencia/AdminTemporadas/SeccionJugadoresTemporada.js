@@ -1,131 +1,151 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function SeccionJugadoresTemporada({ participacion, token }) {
-  const [jugadores, setJugadores] = useState([]);
-  const [jugadoresEquipo, setJugadoresEquipo] = useState([]);
-
-  const [jugadorEquipoId, setJugadorEquipoId] = useState('');
-  const [estado, setEstado] = useState('aceptado');
+  const [jugadoresTemporada, setJugadoresTemporada] = useState([]);
+  const [jugadorEquipoSeleccionado, setJugadorEquipoSeleccionado] = useState('');
+  const [estado, setEstado] = useState('activo');
   const [rol, setRol] = useState('jugador');
-
-  const [editando, setEditando] = useState(null);
+  const [jugadorTemporadaEditando, setJugadorTemporadaEditando] = useState(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
+  const [contratosJugadorEquipo, setContratosJugadorEquipo] = useState([]);
 
   useEffect(() => {
-    if (!token || !participacion?.equipo?._id) return;
+    if (!token || !participacion?._id) return;
     cargarJugadoresTemporada();
-    cargarJugadorEquipoDisponibles();
+    cargarContratosJugadorEquipo();
   }, [token, participacion]);
 
+  // Carga jugadores temporada filtrados por participacionTemporada
   const cargarJugadoresTemporada = () => {
-    fetch(`https://overtime-ddyl.onrender.com/api/jugador-temporada?participacion=${participacion?.equipo?._id}`, {
+    fetch(`https://overtime-ddyl.onrender.com/api/jugador-temporada?participacionTemporada=${participacion._id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
-      .then(setJugadores)
-      .catch(() => setError('Error al cargar jugadores de temporada'));
+      .then(setJugadoresTemporada)
+      .catch(err => {
+        console.error('Error al cargar jugadores temporada', err);
+        setError('No se pudieron cargar los jugadores de la temporada');
+      });
   };
 
-  const cargarJugadorEquipoDisponibles = () => {
-    fetch(`https://overtime-ddyl.onrender.com/api/jugador-equipo?equipo=${participacion?.equipo?._id}`, {
+  // Carga contratos jugadorEquipo filtrados por equipo de la participacion
+  const cargarContratosJugadorEquipo = () => {
+    if (!participacion.equipo?._id) return;
+    fetch(`https://overtime-ddyl.onrender.com/api/jugador-equipo?equipo=${participacion.equipo._id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
-      .then(setJugadoresEquipo)
-      .catch(() => setError('Error al cargar jugadores disponibles'));
+      .then(setContratosJugadorEquipo)
+      .catch(err => {
+        console.error('Error al cargar contratos jugador-equipo', err);
+        setError('No se pudieron cargar los contratos jugador-equipo');
+      });
   };
 
   const resetFormulario = () => {
-    setJugadorEquipoId('');
+    setJugadorEquipoSeleccionado('');
     setEstado('aceptado');
     setRol('jugador');
-    setEditando(null);
+    setJugadorTemporadaEditando(null);
     setMostrarFormulario(false);
+    setError('');
+    setMensaje('');
   };
 
-  const guardarJugador = async () => {
+  const enviarJugadorTemporada = async () => {
     setMensaje('');
     setError('');
-    if (!jugadorEquipoId || !participacion?.equipo?._id) {
+
+    if (!jugadorEquipoSeleccionado) {
       setError('Debe seleccionar un jugador');
       return;
     }
 
-    const payload = {
-      jugadorEquipo: jugadorEquipoId,
-      participacionTemporada: participacion?.equipo?._id,
-      estado,
-      rol,
-      token,
-    };
-
-    const url = `https://overtime-ddyl.onrender.com/api/jugador-temporada` + (editando ? `/${editando._id}` : '');
-    const method = editando ? 'PUT' : 'POST';
+    const url = 'https://overtime-ddyl.onrender.com/api/jugador-temporada' + (jugadorTemporadaEditando ? `/${jugadorTemporadaEditando._id}` : '');
+    const metodo = jugadorTemporadaEditando ? 'PUT' : 'POST';
 
     try {
       const res = await fetch(url, {
-        method,
+        method: metodo,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          jugadorEquipo: jugadorEquipoSeleccionado,
+          participacionTemporada: participacion._id,
+          estado,
+          rol,
+        }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error al guardar');
 
-      setMensaje(editando ? 'Jugador actualizado' : 'Jugador agregado');
-      cargarJugadoresTemporada();
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar jugador temporada');
+
+      setMensaje(jugadorTemporadaEditando ? 'Jugador actualizado' : 'Jugador agregado');
       resetFormulario();
+      cargarJugadoresTemporada();
     } catch (err) {
+      console.error(err);
       setError(err.message);
     }
   };
 
-  const eliminarJugador = async (id) => {
-    if (!window.confirm('¿Eliminar jugador de la temporada?')) return;
+  const eliminarJugadorTemporada = async (id) => {
+    if (!window.confirm('¿Está seguro de eliminar este jugador?')) return;
+
     try {
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/jugador-temporada/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Error al eliminar');
+
+      if (!res.ok) throw new Error('Error al eliminar jugador');
+
+      setMensaje('Jugador eliminado');
       cargarJugadoresTemporada();
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+      setError('Error eliminando jugador');
     }
   };
 
-  const iniciarEdicion = (j) => {
-    setJugadorEquipoId(j.jugadorEquipo?._id || j.jugadorEquipo);
-    setEstado(j.estado || 'aceptado');
-    setRol(j.rol || 'jugador');
-    setEditando(j);
+  const iniciarEdicion = (jt) => {
+    setJugadorTemporadaEditando(jt);
+    setJugadorEquipoSeleccionado(jt.jugadorEquipo?._id || jt.jugadorEquipo);
+    setEstado(jt.estado || 'aceptado');
+    setRol(jt.rol || 'jugador');
     setMostrarFormulario(true);
   };
 
   return (
-    <div className="mt-4 border rounded p-4 bg-gray-50">
-      <h3 className="font-semibold mb-2">Jugadores de la Temporada</h3>
+    <div className="p-3 border rounded bg-gray-50 shadow-inner">
+      <h3 className="text-lg font-semibold mb-3">Jugadores en esta Participación</h3>
 
       {mensaje && <div className="text-green-600 mb-2">{mensaje}</div>}
       {error && <div className="text-red-600 mb-2">{error}</div>}
 
-      <ul className="space-y-1 mb-4">
-        {jugadores.map((j) => (
-          <li key={j._id} className="flex justify-between items-center border p-2 rounded">
-            <span>
-              {j.jugador?.nombre || 'Jugador'} – <span className="italic text-sm">{j.rol}</span> ({j.estado})
-            </span>
+      <ul className="mb-4 space-y-1 max-h-72 overflow-auto">
+        {jugadoresTemporada.length === 0 && <li className="text-gray-500">No hay jugadores registrados.</li>}
+        {jugadoresTemporada.map((jt) => (
+          <li key={jt._id} className="p-2 border rounded bg-white flex justify-between items-center">
+            <div>
+              <strong>{jt.jugadorEquipo?.jugador?.nombre || 'Jugador'}</strong> - <em>{jt.rol}</em> ({jt.estado})
+            </div>
             <div className="flex gap-2">
-              <button onClick={() => iniciarEdicion(j)} className="text-sm bg-blue-500 text-white px-2 py-1 rounded">
+              <button
+                className="text-sm px-2 py-1 bg-blue-500 text-white rounded"
+                onClick={() => iniciarEdicion(jt)}
+              >
                 Editar
               </button>
-              <button onClick={() => eliminarJugador(j._id)} className="text-sm bg-red-500 text-white px-2 py-1 rounded">
+              <button
+                className="text-sm px-2 py-1 bg-red-600 text-white rounded"
+                onClick={() => eliminarJugadorTemporada(jt._id)}
+              >
                 Eliminar
               </button>
             </div>
@@ -139,32 +159,32 @@ export default function SeccionJugadoresTemporada({ participacion, token }) {
             resetFormulario();
             setMostrarFormulario(true);
           }}
-          className="bg-blue-600 text-white px-3 py-1 rounded"
+          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Agregar jugador
         </button>
       )}
 
       {mostrarFormulario && (
-        <div className="mt-4 border-t pt-4">
-          <div className="mb-3">
-            <label className="block font-medium mb-1">Jugador Equipo</label>
+        <div className="border-t pt-4">
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Jugador</label>
             <select
               className="w-full border p-2 rounded"
-              value={jugadorEquipoId}
-              onChange={(e) => setJugadorEquipoId(e.target.value)}
+              value={jugadorEquipoSeleccionado}
+              onChange={(e) => setJugadorEquipoSeleccionado(e.target.value)}
             >
-              <option value="">Seleccionar jugador</option>
-              {jugadoresEquipo.map((je) => (
-                <option key={je._id} value={je._id}>
-                  {je.nombreJugadorEquipo || `${je.jugador?.nombre} - ${je.equipo?.nombre}`}
+              <option value="">Seleccione un jugador</option>
+              {contratosJugadorEquipo.map((ce) => (
+                <option key={ce._id} value={ce._id}>
+                  {ce.jugador?.nombre || 'Jugador'} {ce.estado === 'activo' ? '' : `(${ce.estado})`}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="mb-3">
-            <label className="block font-medium mb-1">Estado</label>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Estado</label>
             <select
               className="w-full border p-2 rounded"
               value={estado}
@@ -176,8 +196,8 @@ export default function SeccionJugadoresTemporada({ participacion, token }) {
             </select>
           </div>
 
-          <div className="mb-3">
-            <label className="block font-medium mb-1">Rol</label>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Rol</label>
             <select
               className="w-full border p-2 rounded"
               value={rol}
@@ -185,19 +205,20 @@ export default function SeccionJugadoresTemporada({ participacion, token }) {
             >
               <option value="jugador">Jugador</option>
               <option value="entrenador">Entrenador</option>
+              {/* Agrega más roles si los tienes */}
             </select>
           </div>
 
           <div className="flex gap-2">
             <button
-              onClick={guardarJugador}
-              className="bg-green-600 text-white px-3 py-1 rounded"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              onClick={enviarJugadorTemporada}
             >
-              {editando ? 'Actualizar' : 'Agregar'}
+              {jugadorTemporadaEditando ? 'Actualizar' : 'Agregar'}
             </button>
             <button
+              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
               onClick={resetFormulario}
-              className="bg-gray-400 text-white px-3 py-1 rounded"
             >
               Cancelar
             </button>
