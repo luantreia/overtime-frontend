@@ -92,7 +92,7 @@ export default function SeccionTablaFase({ fase, token }) {
                 {filas.map((p, idx) => (
                   <tr key={p._id}>
                     <td>{idx + 1}</td>
-                    <td>{p.participacionTemporada?.equipoCompetencia?.equipo?.nombre || 'Sin nombre'}</td>
+                    <td>{p.participacionTemporada?.equipo?.nombre || 'Sin nombre'}</td>
                     <td>{p.puntos}</td>
                     <td>{p.partidosJugados}</td>
                     <td>{p.partidosGanados}</td>

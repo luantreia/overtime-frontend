@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import SeccionJugadoresTemporada from './SeccionJugadoresTemporada'; // Asegurate de importar correctamente
+import SeccionJugadoresTemporada from './SeccionJugadoresTemporada';
 
 export default function SeccionParticipacionTemporada({ temporadaId, token }) {
   const [participaciones, setParticipaciones] = useState([]);
   const [equipos, setEquipos] = useState([]);
-  const [equipoSeleccionado, setEquipoSeleccionado] = useState('');
+  const [equiposSeleccionados, setEquiposSeleccionados] = useState([]);
   const [estado, setEstado] = useState('activo');
   const [observaciones, setObservaciones] = useState('');
-  const [participacionEditando, setParticipacionEditando] = useState(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarJugadores, setMostrarJugadores] = useState(null);
   const [mensaje, setMensaje] = useState('');
@@ -44,64 +43,73 @@ export default function SeccionParticipacionTemporada({ temporadaId, token }) {
   };
 
   const resetFormulario = () => {
-    setEquipoSeleccionado('');
+    setEquiposSeleccionados([]);
     setEstado('activo');
     setObservaciones('');
-    setParticipacionEditando(null);
     setMostrarFormulario(false);
   };
 
-  const enviarParticipacion = async () => {
+  const toggleSeleccion = (equipoId) => {
+    setEquiposSeleccionados((prev) =>
+      prev.includes(equipoId)
+        ? prev.filter((id) => id !== equipoId)
+        : [...prev, equipoId]
+    );
+  };
+
+  const enviarParticipaciones = async () => {
     setMensaje('');
     setError('');
 
-    if (!equipoSeleccionado || !temporadaId) {
-      setError('Debe seleccionar un equipo y una temporada');
+    if (equiposSeleccionados.length === 0 || !temporadaId) {
+      setError('Debe seleccionar al menos un equipo');
       return;
     }
 
-    const url = 'https://overtime-ddyl.onrender.com/api/participacion-temporada' + (participacionEditando ? `/${participacionEditando._id}` : '');
-    const metodo = participacionEditando ? 'PUT' : 'POST';
+    let errores = [];
+    for (const equipoId of equiposSeleccionados) {
+      try {
+        const res = await fetch('https://overtime-ddyl.onrender.com/api/participacion-temporada', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            equipo: equipoId,
+            temporada: temporadaId,
+            estado,
+            observaciones,
+          }),
+        });
 
-    try {
-      const res = await fetch(url, {
-        method: metodo,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          equipo: equipoSeleccionado,
-          temporada: temporadaId,
-          estado,
-          observaciones,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || 'Error al guardar participación');
-
-      setMensaje(participacionEditando ? 'Participación actualizada' : 'Participación creada');
-      resetFormulario();
-      cargarParticipaciones();
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
+        const data = await res.json();
+        if (!res.ok) {
+          errores.push(`${equipoId}: ${data.message || 'error'}`);
+        }
+      } catch (err) {
+        errores.push(`${equipoId}: ${err.message}`);
+      }
     }
+
+    if (errores.length) {
+      setError('Algunos equipos no se pudieron registrar:\n' + errores.join('\n'));
+    } else {
+      setMensaje('Participaciones registradas correctamente');
+    }
+
+    resetFormulario();
+    cargarParticipaciones();
   };
 
   const eliminarParticipacion = async (id) => {
     if (!window.confirm('¿Está seguro de eliminar esta participación?')) return;
-
     try {
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/participacion-temporada/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error('Error al eliminar participación');
-
       setMensaje('Participación eliminada');
       cargarParticipaciones();
     } catch (err) {
@@ -110,35 +118,19 @@ export default function SeccionParticipacionTemporada({ temporadaId, token }) {
     }
   };
 
-  const iniciarEdicion = (p) => {
-    setParticipacionEditando(p);
-    setEquipoSeleccionado(p.equipo?._id || p.equipo);
-    setEstado(p.estado || 'activo');
-    setObservaciones(p.observaciones || '');
-    setMostrarFormulario(true);
-    setMostrarJugadores(null);
-  };
-
   return (
     <div className="p-4 border rounded bg-white shadow">
       <h2 className="text-xl font-bold mb-4">Participaciones de Temporada</h2>
 
-      {mensaje && <div className="text-green-600 mb-2">{mensaje}</div>}
-      {error && <div className="text-red-600 mb-2">{error}</div>}
+      {mensaje && <div className="text-green-600 mb-2 whitespace-pre-wrap">{mensaje}</div>}
+      {error && <div className="text-red-600 mb-2 whitespace-pre-wrap">{error}</div>}
 
-      {/* Lista */}
       <ul className="mb-4 space-y-2">
         {participaciones.map((p) => (
           <li key={p._id} className="p-2 border rounded">
             <div className="flex justify-between items-center">
               <span>{p.equipo?.nombre || 'Equipo'} ({p.estado})</span>
               <div className="flex gap-2">
-                <button
-                  className="text-sm px-2 py-1 bg-blue-500 text-white rounded"
-                  onClick={() => iniciarEdicion(p)}
-                >
-                  Editar
-                </button>
                 <button
                   className="text-sm px-2 py-1 bg-red-500 text-white rounded"
                   onClick={() => eliminarParticipacion(p._id)}
@@ -171,31 +163,31 @@ export default function SeccionParticipacionTemporada({ temporadaId, token }) {
           }}
           className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Agregar participación
+          Agregar equipos a la temporada
         </button>
       )}
 
-      {/* Formulario */}
+      {/* Formulario múltiple */}
       {mostrarFormulario && (
         <div className="border-t pt-4">
           <div className="mb-4">
-            <label className="block mb-1 font-medium">Equipo</label>
-            <select
-              className="w-full border p-2 rounded"
-              value={equipoSeleccionado}
-              onChange={(e) => setEquipoSeleccionado(e.target.value)}
-            >
-              <option value="">Seleccione un equipo</option>
+            <label className="block font-medium mb-1">Seleccione uno o más equipos</label>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-auto border p-2 rounded">
               {equipos.map((equipo) => (
-                <option key={equipo._id} value={equipo._id}>
+                <label key={equipo._id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={equiposSeleccionados.includes(equipo._id)}
+                    onChange={() => toggleSeleccion(equipo._id)}
+                  />
                   {equipo.nombre}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
 
           <div className="mb-4">
-            <label className="block mb-1 font-medium">Estado</label>
+            <label className="block font-medium mb-1">Estado</label>
             <select
               className="w-full border p-2 rounded"
               value={estado}
@@ -208,7 +200,7 @@ export default function SeccionParticipacionTemporada({ temporadaId, token }) {
           </div>
 
           <div className="mb-4">
-            <label className="block mb-1 font-medium">Observaciones</label>
+            <label className="block font-medium mb-1">Observaciones</label>
             <textarea
               className="w-full border p-2 rounded"
               rows={3}
@@ -220,9 +212,9 @@ export default function SeccionParticipacionTemporada({ temporadaId, token }) {
           <div className="flex gap-2">
             <button
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              onClick={enviarParticipacion}
+              onClick={enviarParticipaciones}
             >
-              {participacionEditando ? 'Actualizar' : 'Registrar'}
+              Registrar participaciones
             </button>
             <button
               className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"

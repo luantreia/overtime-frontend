@@ -2,9 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import SeccionDatosCompetencia from './SeccionDatosCompetencia';
 import SeccionAdministradoresCompetencia from './SeccionAdministradoresCompetencia';
-import SeccionFasesCompetencia from './SeccionFasesCompetencia';
-import SeccionContratosEquiposCompetencia from './SeccionContratosEquiposCompetencia';
-import SolicitudesContratoEquipoCompetencia from '../SolicitudesContratoEquipoCompetencia';
+import SeccionEquiposCompetencia from './SeccionEquiposCompetencia.js';
 import SeccionTemporadasCompetencia from './SeccionTemporadasCompetencia';
 
 import { useAuth } from '../../../../../context/AuthContext.js';
@@ -74,20 +72,8 @@ export default function ModalCompetenciaAdmin({ competenciaId, token, onClose })
           <SeccionAdministradoresCompetencia competenciaId={competenciaId} token={token} />
         )}
         {seccionActiva === 'equipos' && (
-          <>
-            <SeccionContratosEquiposCompetencia competenciaId={competencia._id} token={token} />
-
-            <div className="mt-6 border-t pt-4">
-                <h4 className="text-lg font-semibold mb-2">Solicitudes de Contrato</h4>
-                <SolicitudesContratoEquipoCompetencia
-                  competenciaId={competenciaId}
-                  token={token}
-                  usuarioId={usuarioId}
-                  rol={rol}
-                />
-            </div>          
-            
-          </>          
+            <SeccionEquiposCompetencia competenciaId={competencia._id} token={token} />
+        
         )}
         {seccionActiva === 'temporadas' && (
           < SeccionTemporadasCompetencia competenciaId={competencia._id} token={token} />

@@ -1,21 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import SeccionJugadoresFase from './SeccionJugadoresFase'; // asegurate que esta ruta sea correcta
+import SeccionJugadoresFase from './SeccionJugadoresFase';
 
 export default function SeccionParticipacionFase({ faseId, temporadaId, token }) {
   const [participaciones, setParticipaciones] = useState([]);
   const [participacionesTemporada, setParticipacionesTemporada] = useState([]);
-
-  const [formularioVisible, setFormularioVisible] = useState(false);
-  const [editando, setEditando] = useState(null);
-  const [mostrarJugadores, setMostrarJugadores] = useState(null);
-
-  const [participacionTemporadaId, setParticipacionTemporadaId] = useState('');
-  const [grupo, setGrupo] = useState('');
-  const [division, setDivision] = useState('');
-  const [puntos, setPuntos] = useState(0);
-
+  const [formVisible, setFormVisible] = useState(false);
+  const [form, setForm] = useState({ grupo: '', division: '', puntos: 0 });
+  const [seleccionados, setSeleccionados] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
+  const [jugadoresAbiertosId, setJugadoresAbiertosId] = useState(null);
 
   useEffect(() => {
     if (faseId) cargarParticipacionesFase();
@@ -31,10 +25,11 @@ export default function SeccionParticipacionFase({ faseId, temporadaId, token })
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/participacion-fase?fase=${faseId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error('Error cargando participaciones en fase');
       const data = await res.json();
       setParticipaciones(data);
     } catch (err) {
-      setError('Error al cargar participaciones en fase');
+      setError(err.message);
     }
   };
 
@@ -44,37 +39,49 @@ export default function SeccionParticipacionFase({ faseId, temporadaId, token })
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/participacion-temporada?temporada=${temporadaId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error('Error cargando participaciones de temporada');
       const data = await res.json();
       setParticipacionesTemporada(data);
     } catch (err) {
-      setError('Error al cargar participaciones de temporada');
+      setError(err.message);
     }
   };
 
   const resetFormulario = () => {
-    setParticipacionTemporadaId('');
-    setGrupo('');
-    setDivision('');
-    setPuntos(0);
-    setEditando(null);
-    setFormularioVisible(false);
-    setMostrarJugadores(null);
+    setForm({ grupo: '', division: '', puntos: 0 });
+    setSeleccionados([]);
+    setFormVisible(false);
+    setJugadoresAbiertosId(null);
+    setMensaje('');
+    setError('');
   };
 
-  const enviarParticipacion = async () => {
-    if (!participacionTemporadaId || !faseId) {
-      setError('Debe seleccionar una participación de temporada y tener fase definida');
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({
+      ...f,
+      [name]: name === 'puntos' ? Number(value) : value,
+    }));
+  };
+
+  const toggleSeleccion = (id) => {
+    setSeleccionados((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    );
+  };
+
+  const enviarParticipacionesMultiples = async () => {
+    if (seleccionados.length === 0) {
+      setError('Debe seleccionar al menos un equipo');
       return;
     }
 
-    try {
-      setError('');
-      setMensaje('');
-      const url = `https://overtime-ddyl.onrender.com/api/participacion-fase${editando ? `/${editando._id}` : ''}`;
-      const metodo = editando ? 'PUT' : 'POST';
+    setError('');
+    setMensaje('');
 
-      const res = await fetch(url, {
-        method: metodo,
+    const solicitudes = seleccionados.map((participacionTemporadaId) =>
+      fetch(`https://overtime-ddyl.onrender.com/api/participacion-fase`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -82,89 +89,98 @@ export default function SeccionParticipacionFase({ faseId, temporadaId, token })
         body: JSON.stringify({
           fase: faseId,
           participacionTemporada: participacionTemporadaId,
-          grupo: grupo || null,
-          division: division || null,
-          puntos: Number(puntos) || 0,
+          grupo: form.grupo || null,
+          division: form.division || null,
+          puntos: form.puntos || 0,
         }),
-      });
+      })
+    );
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error al guardar participación');
+    try {
+      const resultados = await Promise.all(solicitudes);
+      const errores = [];
 
-      setMensaje(editando ? 'Participación actualizada' : 'Participación creada');
-      resetFormulario();
-      cargarParticipacionesFase();
+      for (let res of resultados) {
+        const data = await res.json();
+        if (!res.ok) errores.push(data.message || 'Error desconocido');
+      }
+
+      if (errores.length) {
+        setError('Algunas participaciones no se pudieron registrar:\n' + errores.join('\n'));
+      } else {
+        setMensaje('Participaciones registradas con éxito');
+        resetFormulario();
+        cargarParticipacionesFase();
+      }
     } catch (err) {
-      setError(err.message);
+      setError('Error al registrar participaciones');
     }
   };
 
   const eliminarParticipacion = async (id) => {
-    if (!window.confirm('¿Está seguro de eliminar esta participación?')) return;
-
+    if (!window.confirm('¿Eliminar esta participación?')) return;
     try {
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/participacion-fase/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error('Error al eliminar participación');
-
       setMensaje('Participación eliminada');
       cargarParticipacionesFase();
+      if (jugadoresAbiertosId === id) setJugadoresAbiertosId(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const iniciarEdicion = (p) => {
-    setEditando(p);
-    setParticipacionTemporadaId(p.participacionTemporada?._id || p.participacionTemporada);
-    setGrupo(p.grupo || '');
-    setDivision(p.division || '');
-    setPuntos(p.puntos || 0);
-    setFormularioVisible(true);
-    setMostrarJugadores(null);
+  const toggleJugadores = (id) => {
+    setJugadoresAbiertosId((prev) => (prev === id ? null : id));
   };
 
+  const participacionesRegistradas = participaciones.map((p) => p.participacionTemporada?._id);
+  const disponibles = participacionesTemporada.filter(
+    (pt) => !participacionesRegistradas.includes(pt._id)
+  );
+
   return (
-    <div className="p-4 border rounded bg-white shadow">
-      <h2 className="text-xl font-bold mb-4">Participaciones en Fase</h2>
+    <section className="p-6 bg-white rounded shadow-md">
+      <h2 className="text-2xl font-semibold mb-5">Participaciones en Fase</h2>
 
-      {mensaje && <div className="text-green-600 mb-2">{mensaje}</div>}
-      {error && <div className="text-red-600 mb-2">{error}</div>}
+      {mensaje && <p className="mb-3 text-green-600 font-medium whitespace-pre-line">{mensaje}</p>}
+      {error && <p className="mb-3 text-red-600 font-medium whitespace-pre-line">{error}</p>}
 
-      {/* Lista de Participaciones */}
-      <ul className="mb-4 space-y-2">
+      {/* Lista participaciones */}
+      <ul className="space-y-3 mb-6">
         {participaciones.map((p) => (
-          <li key={p._id} className="p-2 border rounded">
+          <li
+            key={p._id}
+            className="p-4 border rounded cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => toggleJugadores(p._id)}
+          >
             <div className="flex justify-between items-center">
-              <span>
-                {p.participacionTemporada?.equipo?.nombre || 'Equipo'} — Grupo: {p.grupo || '-'} — División: {p.division || '-'} — Puntos: {p.puntos}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  className="text-sm px-2 py-1 bg-blue-500 text-white rounded"
-                  onClick={() => iniciarEdicion(p)}
-                >
-                  Editar
-                </button>
-                <button
-                  className="text-sm px-2 py-1 bg-red-500 text-white rounded"
-                  onClick={() => eliminarParticipacion(p._id)}
-                >
-                  Eliminar
-                </button>
-                <button
-                  className="text-sm px-2 py-1 bg-gray-600 text-white rounded"
-                  onClick={() => setMostrarJugadores(p._id === mostrarJugadores ? null : p._id)}
-                >
-                  Jugadores
-                </button>
+              <div>
+                <p className="font-semibold text-lg">
+                  {p.participacionTemporada?.equipo?.nombre || 'Equipo sin nombre'}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Grupo: <span className="font-medium">{p.grupo || '-'}</span> | División:{' '}
+                  <span className="font-medium">{p.division || '-'}</span> | Puntos:{' '}
+                  <span className="font-medium">{p.puntos ?? 0}</span>
+                </p>
               </div>
+              <button
+                className="text-sm px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  eliminarParticipacion(p._id);
+                }}
+              >
+                Eliminar
+              </button>
             </div>
-            {mostrarJugadores === p._id && (
-              <div className="mt-2">
+
+            {jugadoresAbiertosId === p._id && (
+              <div className="mt-4 border-t pt-4">
                 <SeccionJugadoresFase participacion={p} token={token} />
               </div>
             )}
@@ -172,85 +188,92 @@ export default function SeccionParticipacionFase({ faseId, temporadaId, token })
         ))}
       </ul>
 
-      {!formularioVisible && (
+      {/* Botón para abrir formulario */}
+      {!formVisible && (
         <button
-          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          onClick={() => {
-            resetFormulario();
-            setFormularioVisible(true);
-          }}
+          className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          onClick={() => setFormVisible(true)}
         >
-          Agregar participación
+          Registrar Participaciones
         </button>
       )}
 
-      {formularioVisible && (
-        <div className="border-t pt-4">
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Participación Temporada</label>
-            <select
-              className="w-full border p-2 rounded"
-              value={participacionTemporadaId}
-              onChange={(e) => setParticipacionTemporadaId(e.target.value)}
-            >
-              <option value="">Seleccione un equipo</option>
-              {participacionesTemporada.map((pt) => (
-                <option key={pt._id} value={pt._id}>
-                  {pt.equipo?.nombre || 'Sin nombre'} — Estado: {pt.estado}
-                </option>
+      {/* Formulario de registro múltiple */}
+      {formVisible && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            enviarParticipacionesMultiples();
+          }}
+          className="border-t pt-6 space-y-4 max-w-xl"
+        >
+          <fieldset>
+            <legend className="font-medium mb-2">Seleccionar equipos:</legend>
+            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-auto border p-2 rounded">
+              {disponibles.map((pt) => (
+                <label key={pt._id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={seleccionados.includes(pt._id)}
+                    onChange={() => toggleSeleccion(pt._id)}
+                  />
+                  {pt.equipo?.nombre || 'Sin nombre'} ({pt.estado})
+                </label>
               ))}
-            </select>
-          </div>
+            </div>
+          </fieldset>
 
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Grupo</label>
+          <div>
+            <label className="block font-medium mb-1">Grupo</label>
             <input
+              name="grupo"
               type="text"
-              className="w-full border p-2 rounded"
-              value={grupo}
-              onChange={(e) => setGrupo(e.target.value)}
-              placeholder="Ej: A, B, 1"
+              className="w-full border rounded px-3 py-2"
+              value={form.grupo}
+              onChange={handleInputChange}
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">División</label>
+          <div>
+            <label className="block font-medium mb-1">División</label>
             <input
+              name="division"
               type="text"
-              className="w-full border p-2 rounded"
-              value={division}
-              onChange={(e) => setDivision(e.target.value)}
-              placeholder="Ej: Primera, Segunda"
+              className="w-full border rounded px-3 py-2"
+              value={form.division}
+              onChange={handleInputChange}
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Puntos</label>
+          <div>
+            <label className="block font-medium mb-1">Puntos</label>
             <input
+              name="puntos"
               type="number"
-              className="w-full border p-2 rounded"
-              value={puntos}
-              onChange={(e) => setPuntos(e.target.value)}
               min={0}
+              className="w-full border rounded px-3 py-2"
+              value={form.puntos}
+              onChange={handleInputChange}
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              onClick={enviarParticipacion}
+              type="submit"
+              className="flex-grow bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded"
             >
-              {editando ? 'Actualizar' : 'Registrar'}
+              Registrar
             </button>
             <button
-              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              type="button"
               onClick={resetFormulario}
+              className="flex-grow bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 rounded"
             >
               Cancelar
             </button>
           </div>
-        </div>
+        </form>
       )}
-    </div>
+    </section>
   );
 }

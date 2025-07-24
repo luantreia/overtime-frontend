@@ -180,6 +180,36 @@ export default function SeccionPartidosFase({ faseId, token }) {
     }
   };
 
+  const generarFixture = async () => {
+  if (!window.confirm('¿Estás seguro de que querés generar el fixture automáticamente?')) return;
+
+  try {
+    setLoading(true);
+    const res = await fetch(`https://overtime-ddyl.onrender.com/api/fases/${faseId}/generar-fixture`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error || 'Error al generar el fixture');
+    }
+
+    const data = await res.json();
+    alert(`${data.mensaje} (${data.cantidad} partidos generados)`);
+    await cargarPartidos();
+  } catch (err) {
+    console.error('Error generando fixture:', err);
+    alert(`Error: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   // Eliminar partido
   const eliminarPartido = async (id) => {
     if (!window.confirm('¿Querés eliminar este partido?')) return;
@@ -209,9 +239,14 @@ export default function SeccionPartidosFase({ faseId, token }) {
       <h3 className="text-xl font-semibold mb-4">Partidos de la Fase</h3>
 
       {!mostrarFormulario && (
-        <button className="btn btn-primary mb-4" onClick={abrirFormularioNuevo}>
-          Crear partido
-        </button>
+        <div className="flex gap-4 mb-4">
+          <button className="btn btn-primary" onClick={abrirFormularioNuevo}>
+            Crear partido
+          </button>
+          <button className="btn btn-secondary" onClick={generarFixture}>
+            Generar Fixture Automático
+          </button>
+        </div>
       )}
 
       {partidos.length === 0 && <p>No hay partidos registrados.</p>}

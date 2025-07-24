@@ -133,7 +133,7 @@ export default function SeccionJugadoresTemporada({ participacion, token }) {
         {jugadoresTemporada.map((jt) => (
           <li key={jt._id} className="p-2 border rounded bg-white flex justify-between items-center">
             <div>
-              <strong>{jt.jugadorEquipo?.jugador?.nombre || 'Jugador'}</strong> - <em>{jt.rol}</em> ({jt.estado})
+              <strong> {jt.jugadorEquipo?.jugador?.alias || jt.jugadorEquipo?.jugador?.nombre}</strong> - <em>{jt.rol}</em> ({jt.estado})
             </div>
             <div className="flex gap-2">
               <button

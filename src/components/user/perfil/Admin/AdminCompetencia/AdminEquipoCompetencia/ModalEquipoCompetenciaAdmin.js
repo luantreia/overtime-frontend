@@ -4,11 +4,12 @@ import { useAuth } from '../../../../../../context/AuthContext.js';
 
 import SeccionContratosJugadorCompetencia from './SeccionContratosJugadorCompetencia.js';
 import SeccionDatosEquipoCompetencia from './SeccionDatosEquipoCompetencia';
-import SeccionContratosEquiposCompetencia from '../SeccionContratosEquiposCompetencia';
+import SeccionParticipacionTemporada from './SeccionParticipacionTemporada';
 
 const SECCIONES = [
   { key: 'datos', label: 'Datos' },
   { key: 'jugadores', label: 'Jugadores' },
+  { key: 'participacion', label: 'Temporadas' },
 ];
 
 export default function ModalEquipoCompetenciaAdmin({ competenciaId, equipoCompetencia, token, onClose, abierto }) {
@@ -60,6 +61,57 @@ export default function ModalEquipoCompetenciaAdmin({ competenciaId, equipoCompe
     }
   }, [abierto, cargarDatos]);
 
+  // Permisos: sólo puede editar/eliminar si es admin o creador
+  const puedeEditarEliminar = (() => {
+    if (!equipoCompetencia) return false;
+    const esAdminEquipo = equipoCompetencia.equipo?.creadoPor === usuarioId || (equipoCompetencia.equipo?.administradores || []).includes(usuarioId);
+    const esAdminCompetencia = equipoCompetencia.competencia?.creadoPor === usuarioId || (equipoCompetencia.competencia?.administradores || []).includes(usuarioId);
+    return esAdminEquipo || esAdminCompetencia || rol === 'admin';
+  })();
+
+  // Actualizar estado
+  const actualizarEstado = async (nuevoEstado) => {
+    try {
+      const res = await fetch(`https://overtime-ddyl.onrender.com/api/equipos-competencia/${equipoCompetencia._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.message || 'Error actualizando estado');
+      }
+      await cargarDatos();
+    } catch (error) {
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  // Eliminar contrato
+  const eliminarContrato = async () => {
+    if (!window.confirm('¿Seguro que querés eliminar este contrato?')) return;
+    try {
+      const res = await fetch(`https://overtime-ddyl.onrender.com/api/equipos-competencia/${equipoCompetencia._id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        alert(json.message || 'Error al eliminar contrato');
+        return;
+      }
+      onClose(); // cerrar modal después de eliminar
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   if (!abierto) return null;
 
   const renderContenido = () => {
@@ -73,7 +125,10 @@ export default function ModalEquipoCompetenciaAdmin({ competenciaId, equipoCompe
           <SeccionDatosEquipoCompetencia
             equipoCompetencia={equipoCompetencia}
             token={token}
-            onUpdate={cargarDatos}
+            onEstadoChange={actualizarEstado}
+            onEliminar={eliminarContrato}
+            puedeEditar={puedeEditarEliminar}
+            puedeEliminar={puedeEditarEliminar}
           />
         );
       case 'jugadores':
@@ -84,14 +139,12 @@ export default function ModalEquipoCompetenciaAdmin({ competenciaId, equipoCompe
             equipoId={equipo._id}
           />
         );
-      case 'contratos':
+      case 'participacion':
         return (
-          <SeccionContratosEquiposCompetencia
+          <SeccionParticipacionTemporada
             equipoId={equipo._id}
-            competenciaId={equipoCompetencia.competencia}
             token={token}
-            usuarioId={usuarioId}
-            rol={rol}
+            competenciaId={competenciaId}
           />
         );
       default:
@@ -101,7 +154,6 @@ export default function ModalEquipoCompetenciaAdmin({ competenciaId, equipoCompe
 
   return (
     <ModalBase open={true} onClose={onClose} title={`Equipo: ${equipo?.nombre || '...'}`}>
-      {/* Navegación entre secciones */}
       <nav className="flex gap-2 mb-4 border-b pb-2">
         {SECCIONES.map(({ key, label }) => (
           <button
@@ -115,8 +167,6 @@ export default function ModalEquipoCompetenciaAdmin({ competenciaId, equipoCompe
           </button>
         ))}
       </nav>
-
-      {/* Contenido de la sección activa */}
       <div className="space-y-4">{renderContenido()}</div>
     </ModalBase>
   );

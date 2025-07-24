@@ -70,18 +70,6 @@ export default function SeccionContratosEquiposCompetencia({ competenciaId, toke
           {equipos.map(renderEquipoItem)}
         </ul>
       )}
-
-      {mostrarModal && equipoSeleccionado && (
-        <ModalEquipoCompetenciaAdmin
-          competenciaId={competenciaId}
-          abierto={mostrarModal}
-          onClose={cerrarModal}
-          equipoCompetencia={equipoSeleccionado}
-          token={token}
-          usuarioId={usuarioId}
-          onUpdate={cargarEquiposCompetencia}
-        />
-      )}
     </section>
   );
 }
