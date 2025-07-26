@@ -120,6 +120,20 @@ export default function PanelAdmin() {
 }
 
 function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlobal, onItemClick }) {
+  const [paginaActual, setPaginaActual] = useState(1);
+  const porPagina = 10;
+
+  const totalPaginas = Math.ceil(items.length / porPagina);
+  const inicio = (paginaActual - 1) * porPagina;
+  const fin = inicio + porPagina;
+  const itemsPagina = items.slice(inicio, fin);
+
+  const cambiarPagina = (nuevaPagina) => {
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+      setPaginaActual(nuevaPagina);
+    }
+  };
+
   if (!items.length) return null;
 
   return (
@@ -134,8 +148,10 @@ function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlo
           <span className="material-icons">add</span>
         </Link>
       </div>
+
+      {/* Lista paginada */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {items.map((item) =>
+        {itemsPagina.map((item) =>
           onItemClick ? (
             <div
               key={item._id}
@@ -162,6 +178,29 @@ function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlo
           )
         )}
       </div>
+
+      {/* Navegación de páginas */}
+      {totalPaginas > 1 && (
+        <div className="mt-4 flex justify-center items-center gap-4">
+          <button
+            onClick={() => cambiarPagina(paginaActual - 1)}
+            disabled={paginaActual === 1}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="text-gray-700 font-medium">
+            Página {paginaActual} de {totalPaginas}
+          </span>
+          <button
+            onClick={() => cambiarPagina(paginaActual + 1)}
+            disabled={paginaActual === totalPaginas}
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
     </div>
   );
 }
