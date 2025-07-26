@@ -45,7 +45,7 @@ export default function SeccionDatosPartido({
   };
 
   const nombreEquipo = (p) =>
-    p?.participacionTemporada?.equipoCompetencia?.equipo?.nombre ||
+    p?.participacionTemporada?.equipo?.nombre ||
     p?.equipo?.nombre || 'Equipo';
 
   const handleChange = (e) => {
