@@ -4,6 +4,7 @@ import SolicitudesContrato from '../solicitudesContrato.js';
 import SolicitudesContratoEquipoCompetencia from '../SolicitudesContratoEquipoCompetencia';
 import { useAuth } from '../../../../../context/AuthContext.js';
 
+import SeccionAmistososEquipo from './SeccionAmistososEquipo';
 import SeccionDatosEquipo from './SeccionDatosEquipo';
 import SeccionAdministradoresEquipo from './SeccionAdministradoresEquipo';
 import SeccionContratosJugadorEquipo from './SeccionContratosJugadoresEquipo.js';
@@ -14,6 +15,7 @@ const SECCIONES = [
   { key: 'admins', label: 'Administradores' },
   { key: 'contratos', label: 'Jugadores' },
   { key: 'competencias', label: 'Competencias' },
+  { key: 'amistosos', label: 'Amistosos' },
 ];
 
 export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
@@ -249,6 +251,9 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
                 />
             </div>
           </>
+        )}
+        {seccionActiva === 'amistosos' && (
+          <SeccionAmistososEquipo equipoId={equipoId} token={token} />
         )}
       </div>
     </ModalBase>
