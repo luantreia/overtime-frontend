@@ -2,16 +2,16 @@ import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import SeccionDatosCompetencia from './SeccionDatosCompetencia';
 import SeccionAdministradoresCompetencia from './SeccionAdministradoresCompetencia';
-import SeccionEquiposCompetencia from './SeccionEquiposCompetencia.js';
 import SeccionTemporadasCompetencia from './SeccionTemporadasCompetencia';
+import SeccionHistoricoEquiposYJugadores from './SeccionHistoricoEquiposYJugadores';
 
 import { useAuth } from '../../../../../context/AuthContext.js';
 
 const SECCIONES = [
   { key: 'datos', label: 'Datos' },
   { key: 'admins', label: 'Administradores' },
-  { key: 'equipos', label: 'Equipos' },
   { key: 'temporadas', label: 'Temporadas' },
+  { key: 'historico', label: 'Histórico Equipos/Jugadores' },
 ];
 
 export default function ModalCompetenciaAdmin({ competenciaId, token, onClose }) {
@@ -71,12 +71,11 @@ export default function ModalCompetenciaAdmin({ competenciaId, token, onClose })
         {seccionActiva === 'admins' && (
           <SeccionAdministradoresCompetencia competenciaId={competenciaId} token={token} />
         )}
-        {seccionActiva === 'equipos' && (
-            <SeccionEquiposCompetencia competenciaId={competencia._id} token={token} />
-        
-        )}
         {seccionActiva === 'temporadas' && (
           < SeccionTemporadasCompetencia competenciaId={competencia._id} token={token} />
+        )}
+        {seccionActiva === 'historico' && (
+          <SeccionHistoricoEquiposYJugadores competenciaId={competencia._id} token={token} />
         )}
 
       </div>
