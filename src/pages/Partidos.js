@@ -9,7 +9,7 @@ export default function Partidos() {
   const [ordenLista, setOrdenLista] = useState('aleatorio');
   const [partidosOrdenados, setPartidosOrdenados] = useState([]);
   const [paginaActual, setPaginaActual] = useState(1);
-  const itemsPorPagina = 10;
+  const itemsPorPagina = 20;
 
   const { token } = useAuth();
   const {
