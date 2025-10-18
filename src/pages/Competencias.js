@@ -32,17 +32,17 @@ export default function Competencias() {
     }
   }, [competencias, orden]);
 
-  const ordenarCompetencias = (lista, criterio) => {
-    switch (criterio) {
-      case 'nombre_asc':
-        return lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      case 'nombre_desc':
-        return lista.sort((a, b) => b.nombre.localeCompare(a.nombre));
-      case 'aleatorio':
-      default:
-        return lista.sort(() => Math.random() - 0.5);
-    }
-  };
+const ordenarCompetencias = (lista, criterio) => {
+  switch (criterio) {
+    case 'nombre_asc':
+      return lista.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    case 'nombre_desc':
+      return lista.sort((a, b) => (b.nombre || '').localeCompare(a.nombre || ''));
+    case 'aleatorio':
+    default:
+      return lista.sort(() => Math.random() - 0.5);
+  }
+};
 
   const indiceUltimo = paginaActual * itemsPorPagina;
   const indiceInicio = indiceUltimo - itemsPorPagina;

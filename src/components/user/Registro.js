@@ -1,10 +1,10 @@
 // src/components/auth/Registro.js
-
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, getIdToken } from 'firebase/auth';
 import { auth } from '../../firebase';
 import ErrorMessage from '../common/FormComponents/ErrorMessage';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const Registro = () => {
   const [nombre, setNombre] = useState('');
@@ -48,7 +48,7 @@ const Registro = () => {
       setNombre('');
       setEmail('');
       setPassword('');
-      setTimeout(() => navigate('/'), 1500); // Redirigir tras 1.5 segundos
+      setTimeout(() => navigate('/'), 1500);
     } catch (err) {
       let displayError = 'Error al registrar la cuenta.';
       if (err.code === 'auth/email-already-in-use') {
@@ -67,64 +67,81 @@ const Registro = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
-      <form onSubmit={handleRegister} className="w-full max-w-sm space-y-6">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Registrar Cuenta</h2>
+    <div
+      className="relative flex items-center justify-center min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: "url('/images/dodgeball-hero.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-black/60" />
 
-        <div>
-          <label htmlFor="nombre" className="sr-only">Nombre</label>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-md p-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl"
+      >
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2">
+          ¡Crea tu cuenta!
+        </h2>
+        <p className="text-center text-gray-500 mb-6">
+          Registrate y comenzá a seguir tus partidos y equipos.
+        </p>
+
+        <form onSubmit={handleRegister} className="space-y-5">
           <input
-            id="nombre"
             type="text"
             placeholder="Nombre"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             required
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
           />
-        </div>
-
-        <div>
-          <label htmlFor="email" className="sr-only">Correo</label>
           <input
-            id="email"
             type="email"
             placeholder="Correo electrónico"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
           />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="sr-only">Contraseña</label>
           <input
-            id="password"
             type="password"
             placeholder="Contraseña"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-500"
           />
+
+          {error && <ErrorMessage mensaje={error} className="mt-2 text-center text-red-600" />}
+          {mensaje && <p className="mt-2 text-center text-green-600 font-medium">{mensaje}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 text-lg font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300'
+            }`}
+          >
+            {loading ? 'Registrando...' : 'Registrarse'}
+          </button>
+        </form>
+
+        <div className="text-center mt-6">
+          <p className="text-gray-600 text-sm">
+            ¿Ya tenés cuenta?{' '}
+            <button
+              onClick={() => navigate('/login')}
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Iniciar sesión
+            </button>
+          </p>
         </div>
-
-        {error && <ErrorMessage mensaje={error} className="mt-4 text-center text-red-600" />}
-        {mensaje && <p className="mt-4 text-center text-green-600 font-medium">{mensaje}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 text-lg font-semibold rounded-md transition-colors duration-200 
-                     focus:outline-none focus:ring-2 focus:ring-offset-2 
-                     ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'}`}
-        >
-          {loading ? 'Registrando...' : 'Registrarse'}
-        </button>
-      </form>
+      </motion.div>
     </div>
   );
 };

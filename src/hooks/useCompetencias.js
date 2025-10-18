@@ -18,7 +18,9 @@ export function useCompetencias() {
     try {
       setLoading(true);
       const data = await obtenerCompetencias();
-      setCompetencias(data);
+      // Filtrar elementos inválidos y asegurar que tengan nombre
+      const dataValida = data.map(c => ({ nombre: '', ...c }));
+      setCompetencias(dataValida);
       setError(null);
     } catch (err) {
       setError(err.message || 'Error al cargar competencias');
@@ -30,7 +32,7 @@ export function useCompetencias() {
   const agregarCompetencia = async (nuevaComp) => {
     try {
       const data = await crearCompetencia(nuevaComp, token);
-      setCompetencias((prev) => [...prev, data]);
+      setCompetencias((prev) => [...prev, { nombre: '', ...data }]);
       return data;
     } catch (err) {
       throw new Error(err.message || 'Error al crear competencia');
@@ -50,7 +52,7 @@ export function useCompetencias() {
     try {
       const actualizada = await actualizarCompetencia(id, datos, token);
       setCompetencias((prev) =>
-        prev.map((comp) => (comp._id === id ? actualizada : comp))
+        prev.map((comp) => (comp._id === id ? { nombre: '', ...actualizada } : comp))
       );
       return actualizada;
     } catch (err) {

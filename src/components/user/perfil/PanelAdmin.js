@@ -59,7 +59,7 @@ export default function PanelAdmin() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Panel de Administración</h1>
         <Link to="/admin/opciones" className="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900">
-          <span className="material-icons">settings</span> Opciones avanzadas
+          <span className="material-icons">road map</span>
         </Link>
       </div>
 
@@ -121,12 +121,19 @@ export default function PanelAdmin() {
 
 function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlobal, onItemClick }) {
   const [paginaActual, setPaginaActual] = useState(1);
+  const [busqueda, setBusqueda] = useState(''); // 🔍 Estado para la búsqueda
   const porPagina = 10;
 
-  const totalPaginas = Math.ceil(items.length / porPagina);
+  // Filtrar items por búsqueda (nombre o título)
+  const itemsFiltrados = items.filter((item) => {
+    const texto = (item.nombre || item.titulo || '').toLowerCase();
+    return texto.includes(busqueda.toLowerCase());
+  });
+
+  const totalPaginas = Math.ceil(itemsFiltrados.length / porPagina);
   const inicio = (paginaActual - 1) * porPagina;
   const fin = inicio + porPagina;
-  const itemsPagina = items.slice(inicio, fin);
+  const itemsPagina = itemsFiltrados.slice(inicio, fin);
 
   const cambiarPagina = (nuevaPagina) => {
     if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
@@ -134,19 +141,33 @@ function SeccionEntidadConAgregar({ titulo, items, tipo, rutaAgregar, esAdminGlo
     }
   };
 
+  // Resetear página si la búsqueda cambia
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [busqueda]);
+
   if (!items.length) return null;
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <h2 className="text-2xl font-semibold text-gray-800">{titulo}</h2>
-        <Link
-          to={rutaAgregar}
-          className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-1.5 rounded-md text-lg font-semibold flex items-center justify-center shadow-md transition-transform transform hover:scale-105"
-          title={`Agregar ${tipo}`}
-        >
-          <span className="material-icons">add</span>
-        </Link>
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="text"
+            placeholder={`Buscar ${tipo}...`}
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="px-3 py-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <Link
+            to={rutaAgregar}
+            className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-1.5 rounded-md text-lg font-semibold flex items-center justify-center shadow-md transition-transform transform hover:scale-105"
+            title={`Agregar ${tipo}`}
+          >
+            <span className="material-icons">add</span>
+          </Link>
+        </div>
       </div>
 
       {/* Lista paginada */}

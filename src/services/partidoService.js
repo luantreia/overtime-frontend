@@ -76,36 +76,41 @@ export async function agregarSet(partidoId, setData, token) {
   console.log('Token enviado:', token);
   console.log('🟡 Datos desde el hook:', setData);
   console.log('🟡 ENVIANDO A BACKEND setData:', JSON.stringify(setData, null, 2));
-  const res = await fetch(`${API_URL}/${partidoId}/sets`, {
+  
+  const payload = {
+    partido: partidoId,
+    ...setData
+  };
+  
+  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(setData),
+    body: JSON.stringify(payload),
   });
 
-  const text = await res.text(); // Leer como texto crudo
-  console.log('Respuesta raw de backend:', text);
-
   if (!res.ok) {
-    try {
-      const errorData = JSON.parse(text);
-      throw new Error(errorData.message || 'Error al crear set');
-    } catch {
-      throw new Error('Error al crear set y respuesta no es JSON');
-    }
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Error al crear set');
   }
 
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null; // Si la respuesta no es JSON, retornamos null para evitar romper
-  }
+  return await res.json();
 }
 
 export async function actualizarSet(partidoId, numeroSet, setData, token) {
-  const res = await fetch(`${API_URL}/${partidoId}/sets/${numeroSet}`, {
+  // Primero obtenemos el set por partido y numeroSet
+  const setsRes = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!setsRes.ok) throw new Error('Error al obtener sets');
+  
+  const sets = await setsRes.json();
+  const set = sets.find(s => s.numeroSet === numeroSet);
+  if (!set) throw new Error('Set no encontrado');
+  
+  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${set._id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -115,13 +120,23 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || 'Error al actualizar set');
+    throw new Error(errorData.error || 'Error al actualizar set');
   }
   return await res.json();
 }
 
 export async function eliminarSet(partidoId, numeroSet, token) {
-  const res = await fetch(`${API_URL}/${partidoId}/sets/${numeroSet}`, {
+  // Primero obtenemos el set por partido y numeroSet
+  const setsRes = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!setsRes.ok) throw new Error('Error al obtener sets');
+  
+  const sets = await setsRes.json();
+  const set = sets.find(s => s.numeroSet === numeroSet);
+  if (!set) throw new Error('Set no encontrado');
+  
+  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${set._id}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -129,23 +144,28 @@ export async function eliminarSet(partidoId, numeroSet, token) {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || 'Error al eliminar set');
+    throw new Error(errorData.error || 'Error al eliminar set');
   }
   return true;
 }
 
-export async function actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet, token) {
-  const res = await fetch(`${API_URL}/${partidoId}/sets/${numeroSet}/stats`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ statsJugadoresSet }),
+// Obtener sets de un partido
+export async function obtenerSetsDePartido(partidoId, token) {
+  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
+    headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || 'Error al actualizar stats del set');
+    throw new Error(errorData.error || 'Error al obtener sets');
   }
   return await res.json();
+}
+
+export async function actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet, token) {
+  // Esta función ahora se maneja a través de las nuevas APIs de estadísticas
+  // Se mantiene por compatibilidad pero se recomienda usar las nuevas funciones
+  console.warn('actualizarStatsSet está deprecated, usar las nuevas APIs de estadísticas');
+  
+  // Por ahora, actualizamos el set con la información básica
+  return await actualizarSet(partidoId, numeroSet, { statsJugadoresSet }, token);
 }

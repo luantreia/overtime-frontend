@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import useEquipos from '../../../../../hooks/useEquipos';
 import { usePartidos } from '../../../../../hooks/usePartidos';
+import ModalPartidoAdmin from '../AdminPartido/ModalPartidoAdmin';
+
+
+
 
 export default function SeccionAmistososEquipo({ equipoId, token }) {
   const [amistosos, setAmistosos] = useState([]);
@@ -8,6 +12,7 @@ export default function SeccionAmistososEquipo({ equipoId, token }) {
   const [modalidad, setModalidad] = useState('');
   const [categoria, setCategoria] = useState('');
   const [equipoVisitante, setEquipoVisitante] = useState('');
+  const [partidoSeleccionado, setPartidoSeleccionado] = useState(null);
 
   const { equipos: equiposGlobales, loading: loadingEquipos } = useEquipos(token);
   const { crearNuevoPartido } = usePartidos(token);
@@ -32,7 +37,7 @@ export default function SeccionAmistososEquipo({ equipoId, token }) {
     const fechaPartido = new Date(fecha);
     const hoy = new Date();
     const estado = fechaPartido < hoy ? 'finalizado' : 'programado';
-
+    
     const nuevoPartido = {
       competencia: null,
       fase: null,
@@ -43,7 +48,7 @@ export default function SeccionAmistososEquipo({ equipoId, token }) {
       equipoVisitante,
       estado,
     };
-
+    
     await crearNuevoPartido(nuevoPartido, (creado) => {
       if (creado) {
         setFecha('');
@@ -150,9 +155,13 @@ export default function SeccionAmistososEquipo({ equipoId, token }) {
         {amistosos.length === 0 ? (
           <p className="text-gray-600">No hay partidos amistosos registrados.</p>
         ) : (
-          <ul className="divide-y">
-            {amistosos.map(partido => (
-              <li key={partido._id} className="py-2">
+        <ul className="divide-y">
+          {amistosos.map(partido => (
+            <li key={partido._id}>
+              <button
+                onClick={() => setPartidoSeleccionado(partido)}
+                className="w-full text-left py-2 hover:bg-gray-100 rounded px-2 transition"
+              >
                 <div className="flex justify-between items-center text-sm">
                   <span>
                     {partido.equipoLocal?.nombre || 'Local'} vs {partido.equipoVisitante?.nombre || 'Visitante'}
@@ -161,11 +170,21 @@ export default function SeccionAmistososEquipo({ equipoId, token }) {
                     {new Date(partido.fecha).toLocaleDateString()} · {partido.modalidad} · {partido.categoria}
                   </span>
                 </div>
-              </li>
-            ))}
-          </ul>
+              </button>
+            </li>
+          ))}
+        </ul>
+
         )}
       </div>
+    {partidoSeleccionado && (
+      <ModalPartidoAdmin
+        partidoId={partidoSeleccionado._id}
+        token={token}
+        onClose={() => setPartidoSeleccionado(null)}
+      />
+    )}
     </div>
+    
   );
 }
