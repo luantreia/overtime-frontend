@@ -250,3 +250,13 @@ export async function actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet
   // Por ahora, actualizamos el set con la información básica
   return await actualizarSet(partidoId, numeroSet, { statsJugadoresSet }, token);
 }
+
+export async function fetchPartidosPorEquipo(equipoId, token) {
+  const res = await fetch(`${API_URL}?equipo=${equipoId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error('Error al cargar partidos del equipo');
+  return await res.json();
+}

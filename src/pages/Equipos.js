@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import TarjetaEquipo from '../components/modals/ModalEquipo/tarjetaequipo.js';
 import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
+import TimelineEquipos from '../components/modals/TimelineEquipos.js';
 import useEquipos from '../hooks/useEquipos.js';
 import { useAuth } from '../context/AuthContext.js';
 
@@ -11,6 +12,7 @@ export default function Equipos() {
   const { equipos, editar, loading, error } = useEquipos(token);
 
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
+  const [mostrarTimeline, setMostrarTimeline] = useState(false);
   const [orden, setOrden] = useState('aleatorio');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [paginaActual, setPaginaActual] = useState(1);
@@ -108,6 +110,16 @@ export default function Equipos() {
             <option value="clubes">Clubes / Otros</option>
           </select>
         </div>
+
+        {/* Botón Timeline */}
+        <div className="flex items-end">
+          <button
+            onClick={() => setMostrarTimeline(true)}
+            className="px-4 py-2 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2"
+          >
+            📅 Ver Timeline Histórico
+          </button>
+        </div>
       </div>
 
       {loading && <p className="text-gray-500">Cargando equipos...</p>}
@@ -131,6 +143,12 @@ export default function Equipos() {
           equipo={equipoSeleccionado}
           onClose={() => setEquipoSeleccionado(null)}
           onEditarEquipo={editar}
+        />
+      )}
+
+      {mostrarTimeline && (
+        <TimelineEquipos
+          onClose={() => setMostrarTimeline(false)}
         />
       )}
     </div>

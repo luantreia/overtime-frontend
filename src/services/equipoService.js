@@ -56,3 +56,13 @@ export async function eliminarEquipo(id, token) {
   if (!res.ok) throw new Error('Error al eliminar equipo');
   return true;
 }
+
+export async function fetchEquiposCompetenciaPorEquipo(equipoId, token) {
+  const res = await fetch(`${API_URL}/equipos-competencia?equipo=${equipoId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error('Error al cargar equipos-competencia');
+  return await res.json();
+}

@@ -32,7 +32,6 @@ export default function SeccionContratosJugadorEquipo({
                 <th className="px-4 py-2">Nombre</th>
                 <th className="px-4 py-2">Edad</th>
                 <th className="px-4 py-2">Rol</th>
-                <th className="px-4 py-2">Número</th>
                 <th className="px-4 py-2">Estado</th>
                 <th className="px-4 py-2">Foto</th>
                 <th className="px-4 py-2">Desde</th>
@@ -56,14 +55,8 @@ export default function SeccionContratosJugadorEquipo({
                     ) : c.rol || '-'}
                   </td>
                   <td className="px-4 py-2">
-                    {editandoContratoId === c._id ? (
-                      <input
-                        type="number"
-                        className="input w-20"
-                        value={contratoEditado.numero || ''}
-                        onChange={e => setContratoEditado({ ...contratoEditado, numero: e.target.value })}
-                      />
-                    ) : c.numero || '-'}
+                    {/* Campo numero eliminado - no existe en el modelo */}
+                    -
                   </td>
                   <td className="px-4 py-2 capitalize">
                     {editandoContratoId === c._id ? (
@@ -73,7 +66,7 @@ export default function SeccionContratosJugadorEquipo({
                         onChange={e => setContratoEditado({ ...contratoEditado, estado: e.target.value })}
                       >
                         <option value="aceptado">Aceptado</option>
-                        <option value="finalizado">Finalizado</option>
+                        <option value="baja">Finalizado</option>
                       </select>
                     ) : c.estado}
                   </td>
@@ -115,7 +108,7 @@ export default function SeccionContratosJugadorEquipo({
                     )}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap">
-                    {['aceptado', 'finalizado'].includes(c.estado) ? (
+                    {['aceptado', 'baja'].includes(c.estado) ? (
                       editandoContratoId === c._id ? (
                         <div className="flex gap-2">
                           <button onClick={() => guardarContratoEditado(c._id)} className="btn-primary btn-xs">Guardar</button>
@@ -127,7 +120,6 @@ export default function SeccionContratosJugadorEquipo({
                             setEditandoContratoId(c._id);
                             setContratoEditado({
                               rol: c.rol || '',
-                              numero: c.numero || '',
                               estado: c.estado,
                               foto: c.foto || '',
                               desde: c.desde?.slice(0, 10) || '',

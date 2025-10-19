@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import ModalEstadisticasCaptura from '../../../../modals/ModalEstadisticas/ModalEstadisticas';
+import GraficoEstadisticasSet from './GraficoEstadisticasSet';
+import EstadisticasGeneralesPartido from './EstadisticasGeneralesPartido';
 import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet, editarPartido } from '../../../../../services/partidoService';
 
 // Error Boundary temporal para debuggear
@@ -57,6 +59,8 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [datosEdicion, setDatosEdicion] = useState({});
+  const [setsExpandidos, setSetsExpandidos] = useState({});
+  const [vistaEstadisticas, setVistaEstadisticas] = useState('generales'); // 'generales' o 'setASet'
 
   useEffect(() => {
     if (!partidoId) return;
@@ -263,24 +267,90 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
             )}
           </div>
 
-          {/* Sets del partido */}
+          {/* Estadísticas del partido */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3">Sets del Partido</h3>
-            {partido.sets && partido.sets.length > 0 ? (
-              <div className="space-y-2">
-                {partido.sets.map(set => (
-                  <div key={set._id} className="flex justify-between items-center bg-white p-3 rounded border">
-                    <div>
-                      <span className="font-medium">Set {set.numeroSet}</span>
-                      <span className="ml-3 text-sm text-gray-600">
-                        Estado: {set.estadoSet} | Ganador: {set.ganadorSet}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Estadísticas del Partido</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setVistaEstadisticas('generales')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    vistaEstadisticas === 'generales'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  📊 Estadísticas Generales
+                </button>
+                <button
+                  onClick={() => setVistaEstadisticas('setASet')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    vistaEstadisticas === 'setASet'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  🎯 Set a Set
+                </button>
               </div>
-            ) : (
-              <p className="text-gray-600">No hay sets creados aún</p>
+            </div>
+            
+            {/* Vista de Estadísticas Generales */}
+            {vistaEstadisticas === 'generales' && (
+              <EstadisticasGeneralesPartido partidoId={partidoId} token={token} />
+            )}
+            
+            {/* Vista Set a Set */}
+            {vistaEstadisticas === 'setASet' && (
+              <div>
+                {partido.sets && partido.sets.length > 0 ? (
+                  <div className="space-y-3">
+                    {partido.sets.map(set => {
+                      const isExpanded = setsExpandidos[set._id];
+                      
+                      return (
+                        <div key={set._id} className="bg-white rounded border">
+                          {/* Header del set */}
+                          <div 
+                            className="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => setSetsExpandidos(prev => ({
+                              ...prev,
+                              [set._id]: !prev[set._id]
+                            }))}
+                          >
+                            <div className="flex items-center gap-2">
+                              <svg 
+                                className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                              <span className="font-medium text-lg">Set {set.numeroSet}</span>
+                              <span className="text-sm text-gray-600">
+                                Estado: <span className="font-medium">{set.estadoSet}</span>
+                              </span>
+                              <span className="text-sm text-gray-600">
+                                Ganador: <span className="font-medium">{set.ganadorSet}</span>
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Estadísticas expandidas */}
+                          {isExpanded && (
+                            <div className="border-t px-3 pb-3">
+                              <GraficoEstadisticasSet setId={set._id} token={token} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">No hay sets creados aún</p>
+                )}
+              </div>
             )}
           </div>
 

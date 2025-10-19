@@ -150,17 +150,20 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
 
   const guardarContratoEditado = async (id) => {
     try {
+      console.log('📤 Enviando datos al backend:', contratoEditado);
+      const bodyData = {
+        ...contratoEditado,
+        rol: contratoEditado.rol || '',
+      };
+      console.log('📦 Body final:', bodyData);
+
       const res = await fetch(`https://overtime-ddyl.onrender.com/api/jugador-equipo/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...contratoEditado,
-          rol: contratoEditado.rol || '',
-          numero: contratoEditado.numero || '',
-        }),
+        body: JSON.stringify(bodyData),
       });
       if (!res.ok) throw new Error('Error al actualizar contrato');
       setEditandoContratoId(null);
