@@ -22,7 +22,14 @@ export function useJugadorEquipo({ equipoId, jugadorId, token} = {}) {
     const fetchRelaciones = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}?${params.toString()}`);
+        const headers = {};
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        
+        const res = await fetch(`${API_URL}?${params.toString()}`, {
+          headers
+        });
         if (!res.ok) throw new Error('Error al obtener relaciones');
         const data = await res.json();
         setRelaciones(data);
@@ -36,7 +43,7 @@ export function useJugadorEquipo({ equipoId, jugadorId, token} = {}) {
     };
 
     fetchRelaciones();
-  }, [equipoId, jugadorId]);
+  }, [equipoId, jugadorId, token]);
 
 
   // Asociar jugador a equipo

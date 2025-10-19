@@ -7,9 +7,10 @@ export function ListaJugadores({
   equipoId,
   estadisticasJugador = [],
   onAsignarJugador,
-  onCambiarEstadistica
+  onCambiarEstadistica,
+  token
 }) {
-  const { relaciones, loading } = useJugadorEquipo({ equipoId });
+  const { relaciones, loading } = useJugadorEquipo({ equipoId, token });
 
   const opcionesSelect = relaciones
     .map(rel => ({

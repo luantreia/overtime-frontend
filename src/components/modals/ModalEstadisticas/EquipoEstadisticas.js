@@ -2,7 +2,7 @@
 import React from 'react';
 import { ListaJugadores } from './ListaJugadores.js';
 
-export default function EquiposEstadisticas({ equipoLocal, equipoVisitante, estadisticas, onCambiarEstadistica, onAsignarJugador }) {
+export default function EquiposEstadisticas({ equipoLocal, equipoVisitante, estadisticas, onCambiarEstadistica, onAsignarJugador, token }) {
   return (
     // Converted inline styles to Tailwind classes
     <div className="flex flex-row flex-wrap justify-between gap-1 mt-1">
@@ -12,6 +12,7 @@ export default function EquiposEstadisticas({ equipoLocal, equipoVisitante, esta
         estadisticasJugador={estadisticas.local}
         onCambiarEstadistica={onCambiarEstadistica}
         onAsignarJugador={(index, jugadorId) => onAsignarJugador('local', index, jugadorId)}
+        token={token}
       />
       <ListaJugadores
         equipoNombre={equipoVisitante.nombre}
@@ -19,6 +20,7 @@ export default function EquiposEstadisticas({ equipoLocal, equipoVisitante, esta
         estadisticasJugador={estadisticas.visitante}
         onCambiarEstadistica={onCambiarEstadistica}
         onAsignarJugador={(index, jugadorId) => onAsignarJugador('visitante', index, jugadorId)}
+        token={token}
       />
     </div>
   );

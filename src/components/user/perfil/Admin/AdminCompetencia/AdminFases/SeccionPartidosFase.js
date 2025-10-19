@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import ModalPartidoAdmin from '../AdminPartidoFases/ModalPartidoAdmin';
+import ModalPartidoAdmin from '../../AdminPartido/ModalPartidoAdmin';
 
 export default function SeccionPartidosFase({ faseId, token }) {
   const [partidos, setPartidos] = useState([]);
@@ -11,6 +11,7 @@ export default function SeccionPartidosFase({ faseId, token }) {
   const [editando, setEditando] = useState(false);
   const [cargandoForm, setCargandoForm] = useState(false);
   const [partidoSeleccionado, setPartidoSeleccionado] = useState(null);
+  const [mostrarModalAdmin, setMostrarModalAdmin] = useState(false);
 
   const [form, setForm] = useState({
     fecha: '',
@@ -121,6 +122,16 @@ export default function SeccionPartidosFase({ faseId, token }) {
     setEditando(false);
     setPartidoSeleccionado(null);
     setError(null);
+  };
+
+  const abrirModalAdmin = (partido) => {
+    setPartidoSeleccionado(partido);
+    setMostrarModalAdmin(true);
+  };
+
+  const cerrarModalAdmin = () => {
+    setMostrarModalAdmin(false);
+    setPartidoSeleccionado(null);
   };
 
   const nombreEquipoDeParticipacion = (p) =>
@@ -270,6 +281,13 @@ export default function SeccionPartidosFase({ faseId, token }) {
               <div className="text-sm text-gray-600">Estado: {p.estado}</div>
             </div>
             <div className="flex gap-2">
+              <button 
+                className="btn btn-sm btn-primary" 
+                onClick={() => abrirModalAdmin(p)}
+                title="Administrar partido - Sets y estadísticas"
+              >
+                Administrar
+              </button>
               <button className="btn btn-sm btn-accent" onClick={() => abrirFormularioEdicion(p)}>
                 Editar
               </button>
@@ -285,15 +303,12 @@ export default function SeccionPartidosFase({ faseId, token }) {
         ))}
       </ul>
 
-    {mostrarFormulario && (
-    <ModalPartidoAdmin
-        partido={partidoSeleccionado}
-        faseId={faseId}
+    {mostrarModalAdmin && partidoSeleccionado && (
+      <ModalPartidoAdmin
+        partidoId={partidoSeleccionado._id}
         token={token}
-        participantes={participantes}
-        onGuardar={cargarPartidos}
-        onCerrar={cancelar}
-    />
+        onClose={cerrarModalAdmin}
+      />
     )}
     </section>
   );

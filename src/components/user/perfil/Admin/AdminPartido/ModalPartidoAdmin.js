@@ -1,8 +1,54 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import ModalEstadisticasCaptura from '../../../../modals/ModalEstadisticas/ModalEstadisticas';
-import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet } from '../../../../../services/partidoService';
-import { editarPartido } from '../../../../../services/partidoService';
+import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet, editarPartido } from '../../../../../services/partidoService';
+
+// Error Boundary temporal para debuggear
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error capturado por ErrorBoundary:', error);
+    console.error('Error info:', errorInfo);
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 border border-red-200 rounded">
+          <h3 className="text-red-800 font-bold">Error en ModalEstadisticasCaptura:</h3>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-red-600">Ver detalles del error</summary>
+            <pre className="mt-2 text-xs text-red-700 whitespace-pre-wrap">
+              {this.state.error && this.state.error.toString()}
+              <br />
+              {this.state.errorInfo && this.state.errorInfo.componentStack}
+            </pre>
+          </details>
+          <button 
+            onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+            className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
   const [partido, setPartido] = useState(null);
@@ -45,14 +91,26 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
     }
   };
 
-  const handleAgregarSet = async (setData) => {
+  const handleAgregarSet = async (partidoIdParam, setData) => {
     try {
-      const nuevoSet = await agregarSet(partidoId, setData, token);
-      setPartido(prev => ({
-
-        ...prev,
-        sets: [...(prev.sets || []), nuevoSet]
-      }));
+      console.log('handleAgregarSet - partidoIdParam:', partidoIdParam);
+      console.log('handleAgregarSet - partidoId:', partidoId);
+      console.log('handleAgregarSet - setData:', setData);
+      console.log('handleAgregarSet - token:', token ? 'presente' : 'ausente');
+      
+      // Usar el partidoId del parámetro o el del estado
+      const idToUse = partidoIdParam || partidoId;
+      const nuevoSet = await agregarSet(idToUse, setData, token);
+      
+      // Actualizar el estado del partido con el nuevo set
+      setPartido(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          sets: [...(prev.sets || []), nuevoSet]
+        };
+      });
+      
       return nuevoSet;
     } catch (err) {
       console.error('Error agregando set:', err);
@@ -112,6 +170,10 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
     await fetchPartidoCompleto();
     return partido;
   };
+
+  const actualizarSetsLocalesCallback = useCallback((sets) => {
+    setPartido(prev => prev ? { ...prev, sets } : null);
+  }, []);
 
   if (loading) return <ModalBase title="Cargando partido..." onClose={onClose}><p>Cargando...</p></ModalBase>;
   if (error) return <ModalBase title="Error" onClose={onClose}><p className="text-red-600">{error}</p></ModalBase>;
@@ -241,18 +303,21 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
       </ModalBase>
 
       {/* Modal de estadísticas */}
-      {modalEstadisticasAbierto && (
-        <ModalEstadisticasCaptura
-          partido={partido}
-          partidoId={partidoId}
-          token={token}
-          onClose={() => setModalEstadisticasAbierto(false)}
-          agregarSetAPartido={handleAgregarSet}
-          eliminarSetDePartido={handleEliminarSet}
-          cargarPartidoPorId={fetchPartidoCompleto}
-          actualizarSetDePartido={handleActualizarSet}
-          refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
-        />
+      {modalEstadisticasAbierto && partido && (
+        <ErrorBoundary>
+          <ModalEstadisticasCaptura
+            partido={partido}
+            partidoId={partidoId}
+            token={token}
+            onClose={() => setModalEstadisticasAbierto(false)}
+            actualizarSetsLocales={actualizarSetsLocalesCallback}
+            agregarSetAPartido={handleAgregarSet}
+            eliminarSetDePartido={handleEliminarSet}
+            cargarPartidoPorId={fetchPartidoCompleto}
+            actualizarSetDePartido={handleActualizarSet}
+            refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
+          />
+        </ErrorBoundary>
       )}
     </>
   );
