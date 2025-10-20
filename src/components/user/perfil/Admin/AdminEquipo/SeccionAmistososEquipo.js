@@ -23,7 +23,9 @@ export default function SeccionAmistososEquipo({ equipoId, token }) {
         headers: { Authorization: `Bearer ${token}` },
         });
       const data = await res.json();
-      setAmistosos(data);
+      // Filtrar solo partidos amistosos (competencia debe ser null)
+      const amistososFiltrados = data.filter(partido => partido.competencia === null);
+      setAmistosos(amistososFiltrados);
     } catch (err) {
       console.error('Error al cargar amistosos:', err);
     }

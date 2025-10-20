@@ -27,6 +27,11 @@ export default function ModalEstadisticasCaptura({
   // Estado para guardar snapshot inicial de las estadísticas (para comparar cambios)
   const [estadisticasIniciales, setEstadisticasIniciales] = useState({});
 
+  // Nuevo: Estado para modal de confirmación de estadísticas manuales
+  const [mostrarConfirmacionManual, setMostrarConfirmacionManual] = useState(false);
+  const [estadisticasManualesDetectadas, setEstadisticasManualesDetectadas] = useState([]);
+  const [setDataPendiente, setSetDataPendiente] = useState(null);
+
   const setsLocales = partidoLocal?.sets || [];
   // Simplificar: usar el set seleccionado directamente
   const estadisticasSet = setsLocales.find(s => s.numeroSet.toString() === numeroSetSeleccionado);
@@ -122,14 +127,22 @@ export default function ModalEstadisticasCaptura({
     cargarEstadisticasSet();
   }, [numeroSetSeleccionado, estadisticasSet?._id, token]);
 
-  // Verificaciones de seguridad después de los hooks
-  if (!partido) {
-    return <p className="text-center text-gray-600 p-4">No se pudo cargar el partido.</p>;
-  }
-  
-  if (!partidoId) {
-    return <p className="text-center text-gray-600 p-4">ID de partido no válido.</p>;
-  }
+  // Función para verificar si hay estadísticas manuales en el partido
+  const verificarEstadisticasManuales = async () => {
+    try {
+      const response = await fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) return [];
+
+      const estadisticas = await response.json();
+      return estadisticas.filter(stat => stat.tipoCaptura === 'manual');
+    } catch (error) {
+      console.error('Error verificando estadísticas manuales:', error);
+      return [];
+    }
+  };
 
   const actualizarSetSeleccionado = (cambios) => {
     if (!estadisticasSet) return;
@@ -298,18 +311,36 @@ export default function ModalEstadisticasCaptura({
     return cambios;
   };
 
-  const guardar = async () => {
+  const guardar = async (forzarRecalculo = false) => {
     if (!estadisticasSet) return alert('Seleccione un set para guardar');
     
     console.log('💾 Guardando estadísticas del set:', {
       partidoId,
       numeroSet: estadisticasSet.numeroSet,
       estadisticasSet,
-      ganadorSet: estadisticasSet.ganadorSet || 'pendiente'
+      ganadorSet: estadisticasSet.ganadorSet || 'pendiente',
+      forzarRecalculo
     });
     
     setGuardando(true);
     try {
+      // Verificar estadísticas manuales si no se está forzando
+      if (!forzarRecalculo) {
+        const manuales = await verificarEstadisticasManuales();
+        if (manuales.length > 0) {
+          setEstadisticasManualesDetectadas(manuales);
+          setSetDataPendiente({
+            numeroSet: estadisticasSet.numeroSet,
+            setData: {
+              ganadorSet: estadisticasSet.ganadorSet || 'pendiente',
+              estadoSet: estadisticasSet.ganadorSet !== 'pendiente' ? 'finalizado' : 'en_juego'
+            }
+          });
+          setMostrarConfirmacionManual(true);
+          setGuardando(false);
+          return;
+        }
+      }
       // 1. Actualizar información básica del set SOLO si tiene _id
       if (estadisticasSet._id) {
         const datosSet = {
@@ -652,6 +683,22 @@ export default function ModalEstadisticasCaptura({
       console.error('Error agregando set:', e);
       alert('Error al crear el set: ' + e.message);
     }
+  };
+
+  const confirmarRecalculo = async () => {
+    if (setDataPendiente) {
+      await guardar(true); // Forzar recalculo
+    }
+    setMostrarConfirmacionManual(false);
+    setEstadisticasManualesDetectadas([]);
+    setSetDataPendiente(null);
+  };
+
+  const cancelarRecalculo = () => {
+    setMostrarConfirmacionManual(false);
+    setEstadisticasManualesDetectadas([]);
+    setSetDataPendiente(null);
+    setGuardando(false);
   };
 
   const eliminarSet = async () => {

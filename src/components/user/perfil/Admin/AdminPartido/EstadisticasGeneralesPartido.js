@@ -7,7 +7,7 @@ import {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-export default function EstadisticasGeneralesPartido({ partidoId }) {
+export default function EstadisticasGeneralesPartido({ partidoId, tipoVista = 'agregadas' }) {
   const { token } = useAuth();
   const [estadisticas, setEstadisticas] = useState({
     jugadores: [],
@@ -35,11 +35,67 @@ export default function EstadisticasGeneralesPartido({ partidoId }) {
   useEffect(() => {
     const cargarEstadisticas = async () => {
       try {
-        const response = await fetch(
-          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/resumen-partido/${partidoId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const data = await response.json();
+        let data;
+
+        if (tipoVista === 'directas') {
+          // Cargar estadísticas directas (EstadisticasJugadorPartido)
+          const response = await fetch(
+            `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const estadisticasDirectas = await response.json();
+
+          // Transformar a formato esperado por el componente
+          const jugadoresFormateados = estadisticasDirectas.map(stat => ({
+            _id: stat._id,
+            throws: stat.throws || 0,
+            hits: stat.hits || 0,
+            outs: stat.outs || 0,
+            catches: stat.catches || 0,
+            jugadorPartido: stat.jugadorPartido
+          }));
+
+          // Calcular estadísticas por equipo
+          const equiposMap = {};
+          estadisticasDirectas.forEach(stat => {
+            const equipoId = stat.equipo._id;
+            const equipoNombre = stat.equipo.nombre;
+            if (!equiposMap[equipoId]) {
+              equiposMap[equipoId] = {
+                _id: equipoId,
+                nombre: equipoNombre,
+                throws: 0,
+                hits: 0,
+                outs: 0,
+                catches: 0,
+                jugadores: 0
+              };
+            }
+            equiposMap[equipoId].throws += stat.throws || 0;
+            equiposMap[equipoId].hits += stat.hits || 0;
+            equiposMap[equipoId].outs += stat.outs || 0;
+            equiposMap[equipoId].catches += stat.catches || 0;
+            equiposMap[equipoId].jugadores += 1;
+          });
+
+          const equiposFormateados = Object.values(equiposMap).map(equipo => ({
+            ...equipo,
+            efectividad: equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0
+          }));
+
+          data = {
+            jugadores: jugadoresFormateados,
+            equipos: equiposFormateados
+          };
+        } else {
+          // Cargar estadísticas agregadas (desde sets)
+          const response = await fetch(
+            `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/resumen-partido/${partidoId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          data = await response.json();
+        }
+
         setEstadisticas(data);
       } catch (error) {
         console.error('Error:', error);
@@ -49,7 +105,7 @@ export default function EstadisticasGeneralesPartido({ partidoId }) {
     };
 
     cargarEstadisticas();
-  }, [partidoId, token]);
+  }, [partidoId, token, tipoVista]);
 
   if (loading) return <div>Cargando estadísticas...</div>;
 
@@ -355,7 +411,28 @@ export default function EstadisticasGeneralesPartido({ partidoId }) {
   return (
     <div className="p-4 bg-gray-50 rounded-lg">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Estadísticas del Partido</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Estadísticas del Partido</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            {tipoVista === 'directas' 
+              ? '📝 Mostrando estadísticas capturadas directamente' 
+              : '📊 Mostrando estadísticas agregadas de sets'}
+          </p>
+          {/* Indicador de tipo de captura */}
+          {estadisticas.jugadores?.length > 0 && estadisticas.jugadores[0].tipoCaptura && (
+            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${
+              estadisticas.jugadores[0].tipoCaptura === 'manual'
+                ? 'bg-blue-100 text-blue-800'
+                : estadisticas.jugadores[0].tipoCaptura === 'mixta'
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {estadisticas.jugadores[0].tipoCaptura === 'manual' && '📝 Manual'}
+              {estadisticas.jugadores[0].tipoCaptura === 'automatica' && '🤖 Automática'}
+              {estadisticas.jugadores[0].tipoCaptura === 'mixta' && '🔄 Mixta'}
+            </div>
+          )}
+        </div>
         <div className="flex space-x-2">
           <button
             onClick={() => setVista('general')}

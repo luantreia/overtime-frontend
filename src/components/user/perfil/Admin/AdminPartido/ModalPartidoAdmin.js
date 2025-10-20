@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../ModalBase';
 import ModalEstadisticasCaptura from '../../../../modals/ModalEstadisticas/ModalEstadisticas';
+import ModalEstadisticasGeneralesCaptura from '../../../../modals/ModalEstadisticas/ModalEstadisticasGeneralesCaptura';
 import GraficoEstadisticasSet from './GraficoEstadisticasSet';
 import EstadisticasGeneralesPartido from './EstadisticasGeneralesPartido';
 import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet, editarPartido } from '../../../../../services/partidoService';
@@ -57,10 +58,11 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
+  const [modalEstadisticasGeneralesAbierto, setModalEstadisticasGeneralesAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [datosEdicion, setDatosEdicion] = useState({});
   const [setsExpandidos, setSetsExpandidos] = useState({});
-  const [vistaEstadisticas, setVistaEstadisticas] = useState('generales'); // 'generales' o 'setASet'
+  const [vistaEstadisticas, setVistaEstadisticas] = useState('generales'); // 'generales', 'setASet', 'generalesDirectas'
 
   useEffect(() => {
     if (!partidoId) return;
@@ -292,10 +294,39 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
                 >
                   🎯 Set a Set
                 </button>
+                <button
+                  onClick={() => setVistaEstadisticas('generalesDirectas')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    vistaEstadisticas === 'generalesDirectas'
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  ⚡ Estadísticas Directas
+                </button>
               </div>
             </div>
             
-            {/* Vista de Estadísticas Generales */}
+            {/* Vista Estadísticas Generales Directas */}
+            {vistaEstadisticas === 'generalesDirectas' && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="text-lg font-semibold text-yellow-800">📝 Estadísticas Generales Directas</h4>
+                    <p className="text-sm text-yellow-700">Captura estadísticas directamente para todo el partido sin sets individuales</p>
+                  </div>
+                  <button
+                    onClick={() => setModalEstadisticasGeneralesAbierto(true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    Capturar Estadísticas Generales
+                  </button>
+                </div>
+                <EstadisticasGeneralesPartido partidoId={partidoId} token={token} tipoVista="directas" />
+              </div>
+            )}
+            
+            {/* Vista Estadísticas Generales */}
             {vistaEstadisticas === 'generales' && (
               <EstadisticasGeneralesPartido partidoId={partidoId} token={token} />
             )}
@@ -388,6 +419,16 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
             refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
           />
         </ErrorBoundary>
+      )}
+
+      {/* Modal de estadísticas generales */}
+      {modalEstadisticasGeneralesAbierto && partido && (
+        <ModalEstadisticasGeneralesCaptura
+          partido={partido}
+          partidoId={partidoId}
+          token={token}
+          onClose={() => setModalEstadisticasGeneralesAbierto(false)}
+        />
       )}
     </>
   );
