@@ -173,9 +173,11 @@ export default function ModalEstadisticasCaptura({
       
       // Verificar si ya existe
       const jugadoresExistentes = await obtenerJugadoresPartido(partidoId, token);
-      const yaExiste = jugadoresExistentes.find(jp => 
-        jp.jugador === jugadorId && jp.equipo === equipoId
-      );
+      const yaExiste = jugadoresExistentes.find(jp => {
+        const jpJugadorId = jp.jugador?._id || jp.jugador;
+        const jpEquipoId = jp.equipo?._id || jp.equipo;
+        return jpJugadorId == jugadorId && jpEquipoId == equipoId;
+      });
       
       let jugadorPartidoId;
       if (!yaExiste) {

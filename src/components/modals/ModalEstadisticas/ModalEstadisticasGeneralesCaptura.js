@@ -8,6 +8,7 @@ export default function ModalEstadisticasGeneralesCaptura({
   partidoId,
   token,
   onClose,
+  onRefresh // Función de refresco para actualizar estadísticas en el componente padre
 }) {
   const [jugadores, setJugadores] = useState([]);
   const [estadisticas, setEstadisticas] = useState({});
@@ -293,6 +294,12 @@ export default function ModalEstadisticasGeneralesCaptura({
       }
 
       alert('Estadísticas guardadas correctamente');
+      
+      // Refrescar estadísticas en el componente padre si hay callback
+      if (onRefresh && typeof onRefresh === 'function') {
+        onRefresh();
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error guardando estadísticas:', error);
@@ -760,6 +767,41 @@ export default function ModalEstadisticasGeneralesCaptura({
 
 // Componente auxiliar para mostrar estadísticas de un jugador
 function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadistica }) {
+  const [valoresTemporales, setValoresTemporales] = React.useState({
+    throws: estadisticas.throws || 0,
+    hits: estadisticas.hits || 0,
+    outs: estadisticas.outs || 0,
+    catches: estadisticas.catches || 0
+  });
+
+  // Actualizar valores temporales cuando cambien las estadísticas
+  React.useEffect(() => {
+    setValoresTemporales({
+      throws: estadisticas.throws || 0,
+      hits: estadisticas.hits || 0,
+      outs: estadisticas.outs || 0,
+      catches: estadisticas.catches || 0
+    });
+  }, [estadisticas]);
+
+  const handleInputChange = (campo, valor) => {
+    const numValue = parseInt(valor) || 0;
+    setValoresTemporales(prev => ({
+      ...prev,
+      [campo]: numValue
+    }));
+    onCambiarEstadistica(jugadorPartidoId, campo, numValue - (estadisticas[campo] || 0));
+  };
+
+  const handleIncrement = (campo, delta) => {
+    const nuevoValor = Math.max(0, (estadisticas[campo] || 0) + delta);
+    setValoresTemporales(prev => ({
+      ...prev,
+      [campo]: nuevoValor
+    }));
+    onCambiarEstadistica(jugadorPartidoId, campo, delta);
+  };
+
   return (
     <div className="grid grid-cols-4 gap-2 text-xs">
       {/* Throws */}
@@ -767,15 +809,21 @@ function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadist
         <div className="text-gray-600 mb-1">Throws</div>
         <div className="flex items-center justify-center gap-1">
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'throws', -1)}
-            className="w-5 h-5 bg-red-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('throws', -1)}
+            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
           >
             -
           </button>
-          <span className="w-6 text-center font-semibold">{estadisticas.throws || 0}</span>
+          <input
+            type="number"
+            min="0"
+            value={valoresTemporales.throws}
+            onChange={(e) => handleInputChange('throws', e.target.value)}
+            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'throws', 1)}
-            className="w-5 h-5 bg-green-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('throws', 1)}
+            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
           >
             +
           </button>
@@ -787,15 +835,21 @@ function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadist
         <div className="text-gray-600 mb-1">Hits</div>
         <div className="flex items-center justify-center gap-1">
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'hits', -1)}
-            className="w-5 h-5 bg-red-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('hits', -1)}
+            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
           >
             -
           </button>
-          <span className="w-6 text-center font-semibold">{estadisticas.hits || 0}</span>
+          <input
+            type="number"
+            min="0"
+            value={valoresTemporales.hits}
+            onChange={(e) => handleInputChange('hits', e.target.value)}
+            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-green-500"
+          />
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'hits', 1)}
-            className="w-5 h-5 bg-green-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('hits', 1)}
+            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
           >
             +
           </button>
@@ -807,15 +861,21 @@ function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadist
         <div className="text-gray-600 mb-1">Outs</div>
         <div className="flex items-center justify-center gap-1">
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'outs', -1)}
-            className="w-5 h-5 bg-red-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('outs', -1)}
+            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
           >
             -
           </button>
-          <span className="w-6 text-center font-semibold">{estadisticas.outs || 0}</span>
+          <input
+            type="number"
+            min="0"
+            value={valoresTemporales.outs}
+            onChange={(e) => handleInputChange('outs', e.target.value)}
+            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-red-500"
+          />
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'outs', 1)}
-            className="w-5 h-5 bg-green-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('outs', 1)}
+            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
           >
             +
           </button>
@@ -827,15 +887,21 @@ function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadist
         <div className="text-gray-600 mb-1">Catches</div>
         <div className="flex items-center justify-center gap-1">
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'catches', -1)}
-            className="w-5 h-5 bg-red-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('catches', -1)}
+            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
           >
             -
           </button>
-          <span className="w-6 text-center font-semibold">{estadisticas.catches || 0}</span>
+          <input
+            type="number"
+            min="0"
+            value={valoresTemporales.catches}
+            onChange={(e) => handleInputChange('catches', e.target.value)}
+            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+          />
           <button
-            onClick={() => onCambiarEstadistica(jugadorPartidoId, 'catches', 1)}
-            className="w-5 h-5 bg-green-500 text-white rounded text-xs flex items-center justify-center"
+            onClick={() => handleIncrement('catches', 1)}
+            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
           >
             +
           </button>

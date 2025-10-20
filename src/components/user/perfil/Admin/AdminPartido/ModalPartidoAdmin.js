@@ -63,6 +63,7 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
   const [datosEdicion, setDatosEdicion] = useState({});
   const [setsExpandidos, setSetsExpandidos] = useState({});
   const [vistaEstadisticas, setVistaEstadisticas] = useState('generales'); // 'generales', 'setASet', 'generalesDirectas'
+  const [refreshEstadisticas, setRefreshEstadisticas] = useState(null);
 
   useEffect(() => {
     if (!partidoId) return;
@@ -322,7 +323,12 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
                     Capturar Estadísticas Generales
                   </button>
                 </div>
-                <EstadisticasGeneralesPartido partidoId={partidoId} token={token} tipoVista="directas" />
+                <EstadisticasGeneralesPartido 
+                  partidoId={partidoId} 
+                  token={token} 
+                  tipoVista="directas"
+                  onRefresh={setRefreshEstadisticas}
+                />
               </div>
             )}
             
@@ -428,6 +434,7 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
           partidoId={partidoId}
           token={token}
           onClose={() => setModalEstadisticasGeneralesAbierto(false)}
+          onRefresh={refreshEstadisticas}
         />
       )}
     </>
