@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-  ResponsiveContainer, Cell, PieChart, Pie, LabelList
-} from 'recharts';
+import { renderEstadisticasGenerales } from './EstadisticasGenerales';
+import { renderEstadisticasEquipos } from './EstadisticasEquipos';
+import { renderEstadisticasJugadores } from './EstadisticasJugadores';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-export default function EstadisticasGeneralesPartido({ 
-  partidoId, 
-  tipoVista = 'agregadas', 
+export default function EstadisticasGeneralesPartido({
+  partidoId,
+  tipoVista = 'directas',
   onRefresh,
   partido,
   onCambiarModoEstadisticas
@@ -23,125 +20,49 @@ export default function EstadisticasGeneralesPartido({
   const [vista, setVista] = useState('general'); // 'general', 'equipos' o 'jugadores'
   const [debugData, setDebugData] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
-  const [convirtiendo, setConvirtiendo] = useState(false);
 
-  const convertirAManuales = async () => {
-    if (!window.confirm('¿Estás seguro de convertir las estadísticas manuales a automáticas? Esta acción reemplazará los datos manuales con los calculados de los sets.')) {
-      return;
-    }
+  // Estados locales para UI inmediata (se sincronizan con props)
+  const [modoEstadisticasUI, setModoEstadisticasUI] = useState(partido?.modoEstadisticas || 'automatico');
+  const [modoVisualizacionUI, setModoVisualizacionUI] = useState(partido?.modoVisualizacion || 'automatico');
 
-    setConvirtiendo(true);
-    try {
-      const response = await fetch(
-        `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/convertir-a-automaticas/${partidoId}`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+  // Sincronizar estados locales con props cuando cambian
+  useEffect(() => {
+    setModoEstadisticasUI(partido?.modoEstadisticas || 'automatico');
+  }, [partido?.modoEstadisticas]);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Si es un error de validación (400), mostrar el mensaje específico
-        if (response.status === 400 && errorData.error) {
-          throw new Error(errorData.error);
-        }
-        
-        throw new Error('Error al convertir estadísticas');
-      }
+  useEffect(() => {
+    setModoVisualizacionUI(partido?.modoVisualizacion || 'automatico');
+  }, [partido?.modoVisualizacion]);
 
-      const resultado = await response.json();
-      alert(resultado.mensaje || 'Conversión completada');
-
-      // Recargar estadísticas
-      await cargarEstadisticas();
-
-    } catch (error) {
-      console.error('Error convirtiendo estadísticas:', error);
-      alert('Error al convertir estadísticas: ' + error.message);
-    } finally {
-      setConvirtiendo(false);
-    }
-  };
-
-  const handleCambiarModo = async (nuevoModo) => {
-    if (!partido || !onCambiarModoEstadisticas) return;
-    
-    try {
-      await onCambiarModoEstadisticas(partido._id, nuevoModo);
-      // Recargar estadísticas después del cambio
-      await cargarEstadisticas();
-    } catch (error) {
-      console.error('Error cambiando modo de estadísticas:', error);
-      alert('Error al cambiar el modo de estadísticas');
-    }
-  };
-
-  const handleCambiarModoVisualizacion = async (nuevoModo) => {
-    if (!partido) return;
-    
-    try {
-      const response = await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partido._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ modoVisualizacion: nuevoModo })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cambiar modo de visualización');
-      }
-
-      const partidoActualizado = await response.json();
-      // Aquí podríamos emitir un callback para notificar el cambio
-      alert(`Modo de visualización cambiado a ${nuevoModo === 'automatico' ? 'Automático' : nuevoModo === 'manual' ? 'Manual' : 'Mixto'}`);
-    } catch (error) {
-      console.error('Error cambiando modo de visualización:', error);
-      alert('Error al cambiar modo de visualización: ' + error.message);
-    }
-  };
-
-  // Función para filtrar estadísticas según modo de visualización
-  const filtrarEstadisticasPorModo = (estadisticasRaw) => {
-    if (!partido?.modoVisualizacion || partido.modoVisualizacion === 'automatico') {
-      return estadisticasRaw.filter(stat => stat.tipoCaptura === 'automatica');
-    } else if (partido.modoVisualizacion === 'manual') {
-      return estadisticasRaw.filter(stat => stat.tipoCaptura === 'manual');
-    } else if (partido.modoVisualizacion === 'mixto') {
-      return estadisticasRaw.filter(stat => stat.tipoCaptura === 'mixta');
-    }
-    return estadisticasRaw; // fallback
-  };
-
-  const cargarDebugData = async () => {
-    try {
-      const response = await fetch(
-        `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/debug?partido=${partidoId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const data = await response.json();
-      setDebugData(data);
-      setShowDebug(true);
-    } catch (error) {
-      console.error('Error cargando debug data:', error);
+  // Función para determinar qué endpoint usar según el modo de estadísticas
+  const getEstadisticasEndpoint = () => {
+    if (!modoEstadisticasUI || modoEstadisticasUI === 'automatico') {
+      return 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido';
+    } else {
+      return 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual';
     }
   };
 
   // Función para cargar estadísticas - exportada para uso externo
   const cargarEstadisticas = useCallback(async () => {
     try {
+      console.log('📊 Cargando estadísticas con modos:', {
+        modoEstadisticasUI,
+        modoVisualizacionUI,
+        tipoVista
+      });
+
+      setLoading(true);
       let data;
 
       if (tipoVista === 'directas') {
-        // Cargar estadísticas directas (EstadisticasJugadorPartido)
+        // Cargar estadísticas directas (EstadisticasJugadorPartido o Manual según modo)
+        const endpoint = getEstadisticasEndpoint();
+        console.log('🔗 Usando endpoint:', endpoint);
+
         const [jugadoresResponse, equiposResponse] = await Promise.all([
           fetch(
-            `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`,
+            `${endpoint}?partido=${partidoId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           ),
           fetch(
@@ -153,7 +74,12 @@ export default function EstadisticasGeneralesPartido({
         const estadisticasDirectas = await jugadoresResponse.json();
         const estadisticasEquipos = await equiposResponse.json();
 
-        // Transformar estadísticas de jugadores
+        console.log('📈 Datos obtenidos:', {
+          jugadores: estadisticasDirectas.length,
+          equipos: estadisticasEquipos.length
+        });
+
+        // Formatear estadísticas de jugadores (ya no necesitamos filtrar por tipoCaptura)
         const jugadoresFormateados = estadisticasDirectas.map(stat => ({
           _id: stat._id,
           throws: stat.throws || 0,
@@ -161,11 +87,31 @@ export default function EstadisticasGeneralesPartido({
           outs: stat.outs || 0,
           catches: stat.catches || 0,
           jugadorPartido: stat.jugadorPartido,
-          tipoCaptura: stat.tipoCaptura
+          // Para compatibilidad, agregamos tipoCaptura basado en el modelo usado
+          tipoCaptura: endpoint.includes('manual') ? 'manual' : 'automatica',
+          fuente: stat.fuente || 'sistema'
         }));
 
-        // Aplicar filtro de visualización
-        const jugadoresFiltrados = filtrarEstadisticasPorModo(jugadoresFormateados);
+        // Aplicar filtro de visualización SOLO si estamos en modo de estadísticas que requiere filtrado
+        let jugadoresFiltrados = jugadoresFormateados;
+        if (modoEstadisticasUI === 'automatico' && modoVisualizacionUI === 'manual') {
+          // Si estamos en automático pero queremos ver manual, no hay datos
+          jugadoresFiltrados = [];
+          console.log('🔍 Filtro aplicado: automático → manual = sin datos');
+        } else if (modoEstadisticasUI === 'manual' && modoVisualizacionUI === 'automatico') {
+          // Si estamos en manual pero queremos ver automático, no hay datos
+          jugadoresFiltrados = [];
+          console.log('🔍 Filtro aplicado: manual → automático = sin datos');
+        } else {
+          console.log('🔍 Filtro aplicado: modos compatibles, mostrando todos los datos');
+        }
+        // Si coinciden los modos, mostramos todos los datos disponibles
+
+        console.log('📊 Datos finales:', {
+          jugadoresOriginales: jugadoresFormateados.length,
+          jugadoresFiltrados: jugadoresFiltrados.length,
+          equipos: estadisticasEquipos.length
+        });
 
         // Usar estadísticas de equipos reales de la base de datos
         const equiposFormateados = estadisticasEquipos.map(equipo => ({
@@ -176,8 +122,8 @@ export default function EstadisticasGeneralesPartido({
           hits: equipo.hits || 0,
           outs: equipo.outs || 0,
           catches: equipo.catches || 0,
-          jugadores: equipo.jugadores || 0,
-          efectividad: equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0
+          efectividad: equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0,
+          jugadores: equipo.jugadores || 0
         }));
 
         data = {
@@ -194,16 +140,189 @@ export default function EstadisticasGeneralesPartido({
       }
 
       setEstadisticas(data);
+      console.log('✅ Estadísticas cargadas exitosamente:', {
+        jugadores: data.jugadores?.length || 0,
+        equipos: data.equipos?.length || 0
+      });
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error cargando estadísticas:', error);
+      setEstadisticas({ jugadores: [], equipos: [] });
     } finally {
       setLoading(false);
     }
-  }, [partidoId, token, tipoVista]);
+  }, [partidoId, token, tipoVista, modoEstadisticasUI, modoVisualizacionUI]);
 
+  // Función para cargar estadísticas mixtas (ambas fuentes)
+  const cargarEstadisticasMixtas = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Cargar ambas fuentes simultáneamente
+      const [automaticasResponse, manualesResponse, equiposResponse] = await Promise.all([
+        fetch(
+          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        fetch(
+          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual?partido=${partidoId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        fetch(
+          `https://overtime-ddyl.onrender.com/api/estadisticas/equipo-partido?partido=${partidoId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+      ]);
+
+      const estadisticasAutomaticas = await automaticasResponse.json();
+      const estadisticasManuales = await manualesResponse.json();
+      const estadisticasEquipos = await equiposResponse.json();
+
+      // Combinar ambas fuentes de estadísticas
+      const estadisticasCombinadas = [
+        ...estadisticasAutomaticas.map(stat => ({
+          ...stat,
+          tipoCaptura: 'automatica',
+          fuente: stat.fuente || 'calculo-automatico-sets'
+        })),
+        ...estadisticasManuales.map(stat => ({
+          ...stat,
+          tipoCaptura: 'manual',
+          fuente: stat.fuente || 'ingreso-manual'
+        }))
+      ];
+
+      // Usar estadísticas de equipos
+      const equiposFormateados = estadisticasEquipos.map(equipo => ({
+        _id: equipo.equipo._id,
+        nombre: equipo.equipo.nombre,
+        escudo: equipo.equipo.escudo,
+        throws: equipo.throws || 0,
+        hits: equipo.hits || 0,
+        outs: equipo.outs || 0,
+        catches: equipo.catches || 0,
+        efectividad: equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0,
+        jugadores: equipo.jugadores || 0
+      }));
+
+      setEstadisticas({
+        jugadores: estadisticasCombinadas,
+        equipos: equiposFormateados
+      });
+
+    } catch (error) {
+      console.error('Error cargando estadísticas mixtas:', error);
+      setEstadisticas({ jugadores: [], equipos: [] });
+    } finally {
+      setLoading(false);
+    }
+  }, [partidoId, token]);
+
+  const cargarDebugData = async () => {
+    try {
+      const response = await fetch(
+        `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/debug?partido=${partidoId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      setDebugData(data);
+      setShowDebug(true);
+    } catch (error) {
+      console.error('Error cargando debug data:', error);
+    }
+  };
+
+  // Función para filtrar estadísticas según modo de visualización (ya no se usa, el filtrado se hace en cargarEstadisticas)
+  const filtrarEstadisticasPorModo = (estadisticasRaw) => {
+    // Este método ya no se usa, el filtrado se hace directamente en cargarEstadisticas
+    return estadisticasRaw;
+  };
+
+  const handleCambiarModo = async (nuevoModo) => {
+    if (!partido || !onCambiarModoEstadisticas) return;
+
+    const modoAnterior = partido.modoEstadisticas;
+
+    try {
+      console.log('🔄 Cambiando modo de estadísticas:', modoAnterior, '→', nuevoModo);
+
+      // Actualizar estado local inmediatamente para mejor UX
+      setModoEstadisticasUI(nuevoModo);
+
+      // Cambiar el modo de estadísticas en el backend
+      await onCambiarModoEstadisticas(partido._id, nuevoModo);
+
+      // Intentar actualizar modo de visualización para que coincida (sin bloquear si falla)
+      try {
+        await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partido._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ modoVisualizacion: nuevoModo })
+        });
+        // Actualizar estado local de visualización también
+        setModoVisualizacionUI(nuevoModo);
+      } catch (error) {
+        console.warn('No se pudo sincronizar modoVisualizacion, pero modoEstadisticas se cambió correctamente');
+      }
+
+      // Recargar estadísticas después del cambio
+      await cargarEstadisticas();
+
+      console.log('✅ Modo cambiado exitosamente');
+
+    } catch (error) {
+      // Revertir cambio local si falló
+      setModoEstadisticasUI(modoAnterior);
+      console.error('❌ Error cambiando modo de estadísticas:', error);
+    }
+  };
+
+  const handleCambiarModoVisualizacion = async (nuevoModo) => {
+    if (!partido) return;
+
+    const modoAnterior = partido.modoVisualizacion;
+
+    try {
+      console.log('🔄 Cambiando modo de visualización:', modoAnterior, '→', nuevoModo);
+
+      // Actualizar estado local inmediatamente
+      setModoVisualizacionUI(nuevoModo);
+
+      // Actualizar en el backend
+      const response = await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partido._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ modoVisualizacion: nuevoModo })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cambiar modo de visualización');
+      }
+
+      // Recargar estadísticas con el filtro actualizado
+      await cargarEstadisticas();
+
+      console.log('✅ Modo de visualización cambiado exitosamente');
+
+    } catch (error) {
+      // Revertir cambio local si falló
+      setModoVisualizacionUI(modoAnterior);
+      console.error('❌ Error cambiando modo de visualización:', error);
+    }
+  };
+
+  // Efecto para cargar estadísticas inicialmente y cuando cambian los modos
   useEffect(() => {
-    cargarEstadisticas();
-  }, [cargarEstadisticas]);
+    if (partidoId && partido) {
+      // Cargar estadísticas cuando cambian los modos
+      cargarEstadisticas();
+    }
+  }, [partidoId, modoEstadisticasUI, modoVisualizacionUI, cargarEstadisticas]);
 
   // Exponer función de refresco si se proporciona callback
   useEffect(() => {
@@ -213,305 +332,6 @@ export default function EstadisticasGeneralesPartido({
   }, [onRefresh, cargarEstadisticas]);
 
   if (loading) return <div>Cargando estadísticas...</div>;
-
-  const renderEstadisticasGenerales = () => {
-    // Calcular totales del partido desde estadísticas individuales de jugadores
-    const totales = estadisticas.jugadores?.reduce((acc, jugador) => ({
-      throws: acc.throws + (jugador.throws || 0),
-      hits: acc.hits + (jugador.hits || 0),
-      outs: acc.outs + (jugador.outs || 0),
-      catches: acc.catches + (jugador.catches || 0),
-    }), { throws: 0, hits: 0, outs: 0, catches: 0 }) || { throws: 0, hits: 0, outs: 0, catches: 0 };
-
-    const efectividadGeneral = totales.throws > 0 
-      ? ((totales.hits / totales.throws) * 100).toFixed(1) 
-      : 0;
-
-    // Usar las estadísticas de equipos calculadas desde el backend
-    const equiposData = estadisticas.equipos || [];
-
-    // Datos para el gráfico de torta (distribución por equipo)
-    const pieData = equiposData.map((equipo, index) => ({
-      name: equipo.nombre,
-      value: equipo.throws || 0,
-      fill: COLORS[index % COLORS.length]
-    }));
-
-    return (
-      <div className="space-y-8">
-        <h3 className="text-2xl font-bold text-center">Resumen General del Partido</h3>
-
-        {/* Tarjetas de estadísticas principales */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard 
-            title="Total Lanzamientos" 
-            value={totales.throws} 
-            color="bg-blue-100 text-blue-800" 
-          />
-          <StatCard 
-            title="Total Golpes" 
-            value={totales.hits} 
-            color="bg-green-100 text-green-800" 
-          />
-          <StatCard 
-            title="Total Outs" 
-            value={totales.outs} 
-            color="bg-red-100 text-red-800" 
-          />
-          <StatCard 
-            title="Total Atrapadas" 
-            value={totales.catches} 
-            color="bg-yellow-100 text-yellow-800" 
-          />
-        </div>
-
-        {/* Estadísticas adicionales */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <div className="text-3xl font-bold text-purple-600 mb-2">{efectividadGeneral}%</div>
-            <div className="text-sm text-gray-600">Efectividad General</div>
-            <div className="text-xs text-gray-500 mt-1">(Golpes/Lanzamientos)</div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <div className="text-3xl font-bold text-indigo-600 mb-2">{equiposData.length}</div>
-            <div className="text-sm text-gray-600">Equipos Participantes</div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <div className="text-3xl font-bold text-orange-600 mb-2">{estadisticas.jugadores?.length || 0}</div>
-            <div className="text-sm text-gray-600">Jugadores Totales</div>
-          </div>
-        </div>
-
-        {/* Gráfico de distribución por equipo */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h4 className="text-lg font-semibold mb-4 text-center">Distribución de Lanzamientos por Equipo</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Comparativa rápida de equipos */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h4 className="text-lg font-semibold mb-4">Comparativa Rápida por Equipo</h4>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Equipo</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Lanzamientos</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Golpes</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Efectividad</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jugadores</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {equiposData.map((equipo) => (
-                  <tr key={equipo._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {equipo.escudo && (
-                          <img 
-                            src={equipo.escudo} 
-                            alt={`Escudo ${equipo.nombre}`}
-                            className="w-8 h-8 object-contain mr-3"
-                          />
-                        )}
-                        <div className="text-sm font-medium text-gray-900">{equipo.nombre}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                      {equipo.throws}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                      {equipo.hits}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${equipo.efectividad > 50 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                        {equipo.efectividad}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                      {equipo.jugadores}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderEstadisticasEquipos = () => (
-    <div className="space-y-6">
-      <h3 className="text-xl font-semibold">Estadísticas por Equipo</h3>
-      
-      {/* Usar los datos de equipos que vienen del backend */}
-      {(() => {
-        const equiposData = estadisticas.equipos || [];
-
-        return equiposData.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {equiposData.map((equipo, index) => (
-                <div key={equipo._id} className="bg-white p-4 rounded-lg shadow">
-                  <div className="flex items-center gap-3 mb-4">
-                    {equipo.escudo && (
-                      <img 
-                        src={equipo.escudo} 
-                        alt={`Escudo ${equipo.nombre}`}
-                        className="w-12 h-12 object-contain"
-                      />
-                    )}
-                    <h4 className="text-lg font-bold">{equipo.nombre}</h4>
-                    <span className="text-sm text-gray-500 ml-auto">
-                      {equipo.jugadores || 0} jugador{equipo.jugadores !== 1 ? 'es' : ''}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <StatCard 
-                      title="Lanzamientos" 
-                      value={equipo.throws} 
-                      color="bg-blue-100 text-blue-800" 
-                    />
-                    <StatCard 
-                      title="Golpes" 
-                      value={equipo.hits} 
-                      color="bg-green-100 text-green-800" 
-                    />
-                    <StatCard 
-                      title="Outs" 
-                      value={equipo.outs} 
-                      color="bg-red-100 text-red-800" 
-                    />
-                    <StatCard 
-                      title="Atrapadas" 
-                      value={equipo.catches} 
-                      color="bg-yellow-100 text-yellow-800" 
-                    />
-                    <div className="col-span-2">
-                      <div className="text-center p-2 bg-gray-50 rounded">
-                        <div className="text-sm text-gray-600">Efectividad</div>
-                        <div className="text-xl font-bold">{equipo.efectividad}%</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <h4 className="text-lg font-semibold mb-4">Comparativa de Equipos</h4>
-            <div className="bg-white p-4 rounded-lg shadow mb-8">
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart
-                  data={equiposData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nombre" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="throws" name="Lanzamientos" fill="#3b82f6" />
-                  <Bar dataKey="hits" name="Golpes" fill="#10b981" />
-                  <Bar dataKey="outs" name="Outs" fill="#ef4444" />
-                  <Bar dataKey="catches" name="Atrapadas" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        ) : (
-          <p className="text-gray-600">No hay estadísticas de equipos disponibles aún</p>
-        );
-      })()}
-    </div>
-  );
-
-  const renderEstadisticasJugadores = () => (
-    <div>
-      <h3 className="text-xl font-semibold mb-4">Estadísticas por Jugador</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded-lg overflow-hidden">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jugador</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Equipo</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Lanz.</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Golpes</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Outs</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Atrap.</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Efect.</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {estadisticas.jugadores?.length > 0 ? estadisticas.jugadores?.map((jugador) => {
-              const efectividad = jugador.throws > 0 
-                ? ((jugador.hits / jugador.throws) * 100).toFixed(1) 
-                : 0;
-                
-              return (
-                <tr key={jugador._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900">
-                        {jugador.jugadorPartido?.jugador?.nombre} {jugador.jugadorPartido?.jugador?.apellido}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {jugador.jugadorPartido?.equipo?.nombre}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {jugador.throws}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {jugador.hits}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {jugador.outs}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {jugador.catches}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${efectividad > 50 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {efectividad}%
-                    </span>
-                  </td>
-                </tr>
-              );
-            }) : (
-              <tr>
-                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  No hay estadísticas de jugadores disponibles aún
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
 
   return (
     <div className="p-4 bg-gray-50 rounded-lg">
@@ -523,30 +343,31 @@ export default function EstadisticasGeneralesPartido({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700">Mostrar al público:</span>
               <select
-                value={partido?.modoVisualizacion || 'automatico'}
+                value={modoVisualizacionUI}
                 onChange={(e) => handleCambiarModoVisualizacion(e.target.value)}
                 className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="automatico">📊 Estadísticas Automáticas (de sets)</option>
-                <option value="manual">✏️ Estadísticas Manuales (totales)</option>
-                <option value="mixto">🔄 Estadísticas Mixtas (combinadas)</option>
+                <option value="automatico">📊 Estadísticas Automáticas (calculadas)</option>
+                <option value="manual">✏️ Estadísticas Manuales (ingresadas)</option>
               </select>
             </div>
 
             {/* Información del modo actual */}
-            <div className="text-sm text-gray-600">
-              Modo de captura: {partido?.modoEstadisticas === 'manual' ? '✏️ Manual' : '📊 Automático'}
-            </div>
+            <p className="text-sm text-gray-600 mt-1">
+              {modoEstadisticasUI === 'manual'
+                ? '📝 Mostrando estadísticas manuales (ingresadas directamente)'
+                : '📊 Mostrando estadísticas automáticas (calculadas de sets)'}
+            </p>
           </div>
         </div>
-        
+
         {/* Selectores de vista (derecha) */}
         <div className="flex flex-col gap-2 ml-4">
           {/* Selector de Modo de Estadísticas (centro) */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">Modo de captura:</span>
             <select
-              value={partido?.modoEstadisticas || 'automatico'}
+              value={modoEstadisticasUI}
               onChange={(e) => handleCambiarModo(e.target.value)}
               className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -554,14 +375,14 @@ export default function EstadisticasGeneralesPartido({
               <option value="manual">✏️ Manual</option>
             </select>
           </div>
-          
+
           {/* Botones de vista de estadísticas */}
           <div className="flex space-x-2">
             <button
               onClick={() => setVista('general')}
               className={`px-4 py-2 rounded-md ${
-                vista === 'general' 
-                  ? 'bg-blue-600 text-white' 
+                vista === 'general'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -570,8 +391,8 @@ export default function EstadisticasGeneralesPartido({
             <button
               onClick={() => setVista('equipos')}
               className={`px-4 py-2 rounded-md ${
-                vista === 'equipos' 
-                  ? 'bg-blue-600 text-white' 
+                vista === 'equipos'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -580,51 +401,21 @@ export default function EstadisticasGeneralesPartido({
             <button
               onClick={() => setVista('jugadores')}
               className={`px-4 py-2 rounded-md ${
-                vista === 'jugadores' 
-                  ? 'bg-blue-600 text-white' 
+                vista === 'jugadores'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
               Jugadores
             </button>
+            <button
+              onClick={cargarDebugData}
+              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+            >
+              🔧 Debug
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Sección de acciones forzosas */}
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-6">
-        <details className="group">
-          <summary className="flex items-center justify-between cursor-pointer text-red-800 font-medium hover:text-red-900 transition-colors">
-            <span className="flex items-center gap-2">
-              ⚠️ Acciones Forzosas
-              <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7 7" />
-              </svg>
-            </span>
-          </summary>
-          
-          <div className="mt-4 pt-4 border-t border-red-200">
-            <div className="bg-white border border-red-200 rounded-lg p-4">
-              <h4 className="text-red-800 font-semibold mb-3">⚠️ Acciones Irreversibles</h4>
-              <p className="text-red-700 text-sm mb-4">
-                Estas acciones pueden sobrescribir datos existentes. Use con precaución.
-              </p>
-              
-              <div className="flex gap-3">
-                {estadisticas.jugadores?.some(j => j.tipoCaptura === 'manual') && (
-                  <button
-                    onClick={convertirAManuales}
-                    disabled={convirtiendo}
-                    className="px-4 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    title="Recalcular estadísticas desde sets (sobrescribe datos existentes)"
-                  >
-                    🔄 Recalcular desde Sets
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </details>
       </div>
 
       {showDebug && debugData ? (
@@ -638,7 +429,7 @@ export default function EstadisticasGeneralesPartido({
               Cerrar
             </button>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <h4 className="font-semibold text-red-700">📊 Estadísticas por Set:</h4>
@@ -646,21 +437,21 @@ export default function EstadisticasGeneralesPartido({
                 {JSON.stringify(debugData.estadisticasJugadorSet, null, 2)}
               </pre>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-red-700">👤 Estadísticas por Jugador (Partido):</h4>
               <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
                 {JSON.stringify(debugData.estadisticasJugadorPartido, null, 2)}
               </pre>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-red-700">🏟️ Estadísticas por Equipo:</h4>
               <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
                 {JSON.stringify(debugData.estadisticasEquipoPartido, null, 2)}
               </pre>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-red-700">👥 Jugadores del Partido:</h4>
               <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
@@ -669,11 +460,11 @@ export default function EstadisticasGeneralesPartido({
             </div>
           </div>
         </div>
-      ) : vista === 'general' 
-        ? renderEstadisticasGenerales() 
-        : vista === 'equipos' 
-          ? renderEstadisticasEquipos() 
-          : renderEstadisticasJugadores()}
+      ) : vista === 'general'
+        ? renderEstadisticasGenerales(estadisticas, partido)
+        : vista === 'equipos'
+          ? renderEstadisticasEquipos(estadisticas, partido)
+          : renderEstadisticasJugadores(estadisticas, partido)}
     </div>
   );
 }

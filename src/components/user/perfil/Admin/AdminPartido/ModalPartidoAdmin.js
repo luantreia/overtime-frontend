@@ -4,6 +4,9 @@ import ModalEstadisticasCaptura from '../../../../modals/ModalEstadisticas/Modal
 import ModalEstadisticasGeneralesCaptura from '../../../../modals/ModalEstadisticas/ModalEstadisticasGeneralesCaptura';
 import GraficoEstadisticasSet from './GraficoEstadisticasSet';
 import EstadisticasGeneralesPartido from './EstadisticasGeneralesPartido';
+import { SeccionEstadisticasGenerales } from './SeccionEstadisticasGenerales';
+import { SeccionEstadisticasSetASet } from './SeccionEstadisticasSetASet';
+import { SeccionEstadisticasDirectas } from './SeccionEstadisticasDirectas';
 import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet, editarPartido, eliminarPartido } from '../../../../../services/partidoService';
 
 // Error Boundary temporal para debuggear
@@ -58,10 +61,9 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
-  const [modalEstadisticasGeneralesAbierto, setModalEstadisticasGeneralesAbierto] = useState(false);
+  const [modalEstadisticasGeneralesAbierto, setModalEstadisticasGeneralesAbierto] = useState(null); // null, false, o {datosIniciales, hayDatosAutomaticos}
   const [modoEdicion, setModoEdicion] = useState(false);
   const [datosEdicion, setDatosEdicion] = useState({});
-  const [setsExpandidos, setSetsExpandidos] = useState({});
   const [vistaEstadisticas, setVistaEstadisticas] = useState('generales'); // 'generales', 'setASet', 'generalesDirectas'
   const [refreshEstadisticas, setRefreshEstadisticas] = useState(null);
 
@@ -239,6 +241,10 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
 
   const handleCambiarModoEstadisticas = async (partidoId, nuevoModo) => {
     try {
+      // Actualizar estado local inmediatamente para mejor UX
+      setPartido(prev => ({ ...prev, modoEstadisticas: nuevoModo }));
+
+      // Actualizar en el backend
       const response = await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partidoId}`, {
         method: 'PUT',
         headers: {
@@ -252,10 +258,11 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
         throw new Error('Error al cambiar modo de estadísticas');
       }
 
-      const partidoActualizado = await response.json();
-      setPartido(prev => ({ ...prev, ...partidoActualizado }));
-      alert(`Modo cambiado a ${nuevoModo === 'manual' ? 'Manual' : 'Automático'}`);
+      // No mostrar alertas que interrumpan la UX
+      console.log(`Modo cambiado a ${nuevoModo === 'manual' ? 'Manual' : 'Automático'}`);
     } catch (error) {
+      // Revertir cambio local si falló
+      setPartido(prev => ({ ...prev, modoEstadisticas: prev.modoEstadisticas }));
       console.error('Error cambiando modo de estadísticas:', error);
       alert('Error al cambiar modo: ' + error.message);
     }
@@ -401,7 +408,7 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  📊 Estadísticas Generales
+                  📊 Generales
                 </button>
                 <button
                   onClick={() => setVistaEstadisticas('setASet')}
@@ -414,103 +421,45 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
                   🎯 Set a Set
                 </button>
                 <button
-                  onClick={() => setVistaEstadisticas('generalesDirectas')}
+                  onClick={() => setVistaEstadisticas('directas')}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    vistaEstadisticas === 'generalesDirectas'
+                    vistaEstadisticas === 'directas'
                       ? 'bg-green-600 text-white shadow-md'
                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  ⚡ Estadísticas Directas
+                  ⚡ Directas
                 </button>
               </div>
             </div>
-            
-            {/* Vista Estadísticas Generales Directas */}
-            {vistaEstadisticas === 'generalesDirectas' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-lg font-semibold text-yellow-800">📝 Estadísticas Generales Directas</h4>
-                    <p className="text-sm text-yellow-700">Captura estadísticas directamente para todo el partido sin sets individuales</p>
-                  </div>
-                  <button
-                    onClick={() => setModalEstadisticasGeneralesAbierto(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    Capturar Estadísticas Generales
-                  </button>
-                </div>
-                <EstadisticasGeneralesPartido 
-                  partidoId={partidoId} 
-                  token={token} 
-                  tipoVista="directas"
-                  onRefresh={setRefreshEstadisticas}
-                />
-              </div>
-            )}
-            
+
             {/* Vista Estadísticas Generales */}
             {vistaEstadisticas === 'generales' && (
-              <EstadisticasGeneralesPartido 
-                partidoId={partidoId} 
-                token={token} 
+              <SeccionEstadisticasGenerales
                 partido={partido}
+                partidoId={partidoId}
+                token={token}
                 onCambiarModoEstadisticas={handleCambiarModoEstadisticas}
               />
             )}
-            
+
             {/* Vista Set a Set */}
             {vistaEstadisticas === 'setASet' && (
-              <div>
-                {partido.sets && partido.sets.length > 0 ? (
-                  <div className="space-y-3">
-                    {partido.sets.map(set => {
-                      const isExpanded = setsExpandidos[set._id];
-                      
-                      return (
-                        <div key={set._id} className="bg-white rounded border">
-                          {/* Header del set */}
-                          <div 
-                            className="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                            onClick={() => setSetsExpandidos(prev => ({
-                              ...prev,
-                              [set._id]: !prev[set._id]
-                            }))}
-                          >
-                            <div className="flex items-center gap-2">
-                              <svg 
-                                className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
-                              <span className="font-medium text-lg">Set {set.numeroSet}</span>
-                              <span className="text-sm text-gray-600">
-                                Estado: <span className="font-medium">{set.estadoSet}</span>
-                              </span>
-                              <span className="text-sm text-gray-600">
-                                Ganador: <span className="font-medium">{set.ganadorSet}</span>
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Estadísticas expandidas */}
-                          {isExpanded && (
-                            <div className="border-t px-3 pb-3">
-                              <GraficoEstadisticasSet setId={set._id} token={token} />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-gray-600">No hay sets creados aún</p>
-                )}
-              </div>
+              <SeccionEstadisticasSetASet
+                partido={partido}
+                token={token}
+              />
+            )}
+
+            {/* Vista Estadísticas Directas */}
+            {vistaEstadisticas === 'directas' && (
+              <SeccionEstadisticasDirectas
+                partido={partido}
+                partidoId={partidoId}
+                token={token}
+                onRefresh={setRefreshEstadisticas}
+                setModalEstadisticasGeneralesAbierto={setModalEstadisticasGeneralesAbierto}
+              />
             )}
           </div>
 
@@ -537,18 +486,18 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
                 <span className="flex items-center gap-2">
                   ⚙️ Configuración Avanzada
                   <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7 7" />
                   </svg>
                 </span>
               </summary>
-              
+
               <div className="mt-4 pt-4 border-t border-red-200">
                 <div className="bg-white border border-red-200 rounded-lg p-4">
                   <h4 className="text-red-800 font-semibold mb-3">⚠️ Acciones Irreversibles</h4>
                   <p className="text-red-700 text-sm mb-4">
                     Estas acciones eliminarán permanentemente datos del partido. No se pueden deshacer.
                   </p>
-                  
+
                   <div className="flex gap-3">
                     <button
                       onClick={handleEliminarPartido}
@@ -562,6 +511,7 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
               </div>
             </details>
           </div>
+
         </div>
       </ModalBase>
 
@@ -584,13 +534,15 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
       )}
 
       {/* Modal de estadísticas generales */}
-      {modalEstadisticasGeneralesAbierto && partido && (
+      {modalEstadisticasGeneralesAbierto && (
         <ModalEstadisticasGeneralesCaptura
           partido={partido}
           partidoId={partidoId}
           token={token}
-          onClose={() => setModalEstadisticasGeneralesAbierto(false)}
+          onClose={() => setModalEstadisticasGeneralesAbierto(null)}
           onRefresh={refreshEstadisticas}
+          datosIniciales={modalEstadisticasGeneralesAbierto?.datosIniciales || []}
+          hayDatosAutomaticos={modalEstadisticasGeneralesAbierto?.hayDatosAutomaticos || false}
         />
       )}
     </>

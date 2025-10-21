@@ -8,7 +8,9 @@ export default function ModalEstadisticasGeneralesCaptura({
   partidoId,
   token,
   onClose,
-  onRefresh // Función de refresco para actualizar estadísticas en el componente padre
+  onRefresh,
+  datosIniciales = [], // Nueva prop para datos iniciales de autocompletado
+  hayDatosAutomaticos = false // Nueva prop para indicar si hay datos automáticos
 }) {
   const [jugadores, setJugadores] = useState([]);
   const [estadisticas, setEstadisticas] = useState({});
@@ -80,23 +82,98 @@ export default function ModalEstadisticasGeneralesCaptura({
 
       setJugadores(jugadoresData);
 
-      // Si no hay jugadores asignados, mostrar interfaz de asignación
-      if (jugadoresData.length === 0) {
+      // Si hay datos iniciales, no mostrar interfaz de asignación
+      if (hayDatosAutomaticos && datosIniciales.length > 0) {
+        setMostrarAsignacion(false);
+      } else if (jugadoresData.length === 0) {
         setMostrarAsignacion(true);
       }
 
-      // Cargar estadísticas existentes
-      const responseEstadisticas = await fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (responseEstadisticas.ok) {
-        const estadisticasData = await responseEstadisticas.json();
+      // Cargar estadísticas existentes o usar datos iniciales
+      if (hayDatosAutomaticos && datosIniciales.length > 0) {
+        // Usar datos iniciales de estadísticas automáticas
+        console.log('🎯 Usando datos iniciales de autocompletado:', datosIniciales.length);
         const estadisticasMap = {};
-        estadisticasData.forEach(stat => {
-          estadisticasMap[stat.jugadorPartido._id] = stat;
+        datosIniciales.forEach(stat => {
+          estadisticasMap[stat.jugadorPartido._id] = {
+            ...stat,
+            _id: undefined, // Forzar creación nueva para estadísticas manuales
+            fuente: 'autocompletado-automatico'
+          };
         });
         setEstadisticas(estadisticasMap);
+
+        // Inicializar selecciones de jugadores basándose en los datos iniciales
+        const nuevasSeleccionesLocal = Array(10).fill('');
+        const nuevasSeleccionesVisitante = Array(10).fill('');
+        let posicionLocal = 0;
+        let posicionVisitante = 0;
+
+        // Agrupar por equipo y asignar posiciones
+        const porEquipo = {};
+        datosIniciales.forEach(stat => {
+          const equipoId = stat.jugadorPartido.equipo?._id || stat.jugadorPartido.equipo;
+          if (!porEquipo[equipoId]) {
+            porEquipo[equipoId] = [];
+          }
+          porEquipo[equipoId].push(stat);
+        });
+
+        console.log('🏆 Agrupación por equipo:', porEquipo);
+
+        // Asignar posiciones para cada equipo
+        Object.entries(porEquipo).forEach(([equipoId, stats]) => {
+          const equipoLocalId = partido?.equipoLocal?._id;
+          const equipoVisitanteId = partido?.equipoVisitante?._id;
+
+          console.log('🎯 Comparando equipo:', equipoId, 'con local:', equipoLocalId, 'visitante:', equipoVisitanteId);
+
+          const esLocal = equipoId === equipoLocalId;
+          const esVisitante = equipoId === equipoVisitanteId;
+
+          console.log('✅ Es local:', esLocal, 'Es visitante:', esVisitante);
+
+          if (esLocal || esVisitante) {
+            const selecciones = esLocal ? nuevasSeleccionesLocal : nuevasSeleccionesVisitante;
+            let posicion = esLocal ? posicionLocal : posicionVisitante;
+
+            stats.forEach(stat => {
+              if (posicion < 10) {
+                selecciones[posicion] = stat.jugadorPartido._id;
+                console.log('📍 Asignando jugador', stat.jugadorPartido._id, 'a posición', posicion, esLocal ? 'local' : 'visitante');
+                posicion++;
+              }
+            });
+
+            if (esLocal) {
+              posicionLocal = posicion;
+            } else {
+              posicionVisitante = posicion;
+            }
+          }
+        });
+
+        setSeleccionesLocal(nuevasSeleccionesLocal);
+        setSeleccionesVisitante(nuevasSeleccionesVisitante);
+
+        console.log('✅ Inicializadas selecciones de autocompletado:', {
+          local: nuevasSeleccionesLocal.filter(id => id !== ''),
+          visitante: nuevasSeleccionesVisitante.filter(id => id !== '')
+        });
+      } else {
+        // Cargar estadísticas existentes (manuales)
+        const responseEstadisticas = await fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual?partido=${partidoId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (responseEstadisticas.ok) {
+          const estadisticasData = await responseEstadisticas.json();
+          const estadisticasMap = {};
+          estadisticasData.forEach(stat => {
+            estadisticasMap[stat.jugadorPartido._id] = stat;
+          });
+          setEstadisticas(estadisticasMap);
+        }
       }
     } catch (error) {
       console.error('Error cargando datos:', error);
@@ -170,7 +247,9 @@ export default function ModalEstadisticasGeneralesCaptura({
             outs: stats.outs || 0,
             catches: stats.catches || 0,
             tipoCaptura: 'manual',
-            fuente: 'captura-directa'
+            fuente: hayDatosAutomaticos && stats.fuente === 'autocompletado-automatico'
+              ? 'manual-con-autocompletado'
+              : 'captura-directa'
           };
 
           // Verificar si ya existe
@@ -215,7 +294,9 @@ export default function ModalEstadisticasGeneralesCaptura({
             outs: stats.outs || 0,
             catches: stats.catches || 0,
             tipoCaptura: 'manual',
-            fuente: 'captura-directa'
+            fuente: hayDatosAutomaticos && stats.fuente === 'autocompletado-automatico'
+              ? 'manual-con-autocompletado'
+              : 'captura-directa'
           };
 
           // Verificar si ya existe
@@ -480,14 +561,25 @@ export default function ModalEstadisticasGeneralesCaptura({
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800">
-            {hayJugadoresAsignados ? 'Editar Asignación de Jugadores' : 'Asignar Jugadores al Partido'}
+            {hayDatosAutomaticos 
+              ? '📝 Capturar Estadísticas (Autocompletadas)' 
+              : '📝 Capturar Estadísticas Generales'
+            }
           </h2>
           <p className="text-gray-600 mt-2">
-            {hayJugadoresAsignados 
-              ? 'Modifica la lista de jugadores que participaron en este partido'
-              : 'Selecciona los jugadores que participaron en este partido'
+            {hayDatosAutomaticos 
+              ? `Se autocompletaron ${datosIniciales.length} estadísticas de datos automáticos. Modifica los valores según necesites.`
+              : 'Ingresa las estadísticas directamente para todo el partido'
             }
           </p>
+          {hayDatosAutomaticos && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+              <p className="text-blue-800 text-sm">
+                💡 <strong>Autocompletado:</strong> Los valores mostrados provienen de estadísticas calculadas automáticamente. 
+                Puedes modificarlos antes de guardar como estadísticas manuales.
+              </p>
+            </div>
+          )}
         </div>
 
         {mostrarAsignacion ? (
@@ -643,9 +735,13 @@ export default function ModalEstadisticasGeneralesCaptura({
                       <select
                         value={jugadorSeleccionadoId || ''}
                         onChange={(e) => cambiarSeleccionJugador('local', index, e.target.value)}
-                        className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className={`flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                          hayDatosAutomaticos && jugadorSeleccionadoId ? 'bg-blue-50 border-blue-300' : ''
+                        }`}
                       >
-                        <option value="">Seleccionar jugador</option>
+                        <option value="">
+                          {hayDatosAutomaticos && !jugadorSeleccionadoId ? 'Posición libre' : 'Seleccionar jugador'}
+                        </option>
                         {jugadoresEquipo.length > 0 ? (
                           jugadoresEquipo.map(jugador => {
                             const nombre = jugador.jugador?.nombre || 'Sin nombre';
@@ -669,6 +765,7 @@ export default function ModalEstadisticasGeneralesCaptura({
                         jugadorPartidoId={jugadorSeleccionadoId}
                         estadisticas={estadisticas[jugadorSeleccionadoId] || {}}
                         onCambiarEstadistica={cambiarEstadistica}
+                        hayDatosAutomaticos={hayDatosAutomaticos}
                       />
                     )}
                   </div>
@@ -708,9 +805,13 @@ export default function ModalEstadisticasGeneralesCaptura({
                       <select
                         value={jugadorSeleccionadoId || ''}
                         onChange={(e) => cambiarSeleccionJugador('visitante', index, e.target.value)}
-                        className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        className={`flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-500 ${
+                          hayDatosAutomaticos && jugadorSeleccionadoId ? 'bg-blue-50 border-blue-300' : ''
+                        }`}
                       >
-                        <option value="">Seleccionar jugador</option>
+                        <option value="">
+                          {hayDatosAutomaticos && !jugadorSeleccionadoId ? 'Posición libre' : 'Seleccionar jugador'}
+                        </option>
                         {jugadoresEquipo.length > 0 ? (
                           jugadoresEquipo.map(jugador => {
                             const nombre = jugador.jugador?.nombre || 'Sin nombre';
@@ -734,6 +835,7 @@ export default function ModalEstadisticasGeneralesCaptura({
                         jugadorPartidoId={jugadorSeleccionadoId}
                         estadisticas={estadisticas[jugadorSeleccionadoId] || {}}
                         onCambiarEstadistica={cambiarEstadistica}
+                        hayDatosAutomaticos={hayDatosAutomaticos}
                       />
                     )}
                   </div>
@@ -766,7 +868,7 @@ export default function ModalEstadisticasGeneralesCaptura({
 }
 
 // Componente auxiliar para mostrar estadísticas de un jugador
-function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadistica }) {
+function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadistica, hayDatosAutomaticos }) {
   const [valoresTemporales, setValoresTemporales] = React.useState({
     throws: estadisticas.throws || 0,
     hits: estadisticas.hits || 0,
@@ -774,15 +876,16 @@ function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadist
     catches: estadisticas.catches || 0
   });
 
-  // Actualizar valores temporales cuando cambien las estadísticas
+  // Actualizar valores temporales cuando cambien las estadísticas o el componente se monte
   React.useEffect(() => {
+    console.log('📊 Inicializando valores para jugador:', jugadorPartidoId, estadisticas);
     setValoresTemporales({
       throws: estadisticas.throws || 0,
       hits: estadisticas.hits || 0,
       outs: estadisticas.outs || 0,
       catches: estadisticas.catches || 0
     });
-  }, [estadisticas]);
+  }, [jugadorPartidoId, estadisticas]);
 
   const handleInputChange = (campo, valor) => {
     const numValue = parseInt(valor) || 0;
@@ -802,8 +905,15 @@ function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadist
     onCambiarEstadistica(jugadorPartidoId, campo, delta);
   };
 
+  const esAutocompletado = hayDatosAutomaticos && estadisticas.fuente === 'autocompletado-automatico';
+
   return (
-    <div className="grid grid-cols-4 gap-2 text-xs">
+    <div className={`grid grid-cols-4 gap-2 text-xs ${esAutocompletado ? 'ring-1 ring-blue-200 rounded p-2 bg-blue-50/30' : ''}`}>
+      {esAutocompletado && (
+        <div className="col-span-4 text-center mb-1">
+          <span className="text-xs text-blue-600 font-medium">💡 Autocompletado</span>
+        </div>
+      )}
       {/* Throws */}
       <div className="text-center">
         <div className="text-gray-600 mb-1">Throws</div>
