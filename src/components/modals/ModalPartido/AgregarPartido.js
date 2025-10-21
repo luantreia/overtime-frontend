@@ -1,10 +1,10 @@
 // Componente AgregarPartido.js
 import React, { useState, useEffect } from 'react';
 import { getAuth, getIdToken } from 'firebase/auth';
-import { usePartidos } from '../../../hooks/usePartidos';
-import { useFases } from '../../../hooks/useFases';
-import { useParticipacionFase } from '../../../hooks/useParticipacionFase';
-import useEquipos from '../../../hooks/useEquipos';
+import { usePartidos } from '../../../hooks/partidos/usePartidos';
+import { useFases } from '../../../hooks/competencias/useFases';
+import { useParticipacionFase } from '../../../hooks/competencias/useParticipacionFase';
+import { useEquipos } from '../../../hooks/equipos/useEquipos';
 
 const AgregarPartido = () => {
   // Estados formulario

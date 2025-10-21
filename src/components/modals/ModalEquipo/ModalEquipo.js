@@ -3,10 +3,10 @@ import EncabezadoEquipo from './EncabezadoEquipo';
 import SeccionResultados from './SeccionResultados';
 import SeccionEstadisticas from './SeccionEstadisticas';
 import SeccionJugadores from './SeccionJugadores';
-import CloseButton from '../../common/FormComponents/CloseButton';
+import CloseButton from '../../ui/FormComponents/CloseButton';
 import ModalJugadorEquipo from '../ModalJugador/ModalJugadorEquipo';
 
-import { usePartidosDeEquipo } from '../../../hooks/usePartidosDeEquipo';
+import { usePartidosDeEquipo } from '../../../hooks/equipos/usePartidosDeEquipo';
 import { useAuth } from '../../../context/AuthContext';
 
 function ModalEquipo({ equipo: equipoProp, onClose }) {

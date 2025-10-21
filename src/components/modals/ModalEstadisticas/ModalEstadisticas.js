@@ -3,7 +3,7 @@ import ModalLayout from '../../common/ModalLayout';
 import EncabezadoEstadisticas from './EncabezadoEstadisticas';
 import EquiposEstadisticas from './EquipoEstadisticas';
 import { SetManager } from './SetManager';
-import { useEstadisticasSet } from './hooks/useEstadisticasSet';
+import { useEstadisticasSet } from '../../../hooks/estadisticas/useEstadisticasSet';
 
 export default function ModalEstadisticasCaptura({
   partido,

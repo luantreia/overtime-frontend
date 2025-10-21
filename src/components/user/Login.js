@@ -1,8 +1,8 @@
 // src/components/auth/Login.js
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase';
-import ErrorMessage from '../common/FormComponents/ErrorMessage';
+import { auth } from '../../config/firebase';
+import ErrorMessage from '../ui/FormComponents/ErrorMessage';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 

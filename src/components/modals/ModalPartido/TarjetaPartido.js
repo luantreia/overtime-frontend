@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function TarjetaPartido({ partido, onClick, onAdminClick, user, rol }) {
+const TarjetaPartido = React.memo(function TarjetaPartido({ partido, onClick, onAdminClick, user, rol }) {
   if (!partido) return null;
 
   const equipoLocal = partido.equipoLocal;
@@ -24,29 +24,47 @@ export default function TarjetaPartido({ partido, onClick, onAdminClick, user, r
 
   return (
     <div
-      className="bg-white rounded-lg shadow-lg p-4 w-52 text-center cursor-pointer
+      className="bg-white rounded-lg shadow-lg p-3 sm:p-4 w-full max-w-xs sm:w-52 text-center cursor-pointer
                  transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl
-                 flex flex-col justify-between items-center"
+                 flex flex-col justify-between items-center dark:bg-gray-800 dark:border dark:border-gray-600"
       onClick={onClick}
     >
       {/* Escudos */}
-      <div className="flex items-center justify-center gap-3 w-full mb-1">
-        <img src={escudoLocal} alt={nombreLocal} className="w-10 h-10 object-contain flex-shrink-0" />
-        <span className="font-bold text-lg text-gray-700">vs</span>
-        <img src={escudoVisitante} alt={nombreVisitante} className="w-10 h-10 object-contain flex-shrink-0" />
+      <div className="flex items-center justify-center gap-2 sm:gap-3 w-full mb-1">
+        <img src={escudoLocal} alt={nombreLocal} className="w-8 h-8 sm:w-10 sm:h-10 object-contain flex-shrink-0" />
+        <span className="font-bold text-base sm:text-lg text-gray-700 dark:text-gray-300">vs</span>
+        <img src={escudoVisitante} alt={nombreVisitante} className="w-8 h-8 sm:w-10 sm:h-10 object-contain flex-shrink-0" />
       </div>
 
       {/* Marcador */}
-      <div className="flex justify-center items-center gap-2 mb-2 text-gray-800">
-        <span className="text-base font-bold">{marcadorLocal}</span>
-        <span className="text-sm text-gray-500">-</span>
-        <span className="text-base font-bold">{marcadorVisitante}</span>
+      <div className="flex justify-center items-center gap-2 mb-2 text-gray-800 dark:text-gray-200">
+        <span className="text-sm sm:text-base font-bold">{marcadorLocal}</span>
+        <span className="text-xs sm:text-sm text-gray-500">-</span>
+        <span className="text-sm sm:text-base font-bold">{marcadorVisitante}</span>
       </div>
 
       {/* Nombres + Info */}
-      <h3 className="text-sm font-semibold text-gray-800 mb-1 leading-tight">{nombreLocal} vs {nombreVisitante}</h3>
-      <p className="text-xs text-gray-500 mb-3 capitalize">
-        {partido.modalidad} · {partido.categoria} · {new Date(partido.fecha).toLocaleDateString()}
+      <h3 className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1 leading-tight px-1">
+        <span className="hidden sm:inline">{nombreLocal} vs {nombreVisitante}</span>
+        <span className="sm:hidden">
+          {nombreLocal.split(' ')[0]} vs {nombreVisitante.split(' ')[0]}
+        </span>
+      </h3>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 capitalize">
+        <span className="hidden sm:block">
+          {partido.modalidad} · {partido.categoria}
+        </span>
+        <span className="sm:hidden">
+          {partido.modalidad}
+        </span>
+        <br className="sm:hidden" />
+        <span className="block sm:inline">
+          {new Date(partido.fecha).toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: window.innerWidth < 640 ? '2-digit' : 'numeric'
+          })}
+        </span>
       </p>
       
       {/* Botones */}
@@ -76,4 +94,6 @@ export default function TarjetaPartido({ partido, onClick, onAdminClick, user, r
       </div>
     </div>
   );
-}
+});
+
+export default TarjetaPartido;

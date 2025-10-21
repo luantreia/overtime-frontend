@@ -1,5 +1,5 @@
 import React from 'react';
-import useResumenEstadisticasEquipo from '../../../hooks/useResumenEstadisticas/useResumenEstadisticasEquipo';
+import useResumenEstadisticasEquipo from '../../../hooks/estadisticas/useResumenEstadisticasEquipo';
 import RadarPromedios from '../ModalJugador/RadarPromedios';
 
 export default function SeccionEstadisticas({ equipoId }) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useOrganizaciones } from '../../../hooks/useOrganizaciones';
+import { useOrganizaciones } from '../../../hooks/organizaciones/useOrganizaciones';
 import { getAuth, getIdToken } from 'firebase/auth';
 
 export default function FormularioCompetencia({ onCreada }) {

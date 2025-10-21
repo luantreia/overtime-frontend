@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useOrganizaciones } from '../../../hooks/useOrganizaciones';
+import { useOrganizaciones } from '../../../hooks/organizaciones/useOrganizaciones';
 
 export default function AgregarOrganizacion() {
   const { agregarOrganizacion } = useOrganizaciones();

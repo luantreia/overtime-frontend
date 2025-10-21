@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import useEquipos from '../../../../../hooks/useEquipos';
-import { usePartidos } from '../../../../../hooks/usePartidos';
+import { useEquipos } from '../../../../../hooks/equipos/useEquipos';
+import { usePartidos } from '../../../../../hooks/partidos/usePartidos';
 import ModalPartidoAdmin from '../AdminPartido/ModalPartidoAdmin';
 
 

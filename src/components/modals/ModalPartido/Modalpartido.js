@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PartidoDatosGenerales from './PartidoDatosGenerales';
-import useJugadores from '../../../hooks/useJugadores';
-import CloseButton from '../../common/FormComponents/CloseButton';
+import useJugadores from '../../../hooks/jugadores/useJugadores';
+import CloseButton from '../../ui/FormComponents/CloseButton';
 import PartidoSetsLineaDeTiempo from './PartidoSetsLineaDeTiempo';
 
 export default function ModalPartido({

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { usePartidos } from '../../../../hooks/usePartidos';
+import { usePartidos } from '../../../../hooks/partidos/usePartidos';
 import TarjetaPartido from './../../ModalPartido/TarjetaPartido'; // Ajustá la ruta si está en otra carpeta
 import ModalPartido from './../../ModalPartido/Modalpartido'; // Importá tu modal
 import { useAuth } from '../../../../context/AuthContext';

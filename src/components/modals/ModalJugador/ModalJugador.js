@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import CloseButton from '../../common/FormComponents/CloseButton';
-import Button from '../../common/FormComponents/Button';
+import CloseButton from '../../ui/FormComponents/CloseButton';
+import Button from '../../ui/FormComponents/Button';
 import SeccionEquiposJugador from './SeccionEquiposJugador';
 import RadarPromedios from './RadarPromedios';
-import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticas/useResumenEstadisticasJugador';
+import useResumenEstadisticasJugador from '../../../hooks/estadisticas/useResumenEstadisticasJugador';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function ModalJugador({ jugador, onClose }) {

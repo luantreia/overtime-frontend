@@ -1,5 +1,5 @@
 import React from 'react';
-import useResumenEstadisticasJugador from '../../../hooks/useResumenEstadisticas/useResumenEstadisticasJugador';
+import useResumenEstadisticasJugador from '../../../hooks/estadisticas/useResumenEstadisticasJugador';
 
 export default function SeccionEstadisticasJugador({ jugadorId, token }) {
   const { resumen, loading, error } = useResumenEstadisticasJugador(jugadorId, token);

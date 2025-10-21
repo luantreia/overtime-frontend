@@ -1,6 +1,6 @@
 // src/components/estadisticas/EncabezadoEstadisticas.js
 import React from 'react';
-import CloseButton from '../../common/FormComponents/CloseButton';
+import CloseButton from '../../ui/FormComponents/CloseButton';
 
 export default function EncabezadoEstadisticas({ onClose }) { // Removed onAgregarSet prop
   return (

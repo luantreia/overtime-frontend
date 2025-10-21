@@ -1,50 +1,58 @@
 // src/App.js
 import './App.css';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import NavBar from "./components/layout/Navbar";
-import Jugadores from './pages/Jugadores';
-import Equipos from './pages/Equipos';
-import Perfil from './pages/Perfil';
-import Login from './components/user/Login';
-import Registro from './components/user/Registro';
-import AgregarJugador from './components/modals/ModalJugador/AgregarJugador';
-import AgregarEquipo from './components/modals/ModalEquipo/AgregarEquipo';
-import LandingPage from './pages/LandingPage';
-import Partidos from './pages/Partidos';
-import AgregarPartido from './components/modals/ModalPartido/AgregarPartido';
-import AgregarOrganizacion from './components/modals/ModalOrganizacion/AgregarOrganizacion';
-import Organizaciones from './pages/Organizaciones';
-import Competencias from './pages/Competencias';
-import FormularioCompetencia from './components/modals/ModalCompetencia/agregarCompetencia';
-import PanelAdmin from './components/user/perfil/PanelAdmin';
-import OpcionesAvanzadas from './pages/admin/OpcionesAvanzadas';
+import LoadingSpinner from './components/common/LoadingSpinner';
+
+// Lazy loaded components
+const Jugadores = lazy(() => import('./pages/Jugadores'));
+const Equipos = lazy(() => import('./pages/Equipos'));
+const Perfil = lazy(() => import('./pages/Perfil'));
+const Login = lazy(() => import('./components/user/Login'));
+const Registro = lazy(() => import('./components/user/Registro'));
+const AgregarJugador = lazy(() => import('./components/modals/ModalJugador/AgregarJugador'));
+const AgregarEquipo = lazy(() => import('./components/modals/ModalEquipo/AgregarEquipo'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Partidos = lazy(() => import('./pages/Partidos'));
+const AgregarPartido = lazy(() => import('./components/modals/ModalPartido/AgregarPartido'));
+const AgregarOrganizacion = lazy(() => import('./components/modals/ModalOrganizacion/AgregarOrganizacion'));
+const Organizaciones = lazy(() => import('./pages/Organizaciones'));
+const Competencias = lazy(() => import('./pages/Competencias'));
+const FormularioCompetencia = lazy(() => import('./components/modals/ModalCompetencia/agregarCompetencia'));
+const PanelAdmin = lazy(() => import('./components/user/perfil/PanelAdmin'));
+const OpcionesAvanzadas = lazy(() => import('./pages/admin/OpcionesAvanzadas'));
+
+// Loading fallback component
+const LoadingFallback = () => <LoadingSpinner size="large" message="Cargando aplicación..." />;
 
 function App() {
   return (
     <div className="App">
       <NavBar />
 
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/jugadores" element={<Jugadores />} />
-        <Route path="/equipos" element={<Equipos />} />
-        <Route path="/agregar-jugadores-multiple" element={<AgregarJugador />} />
-        <Route path="/agregar-equipo" element={<AgregarEquipo />} />
-        <Route path="/agregar-partido" element={<AgregarPartido />} />
-        <Route path="/agregar-organizacion" element={<AgregarOrganizacion />} /> 
-        <Route path="/competencias" element={<Competencias />} />                       
-        <Route path="/agregar-competencia" element={<FormularioCompetencia />} />
-        <Route path="/organizaciones" element={<Organizaciones />} />
-        <Route path="/partidos" element={<Partidos />} />
-        <Route path="/perfil" element={<Perfil />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/admin" element={<PanelAdmin />} />
-        <Route path="/admin/opciones" element={<OpcionesAvanzadas />} />
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/jugadores" element={<Jugadores />} />
+          <Route path="/equipos" element={<Equipos />} />
+          <Route path="/agregar-jugadores-multiple" element={<AgregarJugador />} />
+          <Route path="/agregar-equipo" element={<AgregarEquipo />} />
+          <Route path="/agregar-partido" element={<AgregarPartido />} />
+          <Route path="/agregar-organizacion" element={<AgregarOrganizacion />} /> 
+          <Route path="/competencias" element={<Competencias />} />                       
+          <Route path="/agregar-competencia" element={<FormularioCompetencia />} />
+          <Route path="/organizaciones" element={<Organizaciones />} />
+          <Route path="/partidos" element={<Partidos />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/admin" element={<PanelAdmin />} />
+          <Route path="/admin/opciones" element={<OpcionesAvanzadas />} />
 
-        {/* Agrega más rutas según lo que necesites */}
-      </Routes>
+          {/* Agrega más rutas según lo que necesites */}
+        </Routes>
+      </Suspense>
     </div>
   );
 }

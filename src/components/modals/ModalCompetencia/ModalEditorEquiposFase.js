@@ -1,6 +1,6 @@
 import React from 'react';
 import EditorEquiposFase from './EditorEquiposFase';
-import CloseButton from '../../common/FormComponents/CloseButton';
+import CloseButton from '../../ui/FormComponents/CloseButton';
 
 export default function ModalEditorEquiposFase({ competenciaId, tipoFase, fases, onClose }) {
   return (

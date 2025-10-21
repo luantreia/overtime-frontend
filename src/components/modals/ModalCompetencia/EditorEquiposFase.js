@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useEquipoCompetencia } from '../../../hooks/useEquiposCompetencia';
-import { useParticipacionFase } from '../../../hooks/useParticipacionFase';
+import { useEquipoCompetencia } from '../../../hooks/competencias/useEquiposCompetencia';
+import { useParticipacionFase } from '../../../hooks/competencias/useParticipacionFase';
 
 export default function EditorEquiposFase({ competenciaId, fases }) {
   const [faseSeleccionadaId, setFaseSeleccionadaId] = useState(fases?.[0]?._id || null);

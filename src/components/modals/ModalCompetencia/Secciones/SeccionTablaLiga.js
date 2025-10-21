@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParticipacionFase } from '../../../../hooks/useParticipacionFase';
+import { useParticipacionFase } from '../../../../hooks/competencias/useParticipacionFase';
 
 function SeccionTablaLiga({ faseId }) {
   const { participaciones, loading, error, fetchParticipaciones } = useParticipacionFase();

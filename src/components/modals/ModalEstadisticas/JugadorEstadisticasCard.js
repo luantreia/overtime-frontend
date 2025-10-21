@@ -1,6 +1,6 @@
 // src/components/modals/ModalEstadisticasCaptura/JugadorEstadisticasCard.js
 import React, { useState, useRef } from 'react';
-import SelectDropdown from '../../common/FormComponents/SelectDropdown';
+import SelectDropdown from '../../ui/FormComponents/SelectDropdown';
 
 export default function JugadorEstadisticasCard({
   index,

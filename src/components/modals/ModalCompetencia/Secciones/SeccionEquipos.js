@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEquipoCompetencia } from '../../../../hooks/useEquiposCompetencia';
+import { useEquipoCompetencia } from '../../../../hooks/competencias/useEquiposCompetencia';
 import TarjetaEquipo from '../../ModalEquipo/tarjetaequipo';
 
 function SeccionEquipos({ competenciaId }) {

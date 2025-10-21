@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
+import { auth } from '../config/firebase';
 import MostrarPerfil from '../components/user/perfil/MostrarPerfil';
 import EditarPerfil from '../components/user/perfil/EditarPerfil';
 import { motion } from 'framer-motion';

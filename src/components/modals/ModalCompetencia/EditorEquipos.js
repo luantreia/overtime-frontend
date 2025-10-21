@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useEquipoCompetencia } from '../../../hooks/useEquiposCompetencia';
+import { useEquipoCompetencia } from '../../../hooks/competencias/useEquiposCompetencia';
 
 function EditorEquipos({ competenciaId }) {
   const {

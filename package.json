@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.90.5",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -11,10 +13,9 @@
     "file-saver": "^2.0.5",
     "firebase": "^11.7.1",
     "framer-motion": "^12.23.24",
-    "mongodb": "^6.16.0",
-    "mongoose": "^8.14.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.0",
     "react-scripts": "^5.0.1",
@@ -52,6 +53,7 @@
     "@tailwindcss/postcss": "^4.1.10",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

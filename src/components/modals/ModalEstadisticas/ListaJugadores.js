@@ -1,6 +1,6 @@
 import React from 'react';
 import JugadorEstadisticasCard from './JugadorEstadisticasCard';
-import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
+import { useJugadorEquipo } from '../../../hooks/jugadores/useJugadoresEquipo';
 
 export function ListaJugadores({
   equipoNombre,

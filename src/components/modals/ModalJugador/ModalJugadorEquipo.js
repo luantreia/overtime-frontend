@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import CloseButton from '../../common/FormComponents/CloseButton';
-import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
+import CloseButton from '../../ui/FormComponents/CloseButton';
+import { useJugadorEquipo } from '../../../hooks/jugadores/useJugadoresEquipo';
 
 export default function ModalJugadorEquipo({ relacion: relacionProp, onClose, onJugadorActualizado, actualizarRelacion, error }) {
   const [relacion, setRelacion] = useState(relacionProp);

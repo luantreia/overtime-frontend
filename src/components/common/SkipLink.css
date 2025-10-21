@@ -1,0 +1,57 @@
+/* src/components/common/SkipLink.css */
+
+/* Contenedor de skip links */
+.skip-links-container {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  z-index: 1000;
+}
+
+/* Estilos del skip link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+  font-weight: bold;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.skip-link:focus {
+  opacity: 1 !important;
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+}
+
+/* Múltiples skip links */
+.skip-links-container .skip-link:nth-child(1) {
+  top: -40px;
+}
+
+.skip-links-container .skip-link:nth-child(2) {
+  top: -80px;
+}
+
+.skip-links-container .skip-link:nth-child(3) {
+  top: -120px;
+}
+
+.skip-links-container .skip-link:focus ~ .skip-link {
+  top: -40px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .skip-link {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+}

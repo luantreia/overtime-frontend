@@ -1,8 +1,8 @@
 // src/components/auth/Registro.js
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, getIdToken } from 'firebase/auth';
-import { auth } from '../../firebase';
-import ErrorMessage from '../common/FormComponents/ErrorMessage';
+import { auth } from '../../config/firebase';
+import ErrorMessage from '../ui/FormComponents/ErrorMessage';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 

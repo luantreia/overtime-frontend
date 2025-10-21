@@ -1,15 +1,21 @@
 import React, { useState } from "react";
-import logo from "../../logo.png";
+import logo from "../../assets/logo.png";
 import { signOut } from "firebase/auth";
-import { auth } from "../../firebase";
+import { auth } from "../../config/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { SkipLinks } from "../common/SkipLink";
+import { useAccessibility } from "../../hooks/common/useAccessibility";
+import ThemeToggle from "../common/ThemeToggle";
 
 const NavBar = () => {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hook de accesibilidad
+  const { handleKeyboardNavigation } = useAccessibility();
 
   const handleLogout = async () => {
     try {
@@ -57,15 +63,20 @@ const NavBar = () => {
   const navButtonBaseClasses = "block w-full text-white text-lg font-medium px-4 py-3 rounded-lg transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-800";
 
   return (
+    <>
+      <SkipLinks />
     <header className="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-xl sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-        {/* Logo */}
-        <img
-          src={logo}
-          alt="Overtime Logo"
-          className="h-16 w-auto cursor-pointer object-contain transform hover:scale-105 transition-transform duration-200"
-          onClick={() => handleNavigation("/")}
-        />
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        {/* Logo y Theme Toggle */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <img
+            src={logo}
+            alt="Overtime Logo"
+            className="h-12 sm:h-16 w-auto cursor-pointer object-contain transform hover:scale-105 transition-transform duration-200"
+            onClick={() => handleNavigation("/")}
+          />
+          <ThemeToggle />
+        </div>
 
         {/* Hamburger Menu Button - Always visible, refined animation */}
         <button
@@ -145,6 +156,7 @@ const NavBar = () => {
 
       </div>
     </header>
+    </>
   );
 };
 

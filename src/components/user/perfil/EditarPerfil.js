@@ -1,7 +1,7 @@
 // src/components/user/perfil/EditarPerfil.js
 
 import React, { useState } from 'react';
-import Button from '../../common/FormComponents/Button'; // Ensure this path is correct
+import Button from '../../ui/FormComponents/Button'; // Ensure this path is correct
 
 export default function EditarPerfil({ datos, onGuardar, onCancelar }) {
   const [nombre, setNombre] = useState(datos.nombre || '');

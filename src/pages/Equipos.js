@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import TarjetaEquipo from '../components/modals/ModalEquipo/tarjetaequipo.js';
 import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
-import TimelineEquipos from '../components/modals/TimelineEquipos.js';
-import useEquipos from '../hooks/useEquipos.js';
+import TimelineEquipos from '../components/common/timeline/TimelineEquipos.js';
+import { useEquipos } from '../hooks/equipos/useEquipos.js';
 import { useAuth } from '../context/AuthContext.js';
 
 const ITEMS_POR_PAGINA = 20;

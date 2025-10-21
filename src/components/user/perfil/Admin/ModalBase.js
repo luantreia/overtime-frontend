@@ -1,5 +1,5 @@
 import React from 'react';
-import CloseButton from '../../../common/FormComponents/CloseButton';
+import CloseButton from '../../../ui/FormComponents/CloseButton';
 
 export default function ModalBase({ children, onClose, title }) {
   return (

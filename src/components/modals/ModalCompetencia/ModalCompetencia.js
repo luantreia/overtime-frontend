@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import CloseButton from '../../common/FormComponents/CloseButton';
+import CloseButton from '../../ui/FormComponents/CloseButton';
 import SeccionResumen from './Secciones/SeccionResumen';
 import SeccionEquipos from './Secciones/SeccionEquipos';
 import SeccionPartidos from './Secciones/SeccionPartidos';
 import SeccionTablaLiga from './Secciones/SeccionTablaLiga';
 import ModalEditorEquiposFase from './ModalEditorEquiposFase';
-import { useCompetenciaPorId } from '../../../hooks/useCompetencias';
-import { useFases } from '../../../hooks/useFases';
+import { useCompetenciaPorId } from '../../../hooks/competencias/useCompetencias';
+import { useFases } from '../../../hooks/competencias/useFases';
 import ModalFaseFormulario from './ModalFaseFormulario';
 import EditorEquipos from './EditorEquipos';
 import { useAuth } from '../../../context/AuthContext';

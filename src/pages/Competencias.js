@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCompetencias } from '../hooks/useCompetencias';
+import { useCompetencias } from '../hooks/competencias/useCompetencias';
 import TarjetaCompetencia from '../components/modals/ModalCompetencia/TarjetaCompetencia';
 import ModalCompetencia from '../components/modals/ModalCompetencia/ModalCompetencia';
 
