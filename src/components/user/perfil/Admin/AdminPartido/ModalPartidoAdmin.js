@@ -237,6 +237,30 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
     }
   };
 
+  const handleCambiarModoEstadisticas = async (partidoId, nuevoModo) => {
+    try {
+      const response = await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partidoId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ modoEstadisticas: nuevoModo })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cambiar modo de estadísticas');
+      }
+
+      const partidoActualizado = await response.json();
+      setPartido(prev => ({ ...prev, ...partidoActualizado }));
+      alert(`Modo cambiado a ${nuevoModo === 'manual' ? 'Manual' : 'Automático'}`);
+    } catch (error) {
+      console.error('Error cambiando modo de estadísticas:', error);
+      alert('Error al cambiar modo: ' + error.message);
+    }
+  };
+
   const refrescarPartidoSeleccionado = async () => {
     await fetchPartidoCompleto();
     return partido;
@@ -428,7 +452,12 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
             
             {/* Vista Estadísticas Generales */}
             {vistaEstadisticas === 'generales' && (
-              <EstadisticasGeneralesPartido partidoId={partidoId} token={token} />
+              <EstadisticasGeneralesPartido 
+                partidoId={partidoId} 
+                token={token} 
+                partido={partido}
+                onCambiarModoEstadisticas={handleCambiarModoEstadisticas}
+              />
             )}
             
             {/* Vista Set a Set */}
