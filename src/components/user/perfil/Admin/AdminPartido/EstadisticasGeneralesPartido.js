@@ -37,9 +37,11 @@ export default function EstadisticasGeneralesPartido({
   // Función para determinar qué endpoint usar según el modo de estadísticas
   const getEstadisticasEndpoint = () => {
     if (!modoEstadisticasUI || modoEstadisticasUI === 'automatico') {
-      return 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido';
+      // En modo automático, obtener estadísticas POR SET
+      return `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-set/resumen-partido/${partidoId}`;
     } else {
-      return 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual';
+      // En modo manual, obtener estadísticas agregadas manuales
+      return 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual/resumen-partido';
     }
   };
 
@@ -60,76 +62,68 @@ export default function EstadisticasGeneralesPartido({
         const endpoint = getEstadisticasEndpoint();
         console.log('🔗 Usando endpoint:', endpoint);
 
-        const [jugadoresResponse, equiposResponse] = await Promise.all([
-          fetch(
-            `${endpoint}?partido=${partidoId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-          fetch(
-            `https://overtime-ddyl.onrender.com/api/estadisticas/equipo-partido?partido=${partidoId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-        ]);
+        if (modoEstadisticasUI === 'automatico') {
+          // Para automático, cargar estadísticas POR SET
+          const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+          const dataSets = await response.json();
 
-        const estadisticasDirectas = await jugadoresResponse.json();
-        const estadisticasEquipos = await equiposResponse.json();
+          // Convertir el formato de sets a formato de jugadores para compatibilidad
+          const jugadoresFormateados = [];
+          dataSets.sets?.forEach(set => {
+            set.estadisticas?.forEach(stat => {
+              jugadoresFormateados.push({
+                _id: `${stat._id}_set_${set.numeroSet}`,
+                throws: stat.throws || 0,
+                hits: stat.hits || 0,
+                outs: stat.outs || 0,
+                catches: stat.catches || 0,
+                jugadorPartido: stat.jugadorPartido,
+                tipoCaptura: 'automatica',
+                fuente: `set_${set.numeroSet}`,
+                setInfo: {
+                  numeroSet: set.numeroSet,
+                  estadoSet: set.estadoSet,
+                  ganadorSet: set.ganadorSet
+                }
+              });
+            });
+          });
 
-        console.log('📈 Datos obtenidos:', {
-          jugadores: estadisticasDirectas.length,
-          equipos: estadisticasEquipos.length
-        });
+          // Aplicar filtro de visualización
+          let jugadoresFiltrados = jugadoresFormateados;
+          if (modoVisualizacionUI === 'manual') {
+            // Si queremos ver manual pero estamos en automático, no hay datos
+            jugadoresFiltrados = [];
+          }
 
-        // Formatear estadísticas de jugadores (ya no necesitamos filtrar por tipoCaptura)
-        const jugadoresFormateados = estadisticasDirectas.map(stat => ({
-          _id: stat._id,
-          throws: stat.throws || 0,
-          hits: stat.hits || 0,
-          outs: stat.outs || 0,
-          catches: stat.catches || 0,
-          jugadorPartido: stat.jugadorPartido,
-          // Para compatibilidad, agregamos tipoCaptura basado en el modelo usado
-          tipoCaptura: endpoint.includes('manual') ? 'manual' : 'automatica',
-          fuente: stat.fuente || 'sistema'
-        }));
+          console.log('📈 Datos de sets procesados:', {
+            sets: dataSets.sets?.length || 0,
+            estadisticasTotales: jugadoresFormateados.length,
+            estadisticasFiltradas: jugadoresFiltrados.length
+          });
 
-        // Aplicar filtro de visualización SOLO si estamos en modo de estadísticas que requiere filtrado
-        let jugadoresFiltrados = jugadoresFormateados;
-        if (modoEstadisticasUI === 'automatico' && modoVisualizacionUI === 'manual') {
-          // Si estamos en automático pero queremos ver manual, no hay datos
-          jugadoresFiltrados = [];
-          console.log('🔍 Filtro aplicado: automático → manual = sin datos');
-        } else if (modoEstadisticasUI === 'manual' && modoVisualizacionUI === 'automatico') {
-          // Si estamos en manual pero queremos ver automático, no hay datos
-          jugadoresFiltrados = [];
-          console.log('🔍 Filtro aplicado: manual → automático = sin datos');
+          data = {
+            jugadores: jugadoresFiltrados,
+            equipos: [], // Las estadísticas de equipo se calculan por separado
+            setsInfo: dataSets.sets || [] // Información adicional de sets
+          };
         } else {
-          console.log('🔍 Filtro aplicado: modos compatibles, mostrando todos los datos');
+          // Para manual, cargar estadísticas agregadas manuales
+          const response = await fetch(`${endpoint}/${partidoId}`, { headers: { Authorization: `Bearer ${token}` } });
+          const dataManual = await response.json();
+
+          // Aplicar filtro de visualización
+          let jugadoresFiltrados = dataManual.jugadores || [];
+          if (modoVisualizacionUI === 'automatico') {
+            // Si queremos ver automático pero estamos en manual, no hay datos
+            jugadoresFiltrados = [];
+          }
+
+          data = {
+            jugadores: jugadoresFiltrados,
+            equipos: dataManual.equipos || []
+          };
         }
-        // Si coinciden los modos, mostramos todos los datos disponibles
-
-        console.log('📊 Datos finales:', {
-          jugadoresOriginales: jugadoresFormateados.length,
-          jugadoresFiltrados: jugadoresFiltrados.length,
-          equipos: estadisticasEquipos.length
-        });
-
-        // Usar estadísticas de equipos reales de la base de datos
-        const equiposFormateados = estadisticasEquipos.map(equipo => ({
-          _id: equipo.equipo._id,
-          nombre: equipo.equipo.nombre,
-          escudo: equipo.equipo.escudo,
-          throws: equipo.throws || 0,
-          hits: equipo.hits || 0,
-          outs: equipo.outs || 0,
-          catches: equipo.catches || 0,
-          efectividad: equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0,
-          jugadores: equipo.jugadores || 0
-        }));
-
-        data = {
-          jugadores: jugadoresFiltrados,
-          equipos: equiposFormateados
-        };
       } else {
         // Cargar estadísticas agregadas (desde sets)
         const response = await fetch(
@@ -347,16 +341,16 @@ export default function EstadisticasGeneralesPartido({
                 onChange={(e) => handleCambiarModoVisualizacion(e.target.value)}
                 className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="automatico">📊 Estadísticas Automáticas (calculadas)</option>
-                <option value="manual">✏️ Estadísticas Manuales (ingresadas)</option>
+                <option value="automatico">📊 Estadísticas por Set (calculadas)</option>
+                <option value="manual">✏️ Estadísticas Totales (ingresadas)</option>
               </select>
             </div>
 
             {/* Información del modo actual */}
             <p className="text-sm text-gray-600 mt-1">
               {modoEstadisticasUI === 'manual'
-                ? '📝 Mostrando estadísticas manuales (ingresadas directamente)'
-                : '📊 Mostrando estadísticas automáticas (calculadas de sets)'}
+                ? '📝 Mostrando estadísticas manuales totales (ingresadas directamente)'
+                : '📊 Mostrando estadísticas automáticas por set individual'}
             </p>
           </div>
         </div>
@@ -371,8 +365,8 @@ export default function EstadisticasGeneralesPartido({
               onChange={(e) => handleCambiarModo(e.target.value)}
               className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="automatico">📊 Automático</option>
-              <option value="manual">✏️ Manual</option>
+              <option value="automatico">📊 Automático (por set)</option>
+              <option value="manual">✏️ Manual (totales)</option>
             </select>
           </div>
 

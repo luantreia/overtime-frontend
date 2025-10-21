@@ -14,8 +14,8 @@ export function SeccionEstadisticasGenerales({
           <h4 className="text-lg font-semibold text-blue-800">📊 Estadísticas Generales</h4>
           <p className="text-sm text-blue-700">
             {partido?.modoEstadisticas === 'manual'
-              ? 'Modo Manual: Estadísticas ingresadas directamente'
-              : 'Modo Automático: Estadísticas calculadas desde sets'
+              ? 'Modo Manual: Estadísticas totales del partido (ingresadas directamente)'
+              : 'Modo Automático: Estadísticas detalladas por set individual'
             }
           </p>
         </div>
