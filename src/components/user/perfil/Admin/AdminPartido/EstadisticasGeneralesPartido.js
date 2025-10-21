@@ -18,8 +18,6 @@ export default function EstadisticasGeneralesPartido({
   });
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState('general'); // 'general', 'equipos' o 'jugadores'
-  const [debugData, setDebugData] = useState(null);
-  const [showDebug, setShowDebug] = useState(false);
 
   // Estados locales para UI inmediata (se sincronizan con props)
   const [modoEstadisticasUI, setModoEstadisticasUI] = useState(partido?.modoEstadisticas || 'automatico');
@@ -27,12 +25,11 @@ export default function EstadisticasGeneralesPartido({
 
   // Sincronizar estados locales con props cuando cambian
   useEffect(() => {
-    setModoEstadisticasUI(partido?.modoEstadisticas || 'automatico');
-  }, [partido?.modoEstadisticas]);
-
-  useEffect(() => {
-    setModoVisualizacionUI(partido?.modoVisualizacion || 'automatico');
-  }, [partido?.modoVisualizacion]);
+    const nuevoModo = partido?.modoEstadisticas || 'automatico';
+    setModoEstadisticasUI(nuevoModo);
+    // Cuando cambia el modo de estadísticas, también sincroniza el modo de visualización
+    setModoVisualizacionUI(partido?.modoVisualizacion || nuevoModo);
+  }, [partido?.modoEstadisticas, partido?.modoVisualizacion]);
 
   // Función para determinar qué endpoint usar según el modo de estadísticas
   const getEstadisticasEndpoint = () => {
@@ -41,32 +38,53 @@ export default function EstadisticasGeneralesPartido({
       return `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-set/resumen-partido/${partidoId}`;
     } else {
       // En modo manual, obtener estadísticas agregadas manuales
-      return 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual/resumen-partido';
+      return `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual/resumen-partido/${partidoId}`;
     }
   };
 
   // Función para cargar estadísticas - exportada para uso externo
   const cargarEstadisticas = useCallback(async () => {
     try {
-      console.log('📊 Cargando estadísticas con modos:', {
+      console.log(`📊 Cargando estadísticas en modo ${modoEstadisticasUI}:`, {
         modoEstadisticasUI,
-        modoVisualizacionUI,
-        tipoVista
+        modoVisualizacionUI
       });
 
       setLoading(true);
-      let data;
+      let data = { jugadores: [], equipos: [] }; // Inicializar con valor por defecto
+      let endpoint;
+      let response;
 
-      if (tipoVista === 'directas') {
-        // Cargar estadísticas directas (EstadisticasJugadorPartido o Manual según modo)
-        const endpoint = getEstadisticasEndpoint();
-        console.log('🔗 Usando endpoint:', endpoint);
+      if (modoEstadisticasUI === 'automatico') {
+        // Cargar estadísticas automáticas POR SET
+        endpoint = getEstadisticasEndpoint();
+        console.log('🔗 Cargando estadísticas automáticas desde endpoint:', endpoint);
 
-        if (modoEstadisticasUI === 'automatico') {
-          // Para automático, cargar estadísticas POR SET
-          const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
-          const dataSets = await response.json();
+        response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
 
+        console.log('📡 Respuesta cruda del endpoint automático:', {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type')
+        });
+
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('❌ Respuesta no es JSON:', contentType);
+          throw new Error(`Respuesta no válida del servidor: ${contentType}`);
+        }
+
+        const dataSets = await response.json();
+
+        // Si no hay sets o hay error, retornar datos vacíos
+        if (!dataSets.sets || dataSets.sets.length === 0) {
+          console.log('⚠️ No hay sets con estadísticas en modo automático');
+          data = {
+            jugadores: [],
+            equipos: []
+          };
+        } else {
           // Convertir el formato de sets a formato de jugadores para compatibilidad
           const jugadoresFormateados = [];
           dataSets.sets?.forEach(set => {
@@ -89,48 +107,116 @@ export default function EstadisticasGeneralesPartido({
             });
           });
 
-          // Aplicar filtro de visualización
-          let jugadoresFiltrados = jugadoresFormateados;
-          if (modoVisualizacionUI === 'manual') {
-            // Si queremos ver manual pero estamos en automático, no hay datos
-            jugadoresFiltrados = [];
-          }
+          // Calcular estadísticas por equipo agregando las estadísticas de sets
+          const equiposMap = {};
+          dataSets.sets?.forEach(set => {
+            set.estadisticas?.forEach(stat => {
+              const equipo = stat.jugadorPartido?.equipo;
+              if (equipo) {
+                const equipoId = equipo._id || equipo;
+
+                if (!equiposMap[equipoId]) {
+                  equiposMap[equipoId] = {
+                    _id: equipoId,
+                    nombre: equipo.nombre,
+                    escudo: equipo.escudo,
+                    throws: 0,
+                    hits: 0,
+                    outs: 0,
+                    catches: 0,
+                    jugadores: 0
+                  };
+                }
+
+                equiposMap[equipoId].throws += stat.throws || 0;
+                equiposMap[equipoId].hits += stat.hits || 0;
+                equiposMap[equipoId].outs += stat.outs || 0;
+                equiposMap[equipoId].catches += stat.catches || 0;
+                equiposMap[equipoId].jugadores += 1;
+              }
+            });
+          });
+
+          // Calcular efectividad para cada equipo
+          Object.values(equiposMap).forEach(equipo => {
+            equipo.efectividad = equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0;
+          });
+
+          const equiposCalculados = Object.values(equiposMap);
+
+          // Los administradores ven todos los datos disponibles
+          // El modoVisualizacionUI solo afecta lo que ven los usuarios comunes
+          const jugadoresFiltrados = jugadoresFormateados;
 
           console.log('📈 Datos de sets procesados:', {
             sets: dataSets.sets?.length || 0,
             estadisticasTotales: jugadoresFormateados.length,
-            estadisticasFiltradas: jugadoresFiltrados.length
+            estadisticasFiltradas: jugadoresFiltrados.length,
+            equiposCalculados: equiposCalculados.length,
+            equiposData: equiposCalculados.map(e => ({ nombre: e.nombre, throws: e.throws, hits: e.hits }))
           });
 
           data = {
             jugadores: jugadoresFiltrados,
-            equipos: [], // Las estadísticas de equipo se calculan por separado
+            equipos: equiposCalculados, // Ahora sí calculamos las estadísticas de equipos
             setsInfo: dataSets.sets || [] // Información adicional de sets
-          };
-        } else {
-          // Para manual, cargar estadísticas agregadas manuales
-          const response = await fetch(`${endpoint}/${partidoId}`, { headers: { Authorization: `Bearer ${token}` } });
-          const dataManual = await response.json();
-
-          // Aplicar filtro de visualización
-          let jugadoresFiltrados = dataManual.jugadores || [];
-          if (modoVisualizacionUI === 'automatico') {
-            // Si queremos ver automático pero estamos en manual, no hay datos
-            jugadoresFiltrados = [];
-          }
-
-          data = {
-            jugadores: jugadoresFiltrados,
-            equipos: dataManual.equipos || []
           };
         }
       } else {
-        // Cargar estadísticas agregadas (desde sets)
-        const response = await fetch(
-          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/resumen-partido/${partidoId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        data = await response.json();
+        // Cargar estadísticas manuales agregadas
+        endpoint = getEstadisticasEndpoint();
+        console.log('🔗 Cargando estadísticas manuales desde endpoint:', endpoint);
+        response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+        console.log('📡 Respuesta del endpoint manual:', response.status, response.statusText);
+
+        // Verificar si la respuesta es JSON
+        const contentTypeManual = response.headers.get('content-type');
+        if (!contentTypeManual || !contentTypeManual.includes('application/json')) {
+          console.error('❌ Respuesta manual no es JSON:', contentTypeManual);
+          throw new Error(`Respuesta no válida del servidor: ${contentTypeManual}`);
+        }
+
+        const dataManual = await response.json();
+        console.log('📊 Datos crudos del endpoint manual:', dataManual);
+        console.log('🎯 Estructura de dataManual:', {
+          tieneJugadores: !!dataManual.jugadores,
+          cantidadJugadores: dataManual.jugadores?.length || 0,
+          tieneEquipos: !!dataManual.equipos,
+          cantidadEquipos: dataManual.equipos?.length || 0
+        });
+
+        // Inspeccionar la estructura de los primeros jugadores
+        if (dataManual.jugadores && dataManual.jugadores.length > 0) {
+          console.log('🔍 Estructura del primer jugador:', dataManual.jugadores[0]);
+          console.log('🔍 Propiedades disponibles:', Object.keys(dataManual.jugadores[0]));
+        }
+
+        // Inspeccionar la estructura de equipos
+        if (dataManual.equipos && dataManual.equipos.length > 0) {
+          console.log('🏆 Estructura del primer equipo:', dataManual.equipos[0]);
+          console.log('🏆 Propiedades de equipos:', Object.keys(dataManual.equipos[0]));
+        }
+
+        // En modo manual, siempre mostrar las estadísticas de jugadores disponibles
+        // El modoVisualizacionUI no afecta la disponibilidad de datos en modo manual
+        let jugadoresFiltrados = dataManual.jugadores || [];
+        console.log('🎯 Jugadores en modo manual:', jugadoresFiltrados.length, 'modoVisualizacion:', modoVisualizacionUI);
+        console.log('🔍 En modo manual, siempre mostramos estadísticas de jugadores disponibles');
+
+        console.log('📊 Datos finales modo manual:', {
+          jugadoresOriginales: dataManual.jugadores?.length || 0,
+          jugadoresFiltrados: jugadoresFiltrados.length,
+          equipos: dataManual.equipos?.length || 0
+        });
+
+        data = {
+          jugadores: jugadoresFiltrados,
+          equipos: dataManual.equipos || [],
+          ...(jugadoresFiltrados.length === 0 ? {
+            mensaje: 'No hay estadísticas manuales capturadas. Usa la sección "Estadísticas Directas" para ingresar datos.',
+            tipo: 'sin-datos-manuales'
+          } : {})
+        };
       }
 
       setEstadisticas(data);
@@ -138,98 +224,17 @@ export default function EstadisticasGeneralesPartido({
         jugadores: data.jugadores?.length || 0,
         equipos: data.equipos?.length || 0
       });
+
     } catch (error) {
       console.error('❌ Error cargando estadísticas:', error);
-      setEstadisticas({ jugadores: [], equipos: [] });
+      // Asegurar que siempre tengamos un objeto válido
+      const errorData = { jugadores: [], equipos: [] };
+      setEstadisticas(errorData);
+      console.log('⚠️ Estadísticas establecidas con datos de error:', errorData);
     } finally {
       setLoading(false);
     }
-  }, [partidoId, token, tipoVista, modoEstadisticasUI, modoVisualizacionUI]);
-
-  // Función para cargar estadísticas mixtas (ambas fuentes)
-  const cargarEstadisticasMixtas = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      // Cargar ambas fuentes simultáneamente
-      const [automaticasResponse, manualesResponse, equiposResponse] = await Promise.all([
-        fetch(
-          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        fetch(
-          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual?partido=${partidoId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        fetch(
-          `https://overtime-ddyl.onrender.com/api/estadisticas/equipo-partido?partido=${partidoId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-      ]);
-
-      const estadisticasAutomaticas = await automaticasResponse.json();
-      const estadisticasManuales = await manualesResponse.json();
-      const estadisticasEquipos = await equiposResponse.json();
-
-      // Combinar ambas fuentes de estadísticas
-      const estadisticasCombinadas = [
-        ...estadisticasAutomaticas.map(stat => ({
-          ...stat,
-          tipoCaptura: 'automatica',
-          fuente: stat.fuente || 'calculo-automatico-sets'
-        })),
-        ...estadisticasManuales.map(stat => ({
-          ...stat,
-          tipoCaptura: 'manual',
-          fuente: stat.fuente || 'ingreso-manual'
-        }))
-      ];
-
-      // Usar estadísticas de equipos
-      const equiposFormateados = estadisticasEquipos.map(equipo => ({
-        _id: equipo.equipo._id,
-        nombre: equipo.equipo.nombre,
-        escudo: equipo.equipo.escudo,
-        throws: equipo.throws || 0,
-        hits: equipo.hits || 0,
-        outs: equipo.outs || 0,
-        catches: equipo.catches || 0,
-        efectividad: equipo.throws > 0 ? ((equipo.hits / equipo.throws) * 100).toFixed(1) : 0,
-        jugadores: equipo.jugadores || 0
-      }));
-
-      setEstadisticas({
-        jugadores: estadisticasCombinadas,
-        equipos: equiposFormateados
-      });
-
-    } catch (error) {
-      console.error('Error cargando estadísticas mixtas:', error);
-      setEstadisticas({ jugadores: [], equipos: [] });
-    } finally {
-      setLoading(false);
-    }
-  }, [partidoId, token]);
-
-  const cargarDebugData = async () => {
-    try {
-      const response = await fetch(
-        `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/debug?partido=${partidoId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const data = await response.json();
-      setDebugData(data);
-      setShowDebug(true);
-    } catch (error) {
-      console.error('Error cargando debug data:', error);
-    }
-  };
-
-  // Función para filtrar estadísticas según modo de visualización (ya no se usa, el filtrado se hace en cargarEstadisticas)
-  const filtrarEstadisticasPorModo = (estadisticasRaw) => {
-    // Este método ya no se usa, el filtrado se hace directamente en cargarEstadisticas
-    return estadisticasRaw;
-  };
+  }, [partidoId, token, modoEstadisticasUI, modoVisualizacionUI]);
 
   const handleCambiarModo = async (nuevoModo) => {
     if (!partido || !onCambiarModoEstadisticas) return;
@@ -238,16 +243,23 @@ export default function EstadisticasGeneralesPartido({
 
     try {
       console.log('🔄 Cambiando modo de estadísticas:', modoAnterior, '→', nuevoModo);
+      console.log('📊 Estados actuales antes del cambio:', {
+        modoEstadisticasUI,
+        modoVisualizacionUI
+      });
 
       // Actualizar estado local inmediatamente para mejor UX
       setModoEstadisticasUI(nuevoModo);
+      // Cuando cambias el modo de estadísticas, también cambia el modo de visualización para consistencia
+      setModoVisualizacionUI(nuevoModo);
 
       // Cambiar el modo de estadísticas en el backend
       await onCambiarModoEstadisticas(partido._id, nuevoModo);
 
       // Intentar actualizar modo de visualización para que coincida (sin bloquear si falla)
       try {
-        await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partido._id}`, {
+        console.log('🔄 Intentando cambiar modoVisualizacion a:', nuevoModo);
+        const response = await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partido._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -255,11 +267,24 @@ export default function EstadisticasGeneralesPartido({
           },
           body: JSON.stringify({ modoVisualizacion: nuevoModo })
         });
-        // Actualizar estado local de visualización también
-        setModoVisualizacionUI(nuevoModo);
+
+        if (response.ok) {
+          // Actualizar estado local de visualización también
+          setModoVisualizacionUI(nuevoModo);
+          console.log('✅ ModoVisualizacion actualizado correctamente a:', nuevoModo);
+        } else {
+          console.warn('⚠️ No se pudo actualizar modoVisualizacion en backend, pero continuamos');
+          // Si no se pudo actualizar en backend, igual actualizamos localmente
+          setModoVisualizacionUI(nuevoModo);
+        }
       } catch (error) {
-        console.warn('No se pudo sincronizar modoVisualizacion, pero modoEstadisticas se cambió correctamente');
+        console.warn('⚠️ Error actualizando modoVisualizacion:', error);
       }
+
+      console.log('📊 Estados después del cambio:', {
+        modoEstadisticasUI: nuevoModo,
+        modoVisualizacionUI: nuevoModo
+      });
 
       // Recargar estadísticas después del cambio
       await cargarEstadisticas();
@@ -333,21 +358,9 @@ export default function EstadisticasGeneralesPartido({
         <div className="flex-1">
           <h2 className="text-2xl font-bold">Estadísticas del Partido</h2>
           <div className="mt-4 space-y-3">
-            {/* Selector de Modo de Visualización (arriba) */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Mostrar al público:</span>
-              <select
-                value={modoVisualizacionUI}
-                onChange={(e) => handleCambiarModoVisualizacion(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="automatico">📊 Estadísticas por Set (calculadas)</option>
-                <option value="manual">✏️ Estadísticas Totales (ingresadas)</option>
-              </select>
-            </div>
-
             {/* Información del modo actual */}
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600">
+              Modo Estadísticas: {modoEstadisticasUI} | Modo Visualización: {modoVisualizacionUI}
               {modoEstadisticasUI === 'manual'
                 ? '📝 Mostrando estadísticas manuales totales (ingresadas directamente)'
                 : '📊 Mostrando estadísticas automáticas por set individual'}
@@ -402,63 +415,24 @@ export default function EstadisticasGeneralesPartido({
             >
               Jugadores
             </button>
-            <button
-              onClick={cargarDebugData}
-              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
-            >
-              🔧 Debug
-            </button>
           </div>
         </div>
       </div>
 
-      {showDebug && debugData ? (
-        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-red-800">🔧 Debug Data</h3>
-            <button
-              onClick={() => setShowDebug(false)}
-              className="px-3 py-1 bg-red-600 text-white rounded text-sm"
-            >
-              Cerrar
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-red-700">📊 Estadísticas por Set:</h4>
-              <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
-                {JSON.stringify(debugData.estadisticasJugadorSet, null, 2)}
-              </pre>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-red-700">👤 Estadísticas por Jugador (Partido):</h4>
-              <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
-                {JSON.stringify(debugData.estadisticasJugadorPartido, null, 2)}
-              </pre>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-red-700">🏟️ Estadísticas por Equipo:</h4>
-              <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
-                {JSON.stringify(debugData.estadisticasEquipoPartido, null, 2)}
-              </pre>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-red-700">👥 Jugadores del Partido:</h4>
-              <pre className="bg-white p-2 rounded text-xs overflow-x-auto">
-                {JSON.stringify(debugData.jugadorPartido, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </div>
-      ) : vista === 'general'
-        ? renderEstadisticasGenerales(estadisticas, partido)
+      {vista === 'general'
+        ? renderEstadisticasGenerales(estadisticas, partido, modoEstadisticasUI, modoVisualizacionUI)
         : vista === 'equipos'
           ? renderEstadisticasEquipos(estadisticas, partido)
-          : renderEstadisticasJugadores(estadisticas, partido)}
+          : (() => {
+              console.log('🏃‍♂️ Renderizando vista de jugadores:', {
+                vista,
+                jugadoresCount: estadisticas.jugadores?.length || 0,
+                modoEstadisticasUI,
+                modoVisualizacionUI
+              });
+              return renderEstadisticasJugadores(estadisticas, partido);
+            })()
+      }
     </div>
   );
 }

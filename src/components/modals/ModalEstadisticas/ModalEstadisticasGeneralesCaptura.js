@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ModalLayout from '../../common/ModalLayout';
 import { agregarJugadorPartido } from '../../../services/jugadorPartidoService';
 import { useJugadorEquipo } from '../../../hooks/useJugadoresEquipo';
+import AsignacionJugadores from './components/AsignacionJugadores';
+import CapturaEstadisticas from './components/CapturaEstadisticas';
 
 export default function ModalEstadisticasGeneralesCaptura({
   partido,
@@ -9,56 +11,52 @@ export default function ModalEstadisticasGeneralesCaptura({
   token,
   onClose,
   onRefresh,
-  datosIniciales = [], // Nueva prop para datos iniciales de autocompletado
-  hayDatosAutomaticos = false // Nueva prop para indicar si hay datos automáticos
+  datosIniciales = [],
+  hayDatosAutomaticos = false
 }) {
   const [jugadores, setJugadores] = useState([]);
   const [estadisticas, setEstadisticas] = useState({});
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  const [seleccionesLocal, setSeleccionesLocal] = useState(Array(10).fill('')); // Hasta 10 posiciones
+  const [seleccionesLocal, setSeleccionesLocal] = useState(Array(10).fill(''));
   const [seleccionesVisitante, setSeleccionesVisitante] = useState(Array(10).fill(''));
 
-  // Estados para asignación de jugadores
   const [mostrarAsignacion, setMostrarAsignacion] = useState(false);
   const [jugadoresSeleccionadosLocal, setJugadoresSeleccionadosLocal] = useState(new Set());
   const [jugadoresSeleccionadosVisitante, setJugadoresSeleccionadosVisitante] = useState(new Set());
   const [asignandoJugadores, setAsignandoJugadores] = useState(false);
 
-  // Hooks para obtener jugadores disponibles de cada equipo
-  const { relaciones: jugadoresLocal, loading: loadingLocal } = useJugadorEquipo({ 
-    equipoId: partido?.equipoLocal?._id, 
-    token 
+  const { relaciones: jugadoresLocal, loading: loadingLocal } = useJugadorEquipo({
+    equipoId: partido?.equipoLocal?._id,
+    token
   });
-  const { relaciones: jugadoresVisitante, loading: loadingVisitante } = useJugadorEquipo({ 
-    equipoId: partido?.equipoVisitante?._id, 
-    token 
+  const { relaciones: jugadoresVisitante, loading: loadingVisitante } = useJugadorEquipo({
+    equipoId: partido?.equipoVisitante?._id,
+    token
   });
 
   useEffect(() => {
     cargarJugadoresYEstadisticas();
   }, [partidoId, token]);
 
-  // Inicializar checkboxes cuando se abre la vista de asignación
   useEffect(() => {
     if (mostrarAsignacion) {
-      // Inicializar con los jugadores ya asignados
       const nuevosSeleccionadosLocal = new Set();
       const nuevosSeleccionadosVisitante = new Set();
-      
+
       jugadores.forEach(jugador => {
         const jugadorEquipoId = partido?.equipoLocal?._id;
         if (jugador.equipo === jugadorEquipoId || jugador.equipo?._id === jugadorEquipoId) {
           nuevosSeleccionadosLocal.add(jugador.jugador._id || jugador.jugador);
         }
-        
+
         const jugadorEquipoVisitanteId = partido?.equipoVisitante?._id;
         if (jugador.equipo === jugadorEquipoVisitanteId || jugador.equipo?._id === jugadorEquipoVisitanteId) {
           nuevosSeleccionadosVisitante.add(jugador.jugador._id || jugador.jugador);
         }
       });
-      
+
       setJugadoresSeleccionadosLocal(nuevosSeleccionadosLocal);
       setJugadoresSeleccionadosVisitante(nuevosSeleccionadosVisitante);
     }
@@ -66,7 +64,6 @@ export default function ModalEstadisticasGeneralesCaptura({
 
   const cargarJugadoresYEstadisticas = async () => {
     try {
-      // Cargar jugadores del partido
       const responseJugadores = await fetch(`https://overtime-ddyl.onrender.com/api/jugador-partido?partido=${partidoId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -76,40 +73,28 @@ export default function ModalEstadisticasGeneralesCaptura({
       }
 
       const jugadoresData = await responseJugadores.json();
-      console.log('📊 Jugadores cargados:', jugadoresData);
-      console.log('🏆 Equipo Local ID:', partido?.equipoLocal?._id);
-      console.log('🏆 Equipo Visitante ID:', partido?.equipoVisitante?._id);
-
       setJugadores(jugadoresData);
 
-      // Si hay datos iniciales, no mostrar interfaz de asignación
-      if (hayDatosAutomaticos && datosIniciales.length > 0) {
-        setMostrarAsignacion(false);
-      } else if (jugadoresData.length === 0) {
+      if (jugadoresData.length === 0) {
         setMostrarAsignacion(true);
       }
 
-      // Cargar estadísticas existentes o usar datos iniciales
       if (hayDatosAutomaticos && datosIniciales.length > 0) {
-        // Usar datos iniciales de estadísticas automáticas
-        console.log('🎯 Usando datos iniciales de autocompletado:', datosIniciales.length);
         const estadisticasMap = {};
         datosIniciales.forEach(stat => {
           estadisticasMap[stat.jugadorPartido._id] = {
             ...stat,
-            _id: undefined, // Forzar creación nueva para estadísticas manuales
+            _id: undefined,
             fuente: 'autocompletado-automatico'
           };
         });
         setEstadisticas(estadisticasMap);
 
-        // Inicializar selecciones de jugadores basándose en los datos iniciales
         const nuevasSeleccionesLocal = Array(10).fill('');
         const nuevasSeleccionesVisitante = Array(10).fill('');
         let posicionLocal = 0;
         let posicionVisitante = 0;
 
-        // Agrupar por equipo y asignar posiciones
         const porEquipo = {};
         datosIniciales.forEach(stat => {
           const equipoId = stat.jugadorPartido.equipo?._id || stat.jugadorPartido.equipo;
@@ -119,19 +104,9 @@ export default function ModalEstadisticasGeneralesCaptura({
           porEquipo[equipoId].push(stat);
         });
 
-        console.log('🏆 Agrupación por equipo:', porEquipo);
-
-        // Asignar posiciones para cada equipo
         Object.entries(porEquipo).forEach(([equipoId, stats]) => {
-          const equipoLocalId = partido?.equipoLocal?._id;
-          const equipoVisitanteId = partido?.equipoVisitante?._id;
-
-          console.log('🎯 Comparando equipo:', equipoId, 'con local:', equipoLocalId, 'visitante:', equipoVisitanteId);
-
-          const esLocal = equipoId === equipoLocalId;
-          const esVisitante = equipoId === equipoVisitanteId;
-
-          console.log('✅ Es local:', esLocal, 'Es visitante:', esVisitante);
+          const esLocal = equipoId === partido?.equipoLocal?._id;
+          const esVisitante = equipoId === partido?.equipoVisitante?._id;
 
           if (esLocal || esVisitante) {
             const selecciones = esLocal ? nuevasSeleccionesLocal : nuevasSeleccionesVisitante;
@@ -140,7 +115,6 @@ export default function ModalEstadisticasGeneralesCaptura({
             stats.forEach(stat => {
               if (posicion < 10) {
                 selecciones[posicion] = stat.jugadorPartido._id;
-                console.log('📍 Asignando jugador', stat.jugadorPartido._id, 'a posición', posicion, esLocal ? 'local' : 'visitante');
                 posicion++;
               }
             });
@@ -155,13 +129,8 @@ export default function ModalEstadisticasGeneralesCaptura({
 
         setSeleccionesLocal(nuevasSeleccionesLocal);
         setSeleccionesVisitante(nuevasSeleccionesVisitante);
-
-        console.log('✅ Inicializadas selecciones de autocompletado:', {
-          local: nuevasSeleccionesLocal.filter(id => id !== ''),
-          visitante: nuevasSeleccionesVisitante.filter(id => id !== '')
-        });
+        setMostrarAsignacion(false);
       } else {
-        // Cargar estadísticas existentes (manuales)
         const responseEstadisticas = await fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual?partido=${partidoId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -183,32 +152,15 @@ export default function ModalEstadisticasGeneralesCaptura({
     }
   };
 
-  // Obtener jugadores por equipo - corregida para manejar diferentes estructuras
   const getJugadoresPorEquipo = (equipoId) => {
     if (!equipoId || !jugadores.length) return [];
-
-    console.log('🔍 Buscando jugadores para equipo:', equipoId);
-    console.log('👥 Jugadores disponibles:', jugadores.map(j => ({
-      id: j._id,
-      equipoId: j.equipo?._id || j.equipo,
-      equipoNombre: j.equipo?.nombre,
-      jugadorNombre: j.jugador?.nombre
-    })));
-
     const filtrados = jugadores.filter(jugador => {
       const jugadorEquipoId = jugador.equipo?._id || jugador.equipo;
-      const coincide = jugadorEquipoId === equipoId;
-      if (coincide) {
-        console.log('✅ Jugador encontrado:', jugador.jugador?.nombre, 'para equipo:', equipoId);
-      }
-      return coincide;
+      return jugadorEquipoId === equipoId;
     });
-
-    console.log('📋 Jugadores filtrados para equipo', equipoId, ':', filtrados.length);
     return filtrados;
   };
 
-  // Cambiar selección de jugador en una posición
   const cambiarSeleccionJugador = (equipo, posicion, jugadorPartidoId) => {
     if (equipo === 'local') {
       const nuevasSelecciones = [...seleccionesLocal];
@@ -252,13 +204,16 @@ export default function ModalEstadisticasGeneralesCaptura({
               : 'captura-directa'
           };
 
-          // Verificar si ya existe
           const existe = stats._id;
+          let endpointUpdate, endpointCreate;
 
           if (existe) {
-            // Actualizar
+            endpointUpdate = stats.tipoCaptura === 'manual'
+              ? `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual/${existe}`
+              : `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/${existe}`;
+
             promises.push(
-              fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/${existe}`, {
+              fetch(endpointUpdate, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -268,9 +223,12 @@ export default function ModalEstadisticasGeneralesCaptura({
               })
             );
           } else {
-            // Crear nuevo
+            endpointCreate = data.tipoCaptura === 'manual'
+              ? 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual'
+              : 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido';
+
             promises.push(
-              fetch('https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido', {
+              fetch(endpointCreate, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -299,13 +257,16 @@ export default function ModalEstadisticasGeneralesCaptura({
               : 'captura-directa'
           };
 
-          // Verificar si ya existe
           const existe = stats._id;
+          let endpointUpdate, endpointCreate;
 
           if (existe) {
-            // Actualizar
+            endpointUpdate = stats.tipoCaptura === 'manual'
+              ? `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual/${existe}`
+              : `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/${existe}`;
+
             promises.push(
-              fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/${existe}`, {
+              fetch(endpointUpdate, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -315,9 +276,12 @@ export default function ModalEstadisticasGeneralesCaptura({
               })
             );
           } else {
-            // Crear nuevo
+            endpointCreate = data.tipoCaptura === 'manual'
+              ? 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido-manual'
+              : 'https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido';
+
             promises.push(
-              fetch('https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido', {
+              fetch(endpointCreate, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -332,11 +296,8 @@ export default function ModalEstadisticasGeneralesCaptura({
 
       await Promise.all(promises);
 
-      // Después de guardar las estadísticas de jugadores, actualizar estadísticas de equipos
-      console.log('🔄 Actualizando estadísticas agregadas de equipos...');
-      
+      // Actualizar estadísticas de equipos
       try {
-        // Actualizar estadísticas del equipo local
         const responseLocal = await fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/equipo-partido/actualizar`, {
           method: 'POST',
           headers: {
@@ -346,11 +307,10 @@ export default function ModalEstadisticasGeneralesCaptura({
           body: JSON.stringify({
             partidoId: partidoId,
             equipoId: partido.equipoLocal._id,
-            creadoPor: 'usuario' // Cambiar por el usuario real si está disponible
+            creadoPor: 'usuario'
           })
         });
 
-        // Actualizar estadísticas del equipo visitante
         const responseVisitante = await fetch(`https://overtime-ddyl.onrender.com/api/estadisticas/equipo-partido/actualizar`, {
           method: 'POST',
           headers: {
@@ -360,7 +320,7 @@ export default function ModalEstadisticasGeneralesCaptura({
           body: JSON.stringify({
             partidoId: partidoId,
             equipoId: partido.equipoVisitante._id,
-            creadoPor: 'usuario' // Cambiar por el usuario real si está disponible
+            creadoPor: 'usuario'
           })
         });
 
@@ -371,16 +331,14 @@ export default function ModalEstadisticasGeneralesCaptura({
         }
       } catch (error) {
         console.error('❌ Error actualizando estadísticas de equipos:', error);
-        // No fallar la operación principal si esto falla
       }
 
       alert('Estadísticas guardadas correctamente');
-      
-      // Refrescar estadísticas en el componente padre si hay callback
+
       if (onRefresh && typeof onRefresh === 'function') {
         onRefresh();
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Error guardando estadísticas:', error);
@@ -391,50 +349,27 @@ export default function ModalEstadisticasGeneralesCaptura({
   };
 
   const getNombreJugador = (jugador) => {
-    console.log('🎯 Procesando jugador:', jugador);
-
-    if (!jugador) {
-      console.log('❌ Jugador es null/undefined');
-      return 'Jugador desconocido';
-    }
-
-    // Intentar diferentes formas de acceder al nombre
+    if (!jugador) return 'Jugador desconocido';
     let nombre = '';
-
-    // Forma 1: objeto con nombre y apellido separados
     if (jugador.nombre && jugador.apellido) {
       nombre = `${jugador.nombre} ${jugador.apellido}`;
-      console.log('✅ Nombre completo (separado):', nombre);
-    }
-    // Forma 2: nombre completo en un campo
-    else if (jugador.nombre) {
+    } else if (jugador.nombre) {
       const partes = jugador.nombre.trim().split(' ');
       if (partes.length > 1) {
         nombre = `${partes[0].charAt(0)}. ${partes[partes.length - 1]}`;
-        console.log('✅ Nombre abreviado:', nombre);
       } else {
         nombre = jugador.nombre;
-        console.log('✅ Nombre simple:', nombre);
       }
-    }
-    // Forma 3: buscar en otras propiedades
-    else if (jugador.name) {
+    } else if (jugador.name) {
       nombre = jugador.name;
-      console.log('✅ Nombre (propiedad name):', nombre);
-    }
-    else if (jugador.fullName) {
+    } else if (jugador.fullName) {
       nombre = jugador.fullName;
-      console.log('✅ Nombre (propiedad fullName):', nombre);
-    }
-    else {
-      console.log('❌ No se encontró nombre en:', Object.keys(jugador));
+    } else {
       nombre = 'Sin nombre';
     }
-
     return nombre || 'Jugador';
   };
 
-  // Funciones para asignación de jugadores
   const toggleJugadorLocal = (jugadorId) => {
     setJugadoresSeleccionadosLocal(prev => {
       const nuevo = new Set(prev);
@@ -463,17 +398,15 @@ export default function ModalEstadisticasGeneralesCaptura({
     setAsignandoJugadores(true);
     try {
       const promises = [];
-      
-      // Determinar qué jugadores agregar y cuáles quitar
+
       const jugadoresActualesLocal = new Set(jugadores
         .filter(j => (j.equipo === partido.equipoLocal._id || j.equipo?._id === partido.equipoLocal._id))
         .map(j => j.jugador._id || j.jugador));
-      
+
       const jugadoresActualesVisitante = new Set(jugadores
         .filter(j => (j.equipo === partido.equipoVisitante._id || j.equipo?._id === partido.equipoVisitante._id))
         .map(j => j.jugador._id || j.jugador));
 
-      // Agregar nuevos jugadores locales
       for (const jugadorId of jugadoresSeleccionadosLocal) {
         if (!jugadoresActualesLocal.has(jugadorId)) {
           promises.push(
@@ -487,7 +420,6 @@ export default function ModalEstadisticasGeneralesCaptura({
         }
       }
 
-      // Agregar nuevos jugadores visitantes
       for (const jugadorId of jugadoresSeleccionadosVisitante) {
         if (!jugadoresActualesVisitante.has(jugadorId)) {
           promises.push(
@@ -501,12 +433,11 @@ export default function ModalEstadisticasGeneralesCaptura({
         }
       }
 
-      // Quitar jugadores que ya no están seleccionados (eliminar JugadorPartido)
       for (const jugador of jugadores) {
         const jugadorId = jugador.jugador._id || jugador.jugador;
         const esLocal = jugador.equipo === partido.equipoLocal._id || jugador.equipo?._id === partido.equipoLocal._id;
         const esVisitante = jugador.equipo === partido.equipoVisitante._id || jugador.equipo?._id === partido.equipoVisitante._id;
-        
+
         if (esLocal && !jugadoresSeleccionadosLocal.has(jugadorId)) {
           promises.push(
             fetch(`https://overtime-ddyl.onrender.com/api/jugador-partido/${jugador._id}`, {
@@ -515,7 +446,7 @@ export default function ModalEstadisticasGeneralesCaptura({
             })
           );
         }
-        
+
         if (esVisitante && !jugadoresSeleccionadosVisitante.has(jugadorId)) {
           promises.push(
             fetch(`https://overtime-ddyl.onrender.com/api/jugador-partido/${jugador._id}`, {
@@ -527,11 +458,8 @@ export default function ModalEstadisticasGeneralesCaptura({
       }
 
       await Promise.all(promises);
-      
-      const totalJugadores = jugadoresSeleccionadosLocal.size + jugadoresSeleccionadosVisitante.size;
-      alert(`✅ Asignación actualizada correctamente (${totalJugadores} jugadores)`);
+      alert(`✅ Asignación actualizada correctamente`);
 
-      // Recargar datos y mostrar interfaz de captura
       await cargarJugadoresYEstadisticas();
       setMostrarAsignacion(false);
 
@@ -543,7 +471,6 @@ export default function ModalEstadisticasGeneralesCaptura({
     }
   };
 
-  // Determinar si hay jugadores ya asignados para cambiar textos
   const hayJugadoresAsignados = jugadores.length > 0;
 
   if (loading) {
@@ -561,13 +488,13 @@ export default function ModalEstadisticasGeneralesCaptura({
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800">
-            {hayDatosAutomaticos 
-              ? '📝 Capturar Estadísticas (Autocompletadas)' 
+            {hayDatosAutomaticos
+              ? '📝 Capturar Estadísticas (Autocompletadas)'
               : '📝 Capturar Estadísticas Generales'
             }
           </h2>
           <p className="text-gray-600 mt-2">
-            {hayDatosAutomaticos 
+            {hayDatosAutomaticos
               ? `Se autocompletaron ${datosIniciales.length} estadísticas de datos automáticos. Modifica los valores según necesites.`
               : 'Ingresa las estadísticas directamente para todo el partido'
             }
@@ -575,7 +502,7 @@ export default function ModalEstadisticasGeneralesCaptura({
           {hayDatosAutomaticos && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
               <p className="text-blue-800 text-sm">
-                💡 <strong>Autocompletado:</strong> Los valores mostrados provienen de estadísticas calculadas automáticamente. 
+                💡 <strong>Autocompletado:</strong> Los valores mostrados provienen de estadísticas calculadas automáticamente.
                 Puedes modificarlos antes de guardar como estadísticas manuales.
               </p>
             </div>
@@ -583,440 +510,37 @@ export default function ModalEstadisticasGeneralesCaptura({
         </div>
 
         {mostrarAsignacion ? (
-          // Interfaz de asignación de jugadores
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Equipo Local */}
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-3 mb-4">
-                  {partido?.equipoLocal?.escudo && (
-                    <img
-                      src={partido.equipoLocal.escudo}
-                      alt={`Escudo ${partido.equipoLocal.nombre}`}
-                      className="w-8 h-8 object-contain"
-                    />
-                  )}
-                  <div>
-                    <h3 className="text-lg font-bold text-blue-800">
-                      {partido?.equipoLocal?.nombre || 'Equipo Local'}
-                    </h3>
-                    <p className="text-xs text-blue-600">
-                      {jugadoresSeleccionadosLocal.size} de {jugadoresLocal.length} jugadores seleccionados
-                    </p>
-                  </div>
-                </div>
-
-                {loadingLocal ? (
-                  <p className="text-gray-600 text-sm">Cargando jugadores...</p>
-                ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {jugadoresLocal.map(jugador => (
-                      <label key={jugador.jugador._id} className="flex items-center gap-3 p-2 hover:bg-blue-100 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={jugadoresSeleccionadosLocal.has(jugador.jugador._id)}
-                          onChange={() => toggleJugadorLocal(jugador.jugador._id)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-sm">
-                          {jugador.jugador.numero ? `#${jugador.jugador.numero} ` : ''}
-                          {jugador.jugador.nombre}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Equipo Visitante */}
-              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                <div className="flex items-center gap-3 mb-4">
-                  {partido?.equipoVisitante?.escudo && (
-                    <img
-                      src={partido.equipoVisitante.escudo}
-                      alt={`Escudo ${partido.equipoVisitante.nombre}`}
-                      className="w-8 h-8 object-contain"
-                    />
-                  )}
-                  <div>
-                    <h3 className="text-lg font-bold text-red-800">
-                      {partido?.equipoVisitante?.nombre || 'Equipo Visitante'}
-                    </h3>
-                    <p className="text-xs text-red-600">
-                      {jugadoresSeleccionadosVisitante.size} de {jugadoresVisitante.length} jugadores seleccionados
-                    </p>
-                  </div>
-                </div>
-
-                {loadingVisitante ? (
-                  <p className="text-gray-600 text-sm">Cargando jugadores...</p>
-                ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {jugadoresVisitante.map(jugador => (
-                      <label key={jugador.jugador._id} className="flex items-center gap-3 p-2 hover:bg-red-100 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={jugadoresSeleccionadosVisitante.has(jugador.jugador._id)}
-                          onChange={() => toggleJugadorVisitante(jugador.jugador._id)}
-                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
-                        />
-                        <span className="text-sm">
-                          {jugador.jugador.numero ? `#${jugador.jugador.numero} ` : ''}
-                          {jugador.jugador.nombre}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-4 pt-4 border-t">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={asignarJugadores}
-                disabled={asignandoJugadores}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {asignandoJugadores 
-                  ? 'Actualizando...' 
-                  : (hayJugadoresAsignados ? 'Actualizar Asignación' : 'Asignar Jugadores')
-                }
-              </button>
-            </div>
-          </div>
+          <AsignacionJugadores
+            partido={partido}
+            jugadoresLocal={jugadoresLocal}
+            jugadoresVisitante={jugadoresVisitante}
+            loadingLocal={loadingLocal}
+            loadingVisitante={loadingVisitante}
+            jugadoresSeleccionadosLocal={jugadoresSeleccionadosLocal}
+            jugadoresSeleccionadosVisitante={jugadoresSeleccionadosVisitante}
+            toggleJugadorLocal={toggleJugadorLocal}
+            toggleJugadorVisitante={toggleJugadorVisitante}
+            asignarJugadores={asignarJugadores}
+            asignandoJugadores={asignandoJugadores}
+            hayJugadoresAsignados={hayJugadoresAsignados}
+            onClose={onClose}
+          />
         ) : (
-          // Interfaz de captura de estadísticas (existente)
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <div></div>
-              <button
-                onClick={() => setMostrarAsignacion(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                ✏️ Editar Jugadores
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Equipo Local */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-3 mb-4">
-              {partido?.equipoLocal?.escudo && (
-                <img
-                  src={partido.equipoLocal.escudo}
-                  alt={`Escudo ${partido.equipoLocal.nombre}`}
-                  className="w-8 h-8 object-contain"
-                />
-              )}
-              <h3 className="text-lg font-bold text-blue-800">
-                {partido?.equipoLocal?.nombre || 'Equipo Local'}
-              </h3>
-            </div>
-
-            <div className="space-y-3">
-              {Array.from({ length: 10 }, (_, index) => {
-                const posicion = index + 1;
-                const jugadorSeleccionadoId = seleccionesLocal[index];
-                const jugadorSeleccionado = jugadores.find(j => j._id === jugadorSeleccionadoId);
-                const jugadoresEquipo = getJugadoresPorEquipo(partido?.equipoLocal?._id);
-
-                return (
-                  <div key={`local-${index}`} className="bg-white p-3 rounded border">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-sm font-medium text-gray-600 w-8">
-                        #{posicion}
-                      </span>
-                      <select
-                        value={jugadorSeleccionadoId || ''}
-                        onChange={(e) => cambiarSeleccionJugador('local', index, e.target.value)}
-                        className={`flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                          hayDatosAutomaticos && jugadorSeleccionadoId ? 'bg-blue-50 border-blue-300' : ''
-                        }`}
-                      >
-                        <option value="">
-                          {hayDatosAutomaticos && !jugadorSeleccionadoId ? 'Posición libre' : 'Seleccionar jugador'}
-                        </option>
-                        {jugadoresEquipo.length > 0 ? (
-                          jugadoresEquipo.map(jugador => {
-                            const nombre = jugador.jugador?.nombre || 'Sin nombre';
-                            const numero = jugador.jugador?.numero || jugador.numero || '';
-                            const displayText = numero ? `#${numero} ${nombre}` : nombre;
-
-                            return (
-                              <option key={jugador._id} value={jugador._id}>
-                                {displayText}
-                              </option>
-                            );
-                          })
-                        ) : (
-                          <option disabled>No hay jugadores disponibles</option>
-                        )}
-                      </select>
-                    </div>
-
-                    {jugadorSeleccionadoId && (
-                      <EstadisticasJugador
-                        jugadorPartidoId={jugadorSeleccionadoId}
-                        estadisticas={estadisticas[jugadorSeleccionadoId] || {}}
-                        onCambiarEstadistica={cambiarEstadistica}
-                        hayDatosAutomaticos={hayDatosAutomaticos}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Equipo Visitante */}
-          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-            <div className="flex items-center gap-3 mb-4">
-              {partido?.equipoVisitante?.escudo && (
-                <img
-                  src={partido.equipoVisitante.escudo}
-                  alt={`Escudo ${partido.equipoVisitante.nombre}`}
-                  className="w-8 h-8 object-contain"
-                />
-              )}
-              <h3 className="text-lg font-bold text-red-800">
-                {partido?.equipoVisitante?.nombre || 'Equipo Visitante'}
-              </h3>
-            </div>
-
-            <div className="space-y-3">
-              {Array.from({ length: 10 }, (_, index) => {
-                const posicion = index + 1;
-                const jugadorSeleccionadoId = seleccionesVisitante[index];
-                const jugadorSeleccionado = jugadores.find(j => j._id === jugadorSeleccionadoId);
-                const jugadoresEquipo = getJugadoresPorEquipo(partido?.equipoVisitante?._id);
-
-                return (
-                  <div key={`visitante-${index}`} className="bg-white p-3 rounded border">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-sm font-medium text-gray-600 w-8">
-                        #{posicion}
-                      </span>
-                      <select
-                        value={jugadorSeleccionadoId || ''}
-                        onChange={(e) => cambiarSeleccionJugador('visitante', index, e.target.value)}
-                        className={`flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-500 ${
-                          hayDatosAutomaticos && jugadorSeleccionadoId ? 'bg-blue-50 border-blue-300' : ''
-                        }`}
-                      >
-                        <option value="">
-                          {hayDatosAutomaticos && !jugadorSeleccionadoId ? 'Posición libre' : 'Seleccionar jugador'}
-                        </option>
-                        {jugadoresEquipo.length > 0 ? (
-                          jugadoresEquipo.map(jugador => {
-                            const nombre = jugador.jugador?.nombre || 'Sin nombre';
-                            const numero = jugador.jugador?.numero || jugador.numero || '';
-                            const displayText = numero ? `#${numero} ${nombre}` : nombre;
-
-                            return (
-                              <option key={jugador._id} value={jugador._id}>
-                                {displayText}
-                              </option>
-                            );
-                          })
-                        ) : (
-                          <option disabled>No hay jugadores disponibles</option>
-                        )}
-                      </select>
-                    </div>
-
-                    {jugadorSeleccionadoId && (
-                      <EstadisticasJugador
-                        jugadorPartidoId={jugadorSeleccionadoId}
-                        estadisticas={estadisticas[jugadorSeleccionadoId] || {}}
-                        onCambiarEstadistica={cambiarEstadistica}
-                        hayDatosAutomaticos={hayDatosAutomaticos}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-            <div className="flex justify-end gap-4 pt-4 border-t">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={guardar}
-                disabled={guardando}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {guardando ? 'Guardando...' : 'Guardar Estadísticas'}
-              </button>
-            </div>
-          </>
+          <CapturaEstadisticas
+            partido={partido}
+            seleccionesLocal={seleccionesLocal}
+            seleccionesVisitante={seleccionesVisitante}
+            estadisticas={estadisticas}
+            getJugadoresPorEquipo={getJugadoresPorEquipo}
+            cambiarSeleccionJugador={cambiarSeleccionJugador}
+            cambiarEstadistica={cambiarEstadistica}
+            setMostrarAsignacion={setMostrarAsignacion}
+            guardar={guardar}
+            guardando={guardando}
+            hayDatosAutomaticos={hayDatosAutomaticos}
+          />
         )}
       </div>
     </ModalLayout>
-  );
-}
-
-// Componente auxiliar para mostrar estadísticas de un jugador
-function EstadisticasJugador({ jugadorPartidoId, estadisticas, onCambiarEstadistica, hayDatosAutomaticos }) {
-  const [valoresTemporales, setValoresTemporales] = React.useState({
-    throws: estadisticas.throws || 0,
-    hits: estadisticas.hits || 0,
-    outs: estadisticas.outs || 0,
-    catches: estadisticas.catches || 0
-  });
-
-  // Actualizar valores temporales cuando cambien las estadísticas o el componente se monte
-  React.useEffect(() => {
-    console.log('📊 Inicializando valores para jugador:', jugadorPartidoId, estadisticas);
-    setValoresTemporales({
-      throws: estadisticas.throws || 0,
-      hits: estadisticas.hits || 0,
-      outs: estadisticas.outs || 0,
-      catches: estadisticas.catches || 0
-    });
-  }, [jugadorPartidoId, estadisticas]);
-
-  const handleInputChange = (campo, valor) => {
-    const numValue = parseInt(valor) || 0;
-    setValoresTemporales(prev => ({
-      ...prev,
-      [campo]: numValue
-    }));
-    onCambiarEstadistica(jugadorPartidoId, campo, numValue - (estadisticas[campo] || 0));
-  };
-
-  const handleIncrement = (campo, delta) => {
-    const nuevoValor = Math.max(0, (estadisticas[campo] || 0) + delta);
-    setValoresTemporales(prev => ({
-      ...prev,
-      [campo]: nuevoValor
-    }));
-    onCambiarEstadistica(jugadorPartidoId, campo, delta);
-  };
-
-  const esAutocompletado = hayDatosAutomaticos && estadisticas.fuente === 'autocompletado-automatico';
-
-  return (
-    <div className={`grid grid-cols-4 gap-2 text-xs ${esAutocompletado ? 'ring-1 ring-blue-200 rounded p-2 bg-blue-50/30' : ''}`}>
-      {esAutocompletado && (
-        <div className="col-span-4 text-center mb-1">
-          <span className="text-xs text-blue-600 font-medium">💡 Autocompletado</span>
-        </div>
-      )}
-      {/* Throws */}
-      <div className="text-center">
-        <div className="text-gray-600 mb-1">Throws</div>
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => handleIncrement('throws', -1)}
-            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
-          >
-            -
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={valoresTemporales.throws}
-            onChange={(e) => handleInputChange('throws', e.target.value)}
-            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <button
-            onClick={() => handleIncrement('throws', 1)}
-            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Hits */}
-      <div className="text-center">
-        <div className="text-gray-600 mb-1">Hits</div>
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => handleIncrement('hits', -1)}
-            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
-          >
-            -
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={valoresTemporales.hits}
-            onChange={(e) => handleInputChange('hits', e.target.value)}
-            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-green-500"
-          />
-          <button
-            onClick={() => handleIncrement('hits', 1)}
-            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Outs */}
-      <div className="text-center">
-        <div className="text-gray-600 mb-1">Outs</div>
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => handleIncrement('outs', -1)}
-            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
-          >
-            -
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={valoresTemporales.outs}
-            onChange={(e) => handleInputChange('outs', e.target.value)}
-            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-red-500"
-          />
-          <button
-            onClick={() => handleIncrement('outs', 1)}
-            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Catches */}
-      <div className="text-center">
-        <div className="text-gray-600 mb-1">Catches</div>
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => handleIncrement('catches', -1)}
-            className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center hover:bg-red-600"
-          >
-            -
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={valoresTemporales.catches}
-            onChange={(e) => handleInputChange('catches', e.target.value)}
-            className="w-10 text-center border border-gray-300 rounded text-xs px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
-          />
-          <button
-            onClick={() => handleIncrement('catches', 1)}
-            className="w-6 h-6 bg-green-500 text-white rounded text-xs flex items-center justify-center hover:bg-green-600"
-          >
-            +
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

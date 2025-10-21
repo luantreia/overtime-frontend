@@ -1,4 +1,10 @@
 export function renderEstadisticasJugadores(estadisticas, partido) {
+  console.log('🎾 renderEstadisticasJugadores recibió:', {
+    jugadoresLength: estadisticas.jugadores?.length || 0,
+    tieneJugadores: !!estadisticas.jugadores,
+    primerJugador: estadisticas.jugadores?.[0] || 'Sin jugadores'
+  });
+
   return (
     <div>
       <h3 className="text-xl font-semibold mb-4">Estadísticas por Jugador</h3>
@@ -26,12 +32,12 @@ export function renderEstadisticasJugadores(estadisticas, partido) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="text-sm font-medium text-gray-900">
-                        {jugador.jugadorPartido?.jugador?.nombre} {jugador.jugadorPartido?.jugador?.apellido}
+                        {jugador.jugadorPartido?.jugador?.nombre || 'Sin nombre'} {jugador.jugadorPartido?.jugador?.apellido || ''}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {jugador.jugadorPartido?.equipo?.nombre}
+                    {jugador.jugadorPartido?.equipo?.nombre || 'Sin equipo'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                     {jugador.throws}

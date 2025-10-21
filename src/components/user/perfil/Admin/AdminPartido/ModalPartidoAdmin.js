@@ -268,6 +268,35 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
     }
   };
 
+  const handleCambiarModoVisualizacion = async (nuevoModo) => {
+    try {
+      // Actualizar estado local inmediatamente para mejor UX
+      setPartido(prev => ({ ...prev, modoVisualizacion: nuevoModo }));
+
+      // Actualizar en el backend
+      const response = await fetch(`https://overtime-ddyl.onrender.com/api/partidos/${partidoId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ modoVisualizacion: nuevoModo })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cambiar modo de visualización');
+      }
+
+      // No mostrar alertas que interrumpan la UX
+      console.log(`Modo de visualización cambiado a ${nuevoModo === 'manual' ? 'Manual' : 'Automático'}`);
+    } catch (error) {
+      // Revertir cambio local si falló
+      setPartido(prev => ({ ...prev, modoVisualizacion: prev.modoVisualizacion }));
+      console.error('Error cambiando modo de visualización:', error);
+      alert('Error al cambiar modo de visualización: ' + error.message);
+    }
+  };
+
   const refrescarPartidoSeleccionado = async () => {
     await fetchPartidoCompleto();
     return partido;
@@ -492,6 +521,25 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartido
               </summary>
 
               <div className="mt-4 pt-4 border-t border-red-200">
+                {/* Selector de Modo de Visualización */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <h4 className="text-blue-800 font-semibold mb-3">👁️ Configuración de Visualización</h4>
+                  <p className="text-blue-700 text-sm mb-4">
+                    Controla qué estadísticas ven los usuarios comunes del partido.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-blue-700">Mostrar al público:</span>
+                    <select
+                      value={partido?.modoVisualizacion || 'automatico'}
+                      onChange={(e) => handleCambiarModoVisualizacion(e.target.value)}
+                      className="px-3 py-2 text-sm border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="automatico">📊 Estadísticas por Set (calculadas)</option>
+                      <option value="manual">✏️ Estadísticas Totales (ingresadas)</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="bg-white border border-red-200 rounded-lg p-4">
                   <h4 className="text-red-800 font-semibold mb-3">⚠️ Acciones Irreversibles</h4>
                   <p className="text-red-700 text-sm mb-4">

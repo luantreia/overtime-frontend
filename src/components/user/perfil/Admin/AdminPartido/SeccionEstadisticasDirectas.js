@@ -10,25 +10,109 @@ export function SeccionEstadisticasDirectas({
   const [estadisticasAutomaticas, setEstadisticasAutomaticas] = useState([]);
   const [cargando, setCargando] = useState(false);
 
-  // Cargar estadísticas automáticas para usar como valores por defecto
+  // Cargar estadísticas automáticas agregadas para usar como valores por defecto
   useEffect(() => {
     const cargarEstadisticasAutomaticas = async () => {
       try {
         setCargando(true);
-        const response = await fetch(
-          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`,
+        console.log('🔍 Buscando estadísticas automáticas para partido:', partidoId);
+
+        // Intentar cargar estadísticas automáticas agregadas primero
+        const responseAgregadas = await fetch(
+          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido/resumen-partido/${partidoId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        if (response.ok) {
-          const data = await response.json();
-          setEstadisticasAutomaticas(data);
-          console.log('📊 Estadísticas automáticas cargadas para autocompletado:', data.length);
+        if (responseAgregadas.ok) {
+          const dataAgregadas = await responseAgregadas.json();
+          console.log('📊 Estadísticas automáticas agregadas encontradas:', dataAgregadas.jugadores?.length || 0);
+          setEstadisticasAutomaticas(dataAgregadas.jugadores || []);
+        } else {
+          console.log('⚠️ No hay estadísticas agregadas, buscando individuales...');
+
+          // Si no hay agregadas, intentar cargar individuales
+          const responseIndividuales = await fetch(
+            `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-partido?partido=${partidoId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          if (responseIndividuales.ok) {
+            const dataIndividuales = await responseIndividuales.json();
+            console.log('📊 Estadísticas automáticas individuales encontradas:', dataIndividuales.length);
+
+            if (dataIndividuales.length === 0) {
+              console.log('⚠️ No hay estadísticas individuales, intentando crearlas desde sets...');
+
+              // Si no hay estadísticas individuales, intentar crearlas desde las estadísticas por set
+              await crearEstadisticasDesdeSets();
+            } else {
+              setEstadisticasAutomaticas(dataIndividuales);
+            }
+          } else {
+            console.log('⚠️ No se encontraron estadísticas, intentando crearlas desde sets...');
+            await crearEstadisticasDesdeSets();
+          }
         }
       } catch (error) {
         console.error('Error cargando estadísticas automáticas:', error);
+        setEstadisticasAutomaticas([]);
       } finally {
         setCargando(false);
+      }
+    };
+
+    const crearEstadisticasDesdeSets = async () => {
+      try {
+        console.log('🔧 Intentando crear estadísticas desde datos de sets...');
+
+        // Buscar estadísticas por set para este partido
+        const responseSets = await fetch(
+          `https://overtime-ddyl.onrender.com/api/estadisticas/jugador-set?partido=${partidoId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (responseSets.ok) {
+          const dataSets = await responseSets.json();
+          console.log('📈 Estadísticas por set encontradas:', dataSets.length);
+
+          if (dataSets.length > 0) {
+            // Agrupar por jugador y crear estadísticas agregadas
+            const statsPorJugador = {};
+
+            dataSets.forEach(stat => {
+              const jugadorId = stat.jugadorPartido._id || stat.jugadorPartido;
+              if (!statsPorJugador[jugadorId]) {
+                statsPorJugador[jugadorId] = {
+                  _id: stat._id,
+                  jugadorPartido: stat.jugadorPartido,
+                  throws: 0,
+                  hits: 0,
+                  outs: 0,
+                  catches: 0,
+                  tipoCaptura: 'automatico'
+                };
+              }
+
+              statsPorJugador[jugadorId].throws += stat.throws || 0;
+              statsPorJugador[jugadorId].hits += stat.hits || 0;
+              statsPorJugador[jugadorId].outs += stat.outs || 0;
+              statsPorJugador[jugadorId].catches += stat.catches || 0;
+            });
+
+            const estadisticasAgregadas = Object.values(statsPorJugador);
+            console.log('✅ Estadísticas agregadas creadas desde sets:', estadisticasAgregadas.length);
+            setEstadisticasAutomaticas(estadisticasAgregadas);
+          } else {
+            console.log('⚠️ No hay estadísticas por set para este partido');
+            setEstadisticasAutomaticas([]);
+          }
+        } else {
+          console.log('⚠️ Error consultando estadísticas por set');
+          setEstadisticasAutomaticas([]);
+        }
+      } catch (error) {
+        console.error('Error creando estadísticas desde sets:', error);
+        setEstadisticasAutomaticas([]);
       }
     };
 
@@ -56,6 +140,11 @@ export function SeccionEstadisticasDirectas({
               💡 Se autocompletarán con {estadisticasAutomaticas.length} estadísticas automáticas disponibles
             </p>
           )}
+          {estadisticasAutomaticas.length === 0 && !cargando && (
+            <p className="text-xs text-orange-600 mt-1">
+              🔍 Si hay estadísticas por set guardadas, se cargarán automáticamente
+            </p>
+          )}
         </div>
         <button
           onClick={handleAbrirModal}
@@ -75,7 +164,7 @@ export function SeccionEstadisticasDirectas({
         <p className="text-green-700 text-sm">
           {estadisticasAutomaticas.length > 0
             ? `Haz clic para capturar datos. Se autocompletarán ${estadisticasAutomaticas.length} estadísticas existentes.`
-            : 'Haz clic en "Capturar Estadísticas Generales" para ingresar datos manualmente'
+            : 'Haz clic para capturar estadísticas. Si hay datos por set guardados, se cargarán automáticamente.'
           }
         </p>
       </div>
