@@ -2,10 +2,24 @@
 
 const API_URL = 'https://overtime-ddyl.onrender.com/api';
 
-export async function fetchEquipos() {
-  const res = await fetch(`${API_URL}/equipos`); // 👈 sin headers
-  if (!res.ok) throw new Error('Error al cargar equipos');
-  return await res.json();
+export async function fetchEquipos(token = null) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_URL}/equipos`, {
+    headers
+  });
+
+  if (!res.ok) {
+    console.error('❌ Error en fetchEquipos:', res.status, res.statusText);
+    throw new Error('Error al cargar equipos');
+  }
+
+  const data = await res.json();
+  console.log('✅ Equipos cargados:', data.length);
+  return data;
 }
 
 export async function agregarEquipo(equipo, token) {

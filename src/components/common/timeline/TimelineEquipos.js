@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import ModalLayout from '../ModalLayout';
 import { useAuth } from '../../../context/AuthContext.js';
 import { fetchEquiposCompetenciaPorEquipo } from '../../../services/equipoService.js';
 import { fetchPartidosPorEquipo } from '../../../services/partidoService.js';
@@ -296,76 +297,71 @@ export default function TimelineEquipos({ onClose }) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando línea temporal de equipos...</p>
-          </div>
+      <ModalLayout onClose={onClose} maxWidth="max-w-6xl">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando línea temporal de equipos...</p>
         </div>
-      </div>
+      </ModalLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="text-center py-12">
-            <p className="text-red-600">Error: {error}</p>
-            <button
-              onClick={onClose}
-              className="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
-            >
-              Cerrar
-            </button>
-          </div>
+      <ModalLayout onClose={onClose} maxWidth="max-w-6xl">
+        <div className="text-center py-12">
+          <p className="text-red-600 dark:text-red-400">Error: {error}</p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+          >
+            Cerrar
+          </button>
         </div>
-      </div>
+      </ModalLayout>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-8xl w-full max-h-[95vh] overflow-hidden flex flex-col border border-gray-200">
-        {/* Header mejorado */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 flex-shrink-0">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">⏰ Timeline Histórico de Equipos</h2>
-              <p className="text-blue-100 mb-4">Evolución cronológica del dodgeball</p>
+    <ModalLayout onClose={onClose} maxWidth="max-w-7xl" className="max-h-[95vh]">
+      {/* Header mejorado */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 sm:p-6 flex-shrink-0 rounded-t-lg">
+        <div className="flex justify-between items-start">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">⏰ Timeline Histórico de Equipos</h2>
+            <p className="text-blue-100 mb-4 text-sm sm:text-base">Evolución cronológica del dodgeball</p>
 
-              {/* Leyenda visual mejorada */}
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-full px-3 py-1">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                  <span>Selecciones</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-full px-3 py-1">
-                  <div className="w-3 h-3 bg-green-400 rounded-full border border-white"></div>
-                  <span>Clubes</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-full px-3 py-1">
-                  <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-                  <span>Activos</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-full px-3 py-1">
-                  <div className="w-3 h-3 border border-gray-300 rounded-full bg-white"></div>
-                  <span>Inactivos</span>
-                </div>
+            {/* Leyenda visual mejorada - responsive */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+              <div className="flex items-center gap-1 sm:gap-2 bg-white bg-opacity-20 rounded-full px-2 sm:px-3 py-1">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-400 rounded-full border border-white"></div>
+                <span>Selecciones</span>
               </div>
-
-              <div className="mt-3 text-blue-100 text-sm">
-                {equiposFiltrados.length} equipos • {timelineData.minDate ? formatearFecha(timelineData.minDate) : '...'} → {timelineData.maxDate ? formatearFecha(timelineData.maxDate) : '...'}
+              <div className="flex items-center gap-1 sm:gap-2 bg-white bg-opacity-20 rounded-full px-2 sm:px-3 py-1">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full border border-white"></div>
+                <span>Clubes</span>
+              </div>
+              <div className="flex items-center gap-1 sm:gap-2 bg-white bg-opacity-20 rounded-full px-2 sm:px-3 py-1">
+                <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                <span>Activos</span>
+              </div>
+              <div className="flex items-center gap-1 sm:gap-2 bg-white bg-opacity-20 rounded-full px-2 sm:px-3 py-1">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 border border-gray-300 rounded-full bg-white"></div>
+                <span>Inactivos</span>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:text-gray-200 text-2xl hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-all"
-            >
-              ×
-            </button>
+
+            <div className="mt-3 text-blue-100 text-xs sm:text-sm">
+              {equiposFiltrados.length} equipos • {timelineData.minDate ? formatearFecha(timelineData.minDate) : '...'} → {timelineData.maxDate ? formatearFecha(timelineData.maxDate) : '...'}
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="text-white hover:text-gray-200 text-xl sm:text-2xl hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center transition-all ml-2 sm:ml-4"
+          >
+            ×
+          </button>
+        </div>
 
           {/* Controles de filtro mejorados */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
@@ -757,7 +753,6 @@ export default function TimelineEquipos({ onClose }) {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
+      </ModalLayout>
+    );
+  }

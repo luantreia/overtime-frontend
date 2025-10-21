@@ -188,36 +188,59 @@ export default function Partidos() {
 
       {/* Paginación */}
       {totalPaginas > 1 && (
-        <div className="flex justify-center items-center mt-8 gap-2 flex-wrap">
-          <button
-            onClick={() => cambiarPagina(paginaActual - 1)}
-            disabled={paginaActual === 1}
-            className="px-3 py-1 rounded border bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-          >
-            Anterior
-          </button>
-
-          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
+        <div className="flex flex-col sm:flex-row justify-center items-center mt-8 gap-2 sm:gap-4">
+          <div className="flex gap-2 order-2 sm:order-1">
             <button
-              key={num}
-              onClick={() => cambiarPagina(num)}
-              className={`px-3 py-1 rounded border ${
-                num === paginaActual
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white hover:bg-blue-100'
-              }`}
+              onClick={() => cambiarPagina(paginaActual - 1)}
+              disabled={paginaActual === 1}
+              className="px-3 py-2 rounded border bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
-              {num}
+              Anterior
             </button>
-          ))}
 
-          <button
-            onClick={() => cambiarPagina(paginaActual + 1)}
-            disabled={paginaActual === totalPaginas}
-            className="px-3 py-1 rounded border bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-          >
-            Siguiente
-          </button>
+            {/* Números de página - responsive */}
+            <div className="flex gap-1 sm:gap-2">
+              {Array.from({ length: Math.min(totalPaginas, 5) }, (_, i) => {
+                let pageNum;
+                if (totalPaginas <= 5) {
+                  pageNum = i + 1;
+                } else if (paginaActual <= 3) {
+                  pageNum = i + 1;
+                } else if (paginaActual >= totalPaginas - 2) {
+                  pageNum = totalPaginas - 4 + i;
+                } else {
+                  pageNum = paginaActual - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => cambiarPagina(pageNum)}
+                    className={`px-2 sm:px-3 py-2 rounded border transition-colors text-sm ${
+                      pageNum === paginaActual
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white hover:bg-blue-100 border-gray-300'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => cambiarPagina(paginaActual + 1)}
+              disabled={paginaActual === totalPaginas}
+              className="px-3 py-2 rounded border bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+            >
+              Siguiente
+            </button>
+          </div>
+
+          {/* Info de página */}
+          <div className="text-sm text-gray-600 order-1 sm:order-2">
+            Página {paginaActual} de {totalPaginas}
+          </div>
         </div>
       )}
 

@@ -7,12 +7,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { SkipLinks } from "../common/SkipLink";
 import { useAccessibility } from "../../hooks/common/useAccessibility";
 import ThemeToggle from "../common/ThemeToggle";
+import { usePing } from "../../hooks/usePing";
 
 const NavBar = () => {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isOnline } = usePing();
 
   // Hook de accesibilidad
   const { handleKeyboardNavigation } = useAccessibility();
@@ -75,7 +77,15 @@ const NavBar = () => {
             className="h-12 sm:h-16 w-auto cursor-pointer object-contain transform hover:scale-105 transition-transform duration-200"
             onClick={() => handleNavigation("/")}
           />
-          <ThemeToggle />
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <div className="flex items-center space-x-1 text-sm">
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-red-400'}`}></span>
+              <span className="text-white text-xs font-medium hidden sm:block">
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Hamburger Menu Button - Always visible, refined animation */}

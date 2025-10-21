@@ -5,21 +5,26 @@ import {
   editarEquipo,
   eliminarEquipo,
 } from '../../services/equipoService';
-import { useAuth } from '../../context/AuthContext';
 
 export function useEquipos(token) {
   const [equipos, setEquipos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Cargar equipos automáticamente cuando se monta el componente
+  useEffect(() => {
+    cargarEquipos();
+  }, []);
+
   const cargarEquipos = async () => {
     try {
       setLoading(true);
-      const data = await fetchEquipos();
+      const data = await fetchEquipos(token);
       setEquipos(data);
       setError(null);
     } catch (err) {
       setError(err.message || 'Error al cargar equipos');
+      console.error('Error cargando equipos:', err);
     } finally {
       setLoading(false);
     }
