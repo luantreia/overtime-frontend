@@ -19,25 +19,53 @@ export function AuthProvider({ children }) {
 
       if (user) {
         try {
-          const token = await user.getIdToken();
+          // Intentar obtener un token fresco
+          const token = await user.getIdToken(true); // forceRefresh = true
           setToken(token);
-          localStorage.setItem('token', token); // ✅ guardar en localStorage
+          localStorage.setItem('token', token);
 
+          // Verificar que el token funcione
           const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/mi-perfil', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
 
-          const data = await res.json();
-          setRol(data.rol);
+          if (res.ok) {
+            const data = await res.json();
+            setRol(data.rol);
+          } else {
+            // Si el token no funciona, intentar refrescar
+            console.warn('Token inválido, intentando refrescar...');
+            const freshToken = await user.getIdToken(true);
+            setToken(freshToken);
+            localStorage.setItem('token', freshToken);
+
+            // Reintentar con token fresco
+            const retryRes = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/mi-perfil', {
+              headers: {
+                Authorization: `Bearer ${freshToken}`,
+              },
+            });
+
+            if (retryRes.ok) {
+              const data = await retryRes.json();
+              setRol(data.rol);
+            } else {
+              throw new Error('Token fresco también inválido');
+            }
+          }
         } catch (error) {
           console.error('Error al obtener el rol del usuario:', error);
+          // Limpiar tokens inválidos
+          setToken(null);
+          setRol(null);
+          localStorage.removeItem('token');
         }
       } else {
         setToken(null);
         setRol(null);
-        localStorage.removeItem('token'); // ✅ limpiar al cerrar sesión
+        localStorage.removeItem('token');
       }
     });
 
