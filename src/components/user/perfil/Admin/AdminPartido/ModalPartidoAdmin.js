@@ -4,7 +4,7 @@ import ModalEstadisticasCaptura from '../../../../modals/ModalEstadisticas/Modal
 import ModalEstadisticasGeneralesCaptura from '../../../../modals/ModalEstadisticas/ModalEstadisticasGeneralesCaptura';
 import GraficoEstadisticasSet from './GraficoEstadisticasSet';
 import EstadisticasGeneralesPartido from './EstadisticasGeneralesPartido';
-import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet, editarPartido } from '../../../../../services/partidoService';
+import { obtenerSetsDePartido, agregarSet, actualizarSet, eliminarSet, editarPartido, eliminarPartido } from '../../../../../services/partidoService';
 
 // Error Boundary temporal para debuggear
 class ErrorBoundary extends React.Component {
@@ -53,7 +53,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
+export default function ModalPartidoAdmin({ partidoId, token, onClose, onPartidoEliminado }) {
   const [partido, setPartido] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,7 +88,10 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
         fecha: partidoData.fecha ? new Date(partidoData.fecha).toISOString().slice(0, 16) : '',
         ubicacion: partidoData.ubicacion || '',
         estado: partidoData.estado || 'programado',
-        nombrePartido: partidoData.nombrePartido || ''
+        nombrePartido: partidoData.nombrePartido || '',
+        marcadorLocal: partidoData.marcadorLocal || 0,
+        marcadorVisitante: partidoData.marcadorVisitante || 0,
+        marcadorModificadoManualmente: partidoData.marcadorModificadoManualmente ?? true
       });
       setError(null);
     } catch (err) {
@@ -162,14 +165,75 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
       const payload = {
         ...datosEdicion,
         fecha: datosEdicion.fecha ? new Date(datosEdicion.fecha) : null,
+        marcadorModificadoManualmente: true, // Marcar como modificado manualmente
       };
       
       const partidoActualizado = await editarPartido(partidoId, payload, token);
       setPartido(prev => ({ ...prev, ...partidoActualizado }));
+      setDatosEdicion(prev => ({ ...prev, marcadorModificadoManualmente: true }));
       setModoEdicion(false);
       alert('Partido actualizado correctamente');
     } catch (err) {
       alert('Error al actualizar partido: ' + err.message);
+    }
+  };
+
+  const handleRecalcularMarcador = async () => {
+    if (!window.confirm('¿Estás seguro de recalcular el marcador desde los sets? Esto reemplazará los marcadores actuales con el cálculo automático.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://overtime-ddyl.onrender.com/api/partidos/${partidoId}/recalcular-marcador`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Error al recalcular marcador');
+      }
+
+      const partidoActualizado = await response.json();
+      setPartido(prev => ({ ...prev, ...partidoActualizado }));
+      setDatosEdicion(prev => ({
+        ...prev,
+        marcadorLocal: partidoActualizado.marcadorLocal || 0,
+        marcadorVisitante: partidoActualizado.marcadorVisitante || 0,
+        marcadorModificadoManualmente: false
+      }));
+      alert('Marcador recalculado correctamente');
+    } catch (error) {
+      console.error('Error recalculando marcador:', error);
+      alert('Error al recalcular marcador: ' + error.message);
+    }
+  };
+
+  const handleEliminarPartido = async () => {
+    if (!window.confirm(`¿Estás seguro de eliminar este partido?\n\n${partido.nombrePartido || 'Partido sin nombre'}\n\nEsta acción no se puede deshacer y eliminará todos los sets y estadísticas asociadas.`)) {
+      return;
+    }
+
+    // Confirmación adicional
+    if (!window.confirm('¿Confirmas definitivamente que quieres ELIMINAR este partido?')) {
+      return;
+    }
+
+    try {
+      await eliminarPartido(partidoId, token);
+      alert('Partido eliminado correctamente');
+      onClose(); // Cerrar el modal
+      // Llamar al callback opcional para refrescar la lista
+      if (onPartidoEliminado) {
+        onPartidoEliminado(partidoId);
+      }
+    } catch (error) {
+      console.error('Error eliminando partido:', error);
+      alert('Error al eliminar partido: ' + error.message);
     }
   };
 
@@ -236,12 +300,41 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
                     <option value="cancelado">Cancelado</option>
                   </select>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Marcador Local</label>
+                    <input
+                      type="number"
+                      value={datosEdicion.marcadorLocal}
+                      onChange={(e) => setDatosEdicion(prev => ({ ...prev, marcadorLocal: Number(e.target.value) }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      min={0}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Marcador Visitante</label>
+                    <input
+                      type="number"
+                      value={datosEdicion.marcadorVisitante}
+                      onChange={(e) => setDatosEdicion(prev => ({ ...prev, marcadorVisitante: Number(e.target.value) }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      min={0}
+                    />
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleGuardarEdicion}
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
                     Guardar
+                  </button>
+                  <button
+                    onClick={handleRecalcularMarcador}
+                    className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+                    title="Recalcular marcador automáticamente desde los sets"
+                  >
+                    🔄 Recalcular
                   </button>
                   <button
                     onClick={() => setModoEdicion(false)}
@@ -258,6 +351,7 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
                 <p><strong>Competencia:</strong> {partido.competencia?.nombre || 'Partido amistoso'}</p>
                 <p><strong>Estado:</strong> {partido.estado || '-'}</p>
                 <p><strong>Ubicación:</strong> {partido.ubicacion || '-'}</p>
+                <p><strong>Marcador:</strong> {partido.equipoLocal?.nombre || 'Local'} {partido.marcadorLocal ?? 0} - {partido.marcadorVisitante ?? 0} {partido.equipoVisitante?.nombre || 'Visitante'}</p>
                 <p><strong>Equipo Local:</strong> {partido.equipoLocal?.nombre || '-'}</p>
                 <p><strong>Equipo Visitante:</strong> {partido.equipoVisitante?.nombre || '-'}</p>
                 <button
@@ -405,6 +499,39 @@ export default function ModalPartidoAdmin({ partidoId, token, onClose }) {
             >
               Ver Partido Completo
             </button>
+          </div>
+
+          {/* Sección de configuración avanzada */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer text-red-800 font-medium hover:text-red-900 transition-colors">
+                <span className="flex items-center gap-2">
+                  ⚙️ Configuración Avanzada
+                  <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </summary>
+              
+              <div className="mt-4 pt-4 border-t border-red-200">
+                <div className="bg-white border border-red-200 rounded-lg p-4">
+                  <h4 className="text-red-800 font-semibold mb-3">⚠️ Acciones Irreversibles</h4>
+                  <p className="text-red-700 text-sm mb-4">
+                    Estas acciones eliminarán permanentemente datos del partido. No se pueden deshacer.
+                  </p>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleEliminarPartido}
+                      className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors flex items-center gap-2"
+                      title="Eliminar este partido permanentemente"
+                    >
+                      🗑️ Eliminar Partido
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       </ModalBase>

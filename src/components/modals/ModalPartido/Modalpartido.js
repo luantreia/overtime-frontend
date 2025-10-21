@@ -1,32 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import ModalEstadisticasCaptura from '../ModalEstadisticas/ModalEstadisticas';
 import PartidoDatosGenerales from './PartidoDatosGenerales';
-import Button from '../../common/FormComponents/Button';
 import useJugadores from '../../../hooks/useJugadores';
 import CloseButton from '../../common/FormComponents/CloseButton';
-import ExportarExcelBoton from '../../common/FormComponents/ExportarExcelboton';
 import PartidoSetsLineaDeTiempo from './PartidoSetsLineaDeTiempo';
-import PartidoDatosGeneralesEditable from './PartidoDatosGeneralesEditable';
 
 export default function ModalPartido({
   partido,
   onClose,
   token,
-  refrescarPartidoSeleccionado,
-  eliminarSetDePartido,
-  cargarPartidoPorId,
-  agregarSetAPartido,
-  editarPartidoExistente,
-  actualizarSetDePartido,
 }) {
-  const [modalEstadisticasAbierto, setModalEstadisticasAbierto] = useState(false);
-  const [setsLocales, setSetsLocales] = useState(partido.sets || []);
-  const { jugadores } = useJugadores(token); // Ensure useJugadores is defined and used correctly
-  const [modoEdicion, setModoEdicion] = useState(false);
-
-  useEffect(() => {
-    setSetsLocales(partido.sets || []);
-  }, [partido]);
+  const { jugadores } = useJugadores(token);
 
   if (!partido) return null;
 
@@ -44,32 +27,7 @@ export default function ModalPartido({
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b pb-3">Detalles del Partido</h2> {/* Title styling */}
 
         <div className="space-y-6 mb-6"> {/* Container for main partido details */}
-          {modoEdicion ? (
-            <PartidoDatosGeneralesEditable
-              datosIniciales={partido}
-              onGuardar={async (datosActualizados) => {
-                const payload = {
-                  ...datosActualizados,
-                  fecha: datosActualizados.fecha ? new Date(datosActualizados.fecha) : null,
-                };
-                await editarPartidoExistente(partido._id, payload);
-                await refrescarPartidoSeleccionado(); // para recargar desde backend si querés
-                setModoEdicion(false);
-              }}
-              onCancelar={() => setModoEdicion(false)}
-            />
-          ) : (
-            <PartidoDatosGenerales partido={partido} />
-          )}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setModoEdicion(prev => !prev)}
-                className={`px-4 py-2 rounded-md font-semibold text-white transition-colors duration-200
-                  ${modoEdicion ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-600 hover:bg-green-700'}`}
-              >
-                {modoEdicion ? 'Cancelar edición' : 'Editar Datos'}
-              </button>
-            </div>
+          <PartidoDatosGenerales partido={partido} />
           <PartidoSetsLineaDeTiempo
             sets={partido.sets}
             equipoLocal={partido.equipoLocal}
@@ -77,33 +35,6 @@ export default function ModalPartido({
             jugadores={jugadores}
           />
         </div>
-
-        <div className="flex flex-col md:flex-row md:justify-end md:gap-4 space-y-3 md:space-y-0 mt-6 pt-4 border-t"> {/* Buttons container */}
-          <button onClick={() => setModalEstadisticasAbierto(true)}
-                  className=" px-4 py-2 bg-blue-600 text-white font-medium rounded-md
-                 hover:bg-blue-700 transition-colors duration-200
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-    >
-            Cargar estadísticas
-          </button>
-          <ExportarExcelBoton partido={partido} className=" md:w-auto" />
-        </div>
-
-        {modalEstadisticasAbierto && (
-          <ModalEstadisticasCaptura
-            partido={partido}
-            setsLocales={setsLocales}
-            partidoId={partido._id}
-            token={token}
-            onClose={() => setModalEstadisticasAbierto(false)}
-            agregarSetAPartido={agregarSetAPartido}
-            eliminarSetDePartido={eliminarSetDePartido}
-            cargarPartidoPorId={cargarPartidoPorId}
-            actualizarSetsLocales={setSetsLocales}
-            actualizarSetDePartido={actualizarSetDePartido}
-            refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
-          />
-        )}
       </div>
     </div>
   );

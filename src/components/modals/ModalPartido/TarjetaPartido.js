@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function TarjetaPartido({ partido, onClick }) {
+export default function TarjetaPartido({ partido, onClick, onAdminClick, user, rol }) {
   if (!partido) return null;
 
   const equipoLocal = partido.equipoLocal;
@@ -14,6 +14,13 @@ export default function TarjetaPartido({ partido, onClick }) {
 
   const marcadorLocal = partido.marcadorLocal ?? "-";
   const marcadorVisitante = partido.marcadorVisitante ?? "-";
+
+  // Check if current user is admin of this match
+  const isAdmin = user && (
+    partido.creadoPor === user.uid ||
+    (partido.administradores && partido.administradores.includes(user.uid)) ||
+    rol === 'admin'
+  );
 
   return (
     <div
@@ -41,15 +48,32 @@ export default function TarjetaPartido({ partido, onClick }) {
       <p className="text-xs text-gray-500 mb-3 capitalize">
         {partido.modalidad} · {partido.categoria} · {new Date(partido.fecha).toLocaleDateString()}
       </p>
-      {/* Botón */}
-      <button
-        className="mt-auto px-4 py-2 bg-slate-700 text-white font-medium rounded-lg
-                   hover:bg-slate-800 transition-colors duration-200
-                   focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-white"
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-      >
-        Ver más
-      </button>
+      
+      {/* Botones */}
+      <div className="flex gap-2 mt-auto">
+        {isAdmin && (
+          <button
+            className="px-3 py-2 bg-red-600 text-white font-medium rounded-lg text-sm
+                       hover:bg-red-700 transition-colors duration-200
+                       focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-white"
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              if (onAdminClick) onAdminClick(partido);
+            }}
+            title="Administrar partido"
+          >
+            ⚙️ Admin
+          </button>
+        )}
+        <button
+          className="px-3 py-2 bg-slate-700 text-white font-medium rounded-lg text-sm
+                     hover:bg-slate-800 transition-colors duration-200
+                     focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-white"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+        >
+          Ver más
+        </button>
+      </div>
     </div>
   );
 }

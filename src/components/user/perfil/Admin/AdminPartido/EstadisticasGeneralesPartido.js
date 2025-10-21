@@ -37,6 +37,13 @@ export default function EstadisticasGeneralesPartido({ partidoId, tipoVista = 'a
       );
 
       if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Si es un error de validación (400), mostrar el mensaje específico
+        if (response.status === 400 && errorData.error) {
+          throw new Error(errorData.error);
+        }
+        
         throw new Error('Error al convertir estadísticas');
       }
 

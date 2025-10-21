@@ -25,7 +25,7 @@ export default function JugadorEstadisticasCard({
   const [feedbackColor, setFeedbackColor] = useState(''); // 'green', 'red', or ''
 
   const LONG_PRESS_DELAY = 500; // Milisegundos para esperar antes de la resta repetida
-  const SUBTRACT_INTERVAL = 100; // Milisegundos entre cada resta continua
+  const SUBTRACT_INTERVAL = 400; // Milisegundos entre cada resta continua - AUMENTADO para ser más lento
   const FEEDBACK_DURATION = 300; // Milisegundos que dura el color de retroalimentación
 
   // Limpia el temporizador de color

@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import TarjetaPartido from '../components/modals/ModalPartido/TarjetaPartido.js';
 import ModalPartido from '../components/modals/ModalPartido/Modalpartido.js';
+import ModalPartidoAdmin from '../components/user/perfil/Admin/AdminPartido/ModalPartidoAdmin.js';
 import { usePartidos } from '../hooks/usePartidos.js';
 import { useAuth } from '../context/AuthContext';
 
 export default function Partidos() {
   const [partidoSeleccionado, setPartidoSeleccionado] = useState(null);
+  const [partidoAdminSeleccionado, setPartidoAdminSeleccionado] = useState(null);
   const [ordenLista, setOrdenLista] = useState('aleatorio');
   const [partidosOrdenados, setPartidosOrdenados] = useState([]);
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 20;
 
-  const { token } = useAuth();
+  const { token, user, rol } = useAuth();
   const {
     partidos,
     cargando,
@@ -60,6 +62,10 @@ export default function Partidos() {
     setPartidoSeleccionado(partidoCompleto || partido);
   };
 
+  const handleAdminPartido = (partido) => {
+    setPartidoAdminSeleccionado(partido);
+  };
+
   const totalPaginas = Math.ceil(partidosOrdenados.length / itemsPorPagina);
   const indiceInicio = (paginaActual - 1) * itemsPorPagina;
   const partidosPagina = partidosOrdenados.slice(indiceInicio, indiceInicio + itemsPorPagina);
@@ -95,7 +101,7 @@ export default function Partidos() {
 
       <div className="lista px-0">
         {partidosPagina.map((p) => (
-          <TarjetaPartido key={p._id} partido={p} onClick={() => handleSeleccionarPartido(p)} />
+          <TarjetaPartido key={p._id} partido={p} onClick={() => handleSeleccionarPartido(p)} onAdminClick={handleAdminPartido} user={user} rol={rol} />
         ))}
       </div>
 
@@ -139,12 +145,15 @@ export default function Partidos() {
           partido={partidoSeleccionado}
           onClose={() => setPartidoSeleccionado(null)}
           token={token}
-          agregarSetAPartido={agregarSetAPartido}
-          actualizarSetDePartido={actualizarSetDePartido}
-          cargarPartidoPorId={cargarPartidoPorId}
-          eliminarSetDePartido={eliminarSetDePartido}
-          refrescarPartidoSeleccionado={refrescarPartidoSeleccionado}
-          editarPartidoExistente={editarPartidoExistente}
+        />
+      )}
+
+      {partidoAdminSeleccionado && (
+        <ModalPartidoAdmin
+          partidoId={partidoAdminSeleccionado._id}
+          token={token}
+          onClose={() => setPartidoAdminSeleccionado(null)}
+          onPartidoEliminado={eliminarPartidoPorId}
         />
       )}
     </div>
