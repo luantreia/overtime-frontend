@@ -1,263 +1,225 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import TarjetaPartido from '../components/modals/ModalPartido/TarjetaPartido.js';
-import ModalPartido from '../components/modals/ModalPartido/Modalpartido.js';
-import ModalPartidoAdmin from '../components/user/perfil/Admin/AdminPartido/ModalPartidoAdmin.js';
+import { Card, FilterControls, Spinner } from '../components/ui';
+import { PartidoCard } from '../components/features/partidos';
+import ModalPartidoAdmin from '../components/features/admin/partidos/components/ModalPartidoAdmin';
+import ModalPartido from '../components/features/partidos/ModalPartido';
 import { usePartidos } from '../hooks/partidos/usePartidos.js';
 import { useAuth } from '../context/AuthContext';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import { diagnosticTest } from '../utils/diagnostic';
+import { ITEMS_PER_PAGE, PARTIDO_ESTADOS } from '../utils/constants';
+import { formatDate, formatNumber } from '../utils/formatters';
+import { normalizeEquipoNombre } from '../utils/partidoUtils';
 
 export default function Partidos() {
   const [partidoSeleccionado, setPartidoSeleccionado] = useState(null);
-  const [partidoAdminSeleccionado, setPartidoAdminSeleccionado] = useState(null);
-  const [ordenLista, setOrdenLista] = useState('aleatorio');
+  const [partidoAdminId, setPartidoAdminId] = useState(null);
+  const [ordenLista, setOrdenLista] = useState('fecha_desc');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
   const [paginaActual, setPaginaActual] = useState(1);
-  const [authError, setAuthError] = useState(null);
-  const [diagnosticResults, setDiagnosticResults] = useState(null);
-  const itemsPorPagina = 20;
 
   const { token, user, rol } = useAuth();
   const {
     partidos,
     cargando,
-    error,
-    agregarSetAPartido,
-    actualizarSetDePartido,
-    eliminarPartidoPorId,
-    cargarPartidoPorId,
-    editarPartidoExistente,
-    eliminarSetDePartido
+    error
   } = usePartidos(token, ordenLista);
 
-  // Detectar errores de autenticación y ejecutar diagnóstico
-  useEffect(() => {
-    if (error && error.message && error.message.includes('401')) {
-      console.log('🚨 Error 401 detectado, ejecutando diagnóstico...');
-      setAuthError('Error de autenticación. Verifica tu conexión e intenta recargar la página.');
-      diagnosticTest(token).then(results => {
-        setDiagnosticResults(results);
-      });
-    } else if (error) {
-      setAuthError(null); // Limpiar error de auth si no es 401
-    }
-  }, [error, token]);
+  // Filtrar partidos
+  const partidosFiltrados = useMemo(() => {
+    if (filtroEstado === 'todos') return partidos;
+    return partidos.filter(partido => partido.estado === filtroEstado);
+  }, [partidos, filtroEstado]);
 
-  const ordenarPartidos = (lista, criterio) => {
-    switch (criterio) {
+  // Ordenar partidos
+  const partidosOrdenados = useMemo(() => {
+    const lista = [...partidosFiltrados];
+    switch (ordenLista) {
       case 'fecha_asc':
         return lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
       case 'fecha_desc':
         return lista.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      case 'estado':
-        return lista.sort((a, b) => a.estado.localeCompare(b.estado));
       case 'aleatorio':
       default:
         return lista.sort(() => Math.random() - 0.5);
     }
-  };
+  }, [partidosFiltrados, ordenLista]);
 
-  const refrescarPartidoSeleccionado = async () => {
-    if (!partidoSeleccionado) return;
-    const refreshed = await cargarPartidoPorId(partidoSeleccionado._id);
-    setPartidoSeleccionado(refreshed);
-  };
-
-  const handleOrdenChange = (e) => {
-    setOrdenLista(e.target.value);
-  };
-
-  const handleSeleccionarPartido = async (partido) => {
-    const partidoCompleto = await cargarPartidoPorId(partido._id);
-    setPartidoSeleccionado(partidoCompleto || partido);
-  };
-
-  const handleAdminPartido = (partido) => {
-    setPartidoAdminSeleccionado(partido);
-  };
-
-  // 🎯 Optimización con useMemo para cálculos costosos
-  const partidosOrdenados = useMemo(() => {
-    if (!partidos || partidos.length === 0) return [];
-
-    const listaOrdenada = [...partidos];
-
-    switch (ordenLista) {
-      case 'fecha_desc':
-        return listaOrdenada.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      case 'fecha_asc':
-        return listaOrdenada.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-      case 'estado':
-        return listaOrdenada.sort((a, b) => {
-          const estadoA = a.estadoPartido || 'pendiente';
-          const estadoB = b.estadoPartido || 'pendiente';
-          return estadoA.localeCompare(estadoB);
-        });
-      case 'aleatorio':
-      default:
-        // Para aleatorio, solo reordenar cuando cambie la lista de partidos
-        return listaOrdenada.sort(() => Math.random() - 0.5);
-    }
-  }, [partidos, ordenLista]);
-
-  // 📄 Optimización de paginación con useMemo
-  const totalPaginas = useMemo(() =>
-    Math.ceil(partidosOrdenados.length / itemsPorPagina),
-    [partidosOrdenados.length, itemsPorPagina]
+  // Paginación
+  const totalPaginas = Math.ceil(partidosOrdenados.length / ITEMS_PER_PAGE);
+  const partidosPagina = partidosOrdenados.slice(
+    (paginaActual - 1) * ITEMS_PER_PAGE,
+    paginaActual * ITEMS_PER_PAGE
   );
 
-  const partidosPagina = useMemo(() => {
-    const indiceInicio = (paginaActual - 1) * itemsPorPagina;
-    return partidosOrdenados.slice(indiceInicio, indiceInicio + itemsPorPagina);
-  }, [partidosOrdenados, paginaActual, itemsPorPagina]);
+  // Estadísticas rápidas
+  const estadisticasPartidos = useMemo(() => {
+    const total = partidos.length;
+    const programados = partidos.filter(p => p.estado === PARTIDO_ESTADOS.PROGRAMADO).length;
+    const enVivo = partidos.filter(p => p.estado === PARTIDO_ESTADOS.EN_VIVO).length;
+    const finalizados = partidos.filter(p => p.estado === PARTIDO_ESTADOS.FINALIZADO).length;
+    const cancelados = partidos.filter(p => p.estado === PARTIDO_ESTADOS.CANCELADO).length;
 
-  const cambiarPagina = (nueva) => {
-    if (nueva >= 1 && nueva <= totalPaginas) {
-      setPaginaActual(nueva);
+    return { total, programados, enVivo, finalizados, cancelados };
+  }, [partidos]);
+
+  // Configuración de filtros
+  const filters = [
+    {
+      key: 'estado',
+      label: 'Estado',
+      value: filtroEstado,
+      options: [
+        { value: 'todos', label: 'Todos los partidos' },
+        { value: PARTIDO_ESTADOS.PROGRAMADO, label: 'Programados' },
+        { value: PARTIDO_ESTADOS.EN_VIVO, label: 'En vivo' },
+        { value: PARTIDO_ESTADOS.FINALIZADO, label: 'Finalizados' },
+        { value: PARTIDO_ESTADOS.CANCELADO, label: 'Cancelados' }
+      ]
     }
+  ];
+
+  // Determinar si el usuario puede administrar partidos
+  const puedeAdministrar = (partido) => {
+    return user && (
+      partido.creadoPor === user.uid ||
+      (partido.administradores && partido.administradores.includes(user.uid)) ||
+      rol === 'admin'
+    );
   };
 
   if (cargando) {
-    return <p className="text-center mt-10">Cargando partidos...</p>;
+    return <Spinner size="lg" message="Cargando partidos..." />;
+  }
+
+  if (error) {
+    return (
+      <Card variant="danger">
+        <p>Error al cargar partidos: {error.message || error}</p>
+      </Card>
+    );
   }
 
   return (
-    <div className="p-2">
-      <div className="selector" style={{ marginBottom: 16 }}>
-        <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700">
-          Ordenar por:
-        </label>     
-        <select
-          id="orden"
-          value={ordenLista}
-          onChange={handleOrdenChange}
-          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="fecha_desc">Fecha (más reciente primero)</option>
-          <option value="fecha_asc">Fecha (más antigua primero)</option>
-          <option value="estado">Estado</option>
-          <option value="aleatorio">Orden aleatorio</option>
-        </select>
-      </div>
+    <div className="space-y-6">
+      {/* Header limpio con menú de filtros/orden */}
+      <Card>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Partidos ({formatNumber(partidosFiltrados.length)})
+          </h1>
 
-      {cargando ? (
-        <LoadingSpinner size="large" message="Cargando partidos..." />
-      ) : authError ? (
-        <div className="text-center p-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-            <h3 className="text-lg font-semibold text-red-800 mb-2">Error de Autenticación</h3>
-            <p className="text-red-700 mb-4">{authError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-            >
-              Recargar Página
-            </button>
-          </div>
-
-          {diagnosticResults && (
-            <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 max-w-2xl mx-auto">
-              <h4 className="font-semibold text-gray-800 mb-3">Resultados del Diagnóstico:</h4>
-              <div className="space-y-2 text-sm">
-                {Object.entries(diagnosticResults).map(([test, result]) => (
-                  <div key={test} className="flex justify-between">
-                    <span className="font-medium">{test}:</span>
-                    <span className={result.includes('✅') ? 'text-green-600' : 'text-red-600'}>
-                      {result}
-                    </span>
-                  </div>
-                ))}
+          <details className="relative">
+            <summary className="cursor-pointer select-none px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
+              Filtros y orden
+            </summary>
+            <div className="absolute right-0 mt-2 z-20 w-[min(92vw,560px)] rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:bg-gray-900 dark:border-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FilterControls
+                    filters={filters}
+                    onFilterChange={(key, value) => {
+                      if (key === 'estado') setFiltroEstado(value);
+                      setPaginaActual(1);
+                    }}
+                    onClearFilters={() => {
+                      setFiltroEstado('todos');
+                      setPaginaActual(1);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ordenLista" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por</label>
+                  <select
+                    id="ordenLista"
+                    value={ordenLista}
+                    onChange={(e) => { setOrdenLista(e.target.value); setPaginaActual(1); }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                  >
+                    <option value="fecha_desc">Más recientes primero</option>
+                    <option value="fecha_asc">Más antiguos primero</option>
+                    <option value="aleatorio">Orden aleatorio</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={() => {
+                    setFiltroEstado('todos');
+                    setPaginaActual(1);
+                  }}
+                  className="px-3 py-1.5 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+                >
+                  Limpiar filtros
+                </button>
               </div>
             </div>
-          )}
+          </details>
+        </div>
+      </Card>
+
+      {/* Grid de partidos */}
+      {partidosPagina.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {partidosPagina.map((partido) => (
+            <PartidoCard
+              key={partido._id}
+              partido={partido}
+              onClick={() => setPartidoSeleccionado(partido)}
+              isAdmin={puedeAdministrar(partido)}
+              onAdminClick={() => setPartidoAdminId(partido._id)}
+            />
+          ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
-          {partidosPagina.map((p) => (
-            <div key={p._id} className="w-full max-w-xs">
-              <TarjetaPartido
-                partido={p}
-                onClick={() => handleSeleccionarPartido(p)}
-                onAdminClick={handleAdminPartido}
-                user={user}
-                rol={rol}
-              />
-            </div>
+        <Card>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🏟️</div>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              No hay partidos disponibles
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              No se encontraron partidos con los filtros aplicados.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {/* Paginación mejorada */}
+      {totalPaginas > 1 && (
+        <div className="flex justify-center space-x-2">
+          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numero) => (
+            <button
+              key={numero}
+              onClick={() => setPaginaActual(numero)}
+              disabled={numero === paginaActual}
+              className={`px-3 py-2 rounded-lg border transition-colors ${
+                numero === paginaActual
+                  ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-700 dark:border-blue-700'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+              }`}
+            >
+              {numero}
+            </button>
           ))}
         </div>
       )}
 
-      {/* Paginación */}
-      {totalPaginas > 1 && (
-        <div className="flex flex-col sm:flex-row justify-center items-center mt-8 gap-2 sm:gap-4">
-          <div className="flex gap-2 order-2 sm:order-1">
-            <button
-              onClick={() => cambiarPagina(paginaActual - 1)}
-              disabled={paginaActual === 1}
-              className="px-3 py-2 rounded border bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-            >
-              Anterior
-            </button>
-
-            {/* Números de página - responsive */}
-            <div className="flex gap-1 sm:gap-2">
-              {Array.from({ length: Math.min(totalPaginas, 5) }, (_, i) => {
-                let pageNum;
-                if (totalPaginas <= 5) {
-                  pageNum = i + 1;
-                } else if (paginaActual <= 3) {
-                  pageNum = i + 1;
-                } else if (paginaActual >= totalPaginas - 2) {
-                  pageNum = totalPaginas - 4 + i;
-                } else {
-                  pageNum = paginaActual - 2 + i;
-                }
-
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => cambiarPagina(pageNum)}
-                    className={`px-2 sm:px-3 py-2 rounded border transition-colors text-sm ${
-                      pageNum === paginaActual
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white hover:bg-blue-100 border-gray-300'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              onClick={() => cambiarPagina(paginaActual + 1)}
-              disabled={paginaActual === totalPaginas}
-              className="px-3 py-2 rounded border bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-            >
-              Siguiente
-            </button>
-          </div>
-
-          {/* Info de página */}
-          <div className="text-sm text-gray-600 order-1 sm:order-2">
-            Página {paginaActual} de {totalPaginas}
-          </div>
-        </div>
-      )}
-
+      {/* Modal de partido: versión completa */}
       {partidoSeleccionado && (
         <ModalPartido
           partido={partidoSeleccionado}
           onClose={() => setPartidoSeleccionado(null)}
-          token={token}
         />
       )}
 
-      {partidoAdminSeleccionado && (
+      {/* Modal de administración de partido */}
+      {partidoAdminId && (
         <ModalPartidoAdmin
-          partidoId={partidoAdminSeleccionado._id}
+          partidoId={partidoAdminId}
           token={token}
-          onClose={() => setPartidoAdminSeleccionado(null)}
-          onPartidoEliminado={eliminarPartidoPorId}
+          onClose={() => setPartidoAdminId(null)}
+          onPartidoEliminado={() => {
+            setPartidoAdminId(null);
+          }}
         />
       )}
     </div>

@@ -11,16 +11,14 @@ const Equipos = lazy(() => import('./pages/Equipos'));
 const Perfil = lazy(() => import('./pages/Perfil'));
 const Login = lazy(() => import('./components/user/Login'));
 const Registro = lazy(() => import('./components/user/Registro'));
-const AgregarJugador = lazy(() => import('./components/modals/ModalJugador/AgregarJugador'));
-const AgregarEquipo = lazy(() => import('./components/modals/ModalEquipo/AgregarEquipo'));
+// Nota: Los componentes de agregar se eliminaron porque ya no se usan
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Partidos = lazy(() => import('./pages/Partidos'));
-const AgregarPartido = lazy(() => import('./components/modals/ModalPartido/AgregarPartido'));
-const AgregarOrganizacion = lazy(() => import('./components/modals/ModalOrganizacion/AgregarOrganizacion'));
+// Nota: Los componentes de agregar se eliminaron porque ya no se usan
 const Organizaciones = lazy(() => import('./pages/Organizaciones'));
 const Competencias = lazy(() => import('./pages/Competencias'));
-const FormularioCompetencia = lazy(() => import('./components/modals/ModalCompetencia/agregarCompetencia'));
-const PanelAdmin = lazy(() => import('./components/user/perfil/PanelAdmin'));
+// Nota: Los componentes de agregar se eliminaron porque ya no se usan
+const PanelAdmin = lazy(() => import('./components/features/admin/AdminDashboard'));
 const OpcionesAvanzadas = lazy(() => import('./pages/admin/OpcionesAvanzadas'));
 
 // Loading fallback component
@@ -36,14 +34,13 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/jugadores" element={<Jugadores />} />
           <Route path="/equipos" element={<Equipos />} />
-          <Route path="/agregar-jugadores-multiple" element={<AgregarJugador />} />
-          <Route path="/agregar-equipo" element={<AgregarEquipo />} />
-          <Route path="/agregar-partido" element={<AgregarPartido />} />
-          <Route path="/agregar-organizacion" element={<AgregarOrganizacion />} /> 
-          <Route path="/competencias" element={<Competencias />} />                       
-          <Route path="/agregar-competencia" element={<FormularioCompetencia />} />
+          {/* Nota: Rutas de agregar eliminadas porque ya no se usan */}
+          <Route path="/competencias" element={<Competencias />} />
+          {/* Nota: Ruta de agregar competencia eliminada porque ya no se usa */}
           <Route path="/organizaciones" element={<Organizaciones />} />
           <Route path="/partidos" element={<Partidos />} />
+          {/* Nota: Ruta de agregar partido eliminada porque ya no se usa */}
+          {/* Nota: Ruta de agregar organizacion eliminada porque ya no se usa */}
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />

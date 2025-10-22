@@ -14,16 +14,42 @@ export function useCompetencias() {
   const [error, setError] = useState(null);
   const { token } = useAuth();
 
+  // Cargar competencias automáticamente al montar
+  useEffect(() => {
+    cargarCompetencias();
+  }, []);
+
   const cargarCompetencias = async () => {
     try {
       setLoading(true);
+      // Intentar cargar competencias administrables primero
+      try {
+        const response = await fetch(`https://overtime-ddyl.onrender.com/api/competencias/admin`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const dataValida = data.map(c => ({ nombre: '', ...c }));
+          setCompetencias(dataValida);
+          setError(null);
+          return;
+        }
+      } catch (adminError) {
+        console.warn('No se pudieron cargar competencias admin, intentando públicas:', adminError.message);
+      }
+
+      // Fallback a competencias públicas
       const data = await obtenerCompetencias();
-      // Filtrar elementos inválidos y asegurar que tengan nombre
       const dataValida = data.map(c => ({ nombre: '', ...c }));
       setCompetencias(dataValida);
       setError(null);
     } catch (err) {
       setError(err.message || 'Error al cargar competencias');
+      setCompetencias([]);
     } finally {
       setLoading(false);
     }

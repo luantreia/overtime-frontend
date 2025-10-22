@@ -1,4 +1,3 @@
-// src/hooks/partidos/usePartidos.js
 import { useState, useEffect, useCallback } from 'react';
 import {
   fetchPartidos,
@@ -17,26 +16,25 @@ export function usePartidos(token) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cargar todos los partidos
+  // Cargar todos los partidos (rápido): ir directo al endpoint público
   useEffect(() => {
-    console.log('Token recibido en usePartidos:', token);
-
     setLoading(true);
-    fetchPartidos(token)
-      .then(data => {
-        console.log('Partidos cargados:', data);
-        setPartidos(data);
-        setError(null);
-      })
-      .catch(err => {
-        console.error('Error fetchPartidos:', err);
-        setError(err.message);
-      })
-      .finally(() => {
-        console.log('Carga finalizada');
-        setLoading(false)
-      });
+    cargarPartidos();
   }, [token]);
+
+  const cargarPartidos = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchPartidos(token);
+      setPartidos(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setPartidos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const cargarPartidoPorId = useCallback(async (id) => {
     try {
@@ -131,6 +129,7 @@ export function usePartidos(token) {
     partidos,
     loading,
     error,
+    cargarPartidos,
     cargarPartidoPorId,
     crearNuevoPartido,
     editarPartidoExistente,

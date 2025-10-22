@@ -1,0 +1,27 @@
+// src/components/modals/ModalEstadisticasCaptura/EquiposEstadisticas.js
+import React from 'react';
+import { ListaJugadores } from './ListaJugadores.js';
+
+export default function EquiposEstadisticas({ equipoLocal, equipoVisitante, estadisticas, onCambiarEstadistica, onAsignarJugador, token }) {
+  return (
+    // Converted inline styles to Tailwind classes
+    <div className="flex flex-row flex-wrap justify-between gap-1 mt-1">
+      <ListaJugadores
+        equipoNombre={equipoLocal.nombre}
+        equipoId={equipoLocal._id}
+        estadisticasJugador={estadisticas.local}
+        onCambiarEstadistica={(jugadorId, campo, delta) => onCambiarEstadistica(equipoLocal._id, jugadorId, campo, delta)}
+        onAsignarJugador={(index, jugadorId) => onAsignarJugador('local', index, jugadorId)}
+        token={token}
+      />
+      <ListaJugadores
+        equipoNombre={equipoVisitante.nombre}
+        equipoId={equipoVisitante._id}
+        estadisticasJugador={estadisticas.visitante}
+        onCambiarEstadistica={(jugadorId, campo, delta) => onCambiarEstadistica(equipoVisitante._id, jugadorId, campo, delta)}
+        onAsignarJugador={(index, jugadorId) => onAsignarJugador('visitante', index, jugadorId)}
+        token={token}
+      />
+    </div>
+  );
+}

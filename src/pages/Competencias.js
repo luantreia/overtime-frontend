@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, FilterControls, Spinner, Badge } from '../components/ui';
 import { useCompetencias } from '../hooks/competencias/useCompetencias';
-import TarjetaCompetencia from '../components/modals/ModalCompetencia/TarjetaCompetencia';
-import ModalCompetencia from '../components/modals/ModalCompetencia/ModalCompetencia';
+import { useAuth } from '../context/AuthContext';
+import { ITEMS_PER_PAGE } from '../utils/constants';
+import { formatNumber } from '../utils/formatters';
 
 export default function Competencias() {
+  const { token } = useAuth();
   const {
     competencias,
     loading,
@@ -11,109 +14,316 @@ export default function Competencias() {
     cargarCompetencias,
     eliminarCompetenciaPorId,
     actualizarCompetenciaPorId,
-  } = useCompetencias();
+  } = useCompetencias(token);
 
   const [orden, setOrden] = useState('nombre_asc');
-  const [competenciasOrdenadas, setCompetenciasOrdenadas] = useState([]);
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
   const [paginaActual, setPaginaActual] = useState(1);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState(null);
 
-  const itemsPorPagina = 10;
+  // Filtrar competencias
+  const competenciasFiltradas = useMemo(() => {
+    let filtered = competencias;
 
-  useEffect(() => {
-    cargarCompetencias(); // Al montar
-  }, []);
-
-  useEffect(() => {
-    if (competencias.length > 0) {
-      const ordenadas = ordenarCompetencias([...competencias], orden);
-      setCompetenciasOrdenadas(ordenadas);
-      setPaginaActual(1); // Reinicia al cambiar orden
+    if (filtroTipo !== 'todos') {
+      filtered = filtered.filter(competencia => competencia.tipo === filtroTipo);
     }
-  }, [competencias, orden]);
 
-const ordenarCompetencias = (lista, criterio) => {
-  switch (criterio) {
-    case 'nombre_asc':
-      return lista.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-    case 'nombre_desc':
-      return lista.sort((a, b) => (b.nombre || '').localeCompare(a.nombre || ''));
-    case 'aleatorio':
-    default:
-      return lista.sort(() => Math.random() - 0.5);
+    if (filtroEstado !== 'todos') {
+      filtered = filtered.filter(competencia => competencia.estado === filtroEstado);
+    }
+
+    return filtered;
+  }, [competencias, filtroTipo, filtroEstado]);
+
+  // Ordenar competencias
+  const competenciasOrdenadas = useMemo(() => {
+    const lista = [...competenciasFiltradas];
+    switch (orden) {
+      case 'nombre_asc':
+        return lista.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+      case 'nombre_desc':
+        return lista.sort((a, b) => (b.nombre || '').localeCompare(a.nombre || ''));
+      case 'aleatorio':
+      default:
+        return lista.sort(() => Math.random() - 0.5);
+    }
+  }, [competenciasFiltradas, orden]);
+
+  // Paginación
+  const totalPaginas = Math.ceil(competenciasOrdenadas.length / ITEMS_PER_PAGE);
+  const competenciasPagina = competenciasOrdenadas.slice(
+    (paginaActual - 1) * ITEMS_PER_PAGE,
+    paginaActual * ITEMS_PER_PAGE
+  );
+
+  // Estadísticas rápidas
+  const estadisticasCompetencias = useMemo(() => {
+    const total = competencias.length;
+    const activas = competencias.filter(c => c.estado === 'activa').length;
+    const finalizadas = competencias.filter(c => c.estado === 'finalizada').length;
+    const equiposTotal = competencias.reduce((acc, c) => acc + (c.equipos?.length || 0), 0);
+
+    return { total, activas, finalizadas, equiposTotal };
+  }, [competencias]);
+
+  // Configuración de filtros
+  const filters = [
+    {
+      key: 'tipo',
+      label: 'Tipo',
+      value: filtroTipo,
+      options: [
+        { value: 'todos', label: 'Todos los tipos' },
+        { value: 'liga', label: 'Liga' },
+        { value: 'torneo', label: 'Torneo' },
+        { value: 'copa', label: 'Copa' }
+      ]
+    },
+    {
+      key: 'estado',
+      label: 'Estado',
+      value: filtroEstado,
+      options: [
+        { value: 'todos', label: 'Todos los estados' },
+        { value: 'activa', label: 'Activas' },
+        { value: 'finalizada', label: 'Finalizadas' },
+        { value: 'programada', label: 'Programadas' },
+        { value: 'cancelada', label: 'Canceladas' }
+      ]
+    }
+  ];
+
+  if (loading) {
+    return <Spinner size="lg" message="Cargando competencias..." />;
   }
-};
 
-  const indiceUltimo = paginaActual * itemsPorPagina;
-  const indiceInicio = indiceUltimo - itemsPorPagina;
-  const competenciasPagina = competenciasOrdenadas.slice(indiceInicio, indiceUltimo);
-  const totalPaginas = Math.ceil(competenciasOrdenadas.length / itemsPorPagina);
-
-  const renderPaginacion = () => {
-    return Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
-      <button
-        key={num}
-        onClick={() => setPaginaActual(num)}
-        disabled={num === paginaActual}
-        className={`px-3 py-1 rounded border text-sm mx-1 ${
-          num === paginaActual
-            ? 'bg-blue-600 text-white border-blue-600'
-            : 'bg-white hover:bg-blue-100 border-gray-300'
-        }`}
-      >
-        {num}
-      </button>
-    ));
-  };
+  if (error) {
+    return (
+      <Card variant="danger">
+        <p>Error al cargar competencias: {error}</p>
+      </Card>
+    );
+  }
 
   return (
-    <div className="p-2">
-      <div className="selector mb-4">
-        <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700">
-          Ordenar por:
-        </label>
-        <select
-          id="orden"
-          value={orden}
-          onChange={(e) => setOrden(e.target.value)}
-          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="aleatorio">Orden aleatorio</option>
-          <option value="nombre_asc">Nombre (A-Z)</option>
-          <option value="nombre_desc">Nombre (Z-A)</option>
-        </select>
-      </div>
+    <div className="space-y-6">
+      {/* Header limpio con menú de filtros/orden */}
+      <Card>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Competencias ({formatNumber(competenciasFiltradas.length)})
+          </h1>
 
-      {loading && <p className="text-gray-600">Cargando competencias...</p>}
-      {error && <p className="text-red-600 font-semibold">Error: {error}</p>}
+          <details className="relative">
+            <summary className="cursor-pointer select-none px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
+              Filtros y orden
+            </summary>
+            <div className="absolute right-0 mt-2 z-20 w-[min(92vw,560px)] rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:bg-gray-900 dark:border-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FilterControls
+                    filters={filters}
+                    onFilterChange={(key, value) => {
+                      if (key === 'tipo') setFiltroTipo(value);
+                      if (key === 'estado') setFiltroEstado(value);
+                      setPaginaActual(1);
+                    }}
+                    onClearFilters={() => {
+                      setFiltroTipo('todos');
+                      setFiltroEstado('todos');
+                      setPaginaActual(1);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="orden" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por</label>
+                  <select
+                    id="orden"
+                    value={orden}
+                    onChange={(e) => { setOrden(e.target.value); setPaginaActual(1); }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                  >
+                    <option value="nombre_asc">Nombre A-Z</option>
+                    <option value="nombre_desc">Nombre Z-A</option>
+                    <option value="aleatorio">Orden aleatorio</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={() => {
+                    setFiltroTipo('todos');
+                    setFiltroEstado('todos');
+                    setPaginaActual(1);
+                  }}
+                  className="px-3 py-1.5 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </Card>
 
-      <div className="lista px-0" aria-live="polite">        
-        {competenciasPagina.map((comp) => (
-          <TarjetaCompetencia
-            key={comp._id}
-            nombre={comp.nombre}
-            descripcion={comp.descripcion}
-            onClick={() => setCompetenciaSeleccionada(comp)}
-          />
-        ))}
-      </div>
+      {/* Grid de competencias */}
+      {competenciasPagina.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {competenciasPagina.map((competencia) => (
+            <Card key={competencia._id} className="cursor-pointer hover:shadow-lg transition-all duration-200">
+              <div className="space-y-4">
+                {/* Header con nombre y estado */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                    {competencia.nombre}
+                  </h3>
+                  <Badge variant={
+                    competencia.estado === 'activa' ? 'success' :
+                    competencia.estado === 'finalizada' ? 'primary' :
+                    competencia.estado === 'cancelada' ? 'danger' : 'secondary'
+                  }>
+                    {competencia.estado === 'activa' ? 'Activa' :
+                     competencia.estado === 'finalizada' ? 'Finalizada' :
+                     competencia.estado === 'cancelada' ? 'Cancelada' : 'Programada'}
+                  </Badge>
+                </div>
 
-      {totalPaginas > 1 && (
-        <nav
-          aria-label="Paginación de competencias"
-          className="text-center mt-6 mb-10"
-        >
-          {renderPaginacion()}
-        </nav>
+                {/* Descripción */}
+                {competencia.descripcion && (
+                  <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
+                    {competencia.descripcion}
+                  </p>
+                )}
+
+                {/* Información básica */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">Tipo:</span>
+                    <p className="font-medium capitalize">
+                      {competencia.tipo || 'No especificado'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">Equipos:</span>
+                    <p className="font-medium">{competencia.equipos?.length || 0}</p>
+                  </div>
+                </div>
+
+                {/* Estadísticas */}
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+                      {competencia.equipos?.length || 0}
+                    </div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400">Equipos</div>
+                  </div>
+                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="text-lg font-semibold text-green-700 dark:text-green-300">
+                      {competencia.fases?.length || 0}
+                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400">Fases</div>
+                  </div>
+                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="text-lg font-semibold text-purple-700 dark:text-purple-300">
+                      {competencia.partidos?.length || 0}
+                    </div>
+                    <div className="text-xs text-purple-600 dark:text-purple-400">Partidos</div>
+                  </div>
+                </div>
+
+                {/* Información adicional */}
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Creada: {new Date(competencia.fechaCreacion).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setCompetenciaSeleccionada(competencia)}
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      >
+                        Ver Detalles
+                      </button>
+                      <button
+                        onClick={() => {/* Editar competencia */}}
+                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => {/* Eliminar competencia */}}
+                        className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🏆</div>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              No hay competencias disponibles
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              No se encontraron competencias con los filtros aplicados.
+            </p>
+          </div>
+        </Card>
       )}
 
+      {/* Paginación mejorada */}
+      {totalPaginas > 1 && (
+        <div className="flex justify-center space-x-2">
+          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numero) => (
+            <button
+              key={numero}
+              onClick={() => setPaginaActual(numero)}
+              disabled={numero === paginaActual}
+              className={`px-3 py-2 rounded-lg border transition-colors ${
+                numero === paginaActual
+                  ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-700 dark:border-blue-700'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+              }`}
+            >
+              {numero}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de competencia usando nuevo módulo */}
       {competenciaSeleccionada && (
-        <ModalCompetencia
-          competenciaId={competenciaSeleccionada._id}
-          onClose={() => setCompetenciaSeleccionada(null)}
-          onActualizar={actualizarCompetenciaPorId}
-          onEliminar={eliminarCompetenciaPorId}
-        />
+        <div>
+          {/* Aquí se implementaría el modal usando el módulo de competencias */}
+          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md mx-4">
+              <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Competencia Seleccionada</h3>
+              <p className="mb-4 text-gray-700 dark:text-gray-300">
+                {competenciaSeleccionada.nombre}
+              </p>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setCompetenciaSeleccionada(null)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

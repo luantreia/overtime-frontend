@@ -11,6 +11,7 @@ export function useEstadisticasSet({
 }) {
   // Importar servicios dinámicamente
   const [servicios, setServicios] = useState(null);
+  const [serviciosCargados, setServiciosCargados] = useState(false);
 
   useEffect(() => {
     import('../../services/jugadorPartidoService').then(module => {
@@ -18,6 +19,7 @@ export function useEstadisticasSet({
         obtenerJugadoresPartido: module.obtenerJugadoresPartido,
         agregarJugadorPartido: module.agregarJugadorPartido
       });
+      setServiciosCargados(true);
     });
   }, []);
 
@@ -109,7 +111,7 @@ export function useEstadisticasSet({
       }
 
       await Promise.all(promises);
-      await actualizarSetSeleccionado(estadisticasSet.numeroSet, setData);
+      await actualizarSetSeleccionado(setData || {});
       await refrescarPartidoSeleccionado();
 
       console.log('✅ Estadísticas del set guardadas correctamente');
@@ -122,6 +124,96 @@ export function useEstadisticasSet({
       setGuardando(false);
     }
   }, [estadisticasSet, token, actualizarSetSeleccionado, refrescarPartidoSeleccionado]);
+
+  // Helpers clave actuales
+  const setKey = `${numeroSetSeleccionado || ''}`;
+
+  // Asignar jugador a un índice del equipo en el set seleccionado
+  const asignarJugador = useCallback(async (index, jugadorId, equipoId) => {
+    if (!numeroSetSeleccionado) return;
+    try {
+      // Asegurar jugadorPartido
+      let jugadorPartidoId = null;
+      if (serviciosCargados && servicios?.obtenerJugadoresPartido) {
+        const existentes = await servicios.obtenerJugadoresPartido(partidoId, token);
+        const match = existentes.find(jp => (jp.jugador?._id || jp.jugador) === jugadorId && (jp.equipo?._id || jp.equipo) === equipoId);
+        if (match) {
+          jugadorPartidoId = match._id;
+        } else if (servicios?.agregarJugadorPartido) {
+          const creado = await servicios.agregarJugadorPartido({ partido: partidoId, jugador: jugadorId, equipo: equipoId }, token);
+          jugadorPartidoId = creado?._id || null;
+        }
+      }
+
+      setJugadoresPorSet(prev => {
+        const actual = { ...(prev[setKey] || {}) };
+        const listaEquipo = Array.isArray(actual[equipoId]) ? [...actual[equipoId]] : [];
+        listaEquipo[index] = {
+          jugadorId,
+          jugadorPartidoId,
+          estadisticas: listaEquipo[index]?.estadisticas || { throws: 0, hits: 0, outs: 0, catches: 0 }
+        };
+        return { ...prev, [setKey]: { ...actual, [equipoId]: listaEquipo } };
+      });
+    } catch (e) {
+      console.error('Error asignando jugador:', e);
+    }
+  }, [numeroSetSeleccionado, servicios, serviciosCargados, partidoId, token, setKey]);
+
+  // Cambiar estadística puntual
+  const cambiarEstadistica = useCallback((equipoId, index, campo, delta) => {
+    if (!numeroSetSeleccionado) return;
+    setJugadoresPorSet(prev => {
+      const actual = { ...(prev[setKey] || {}) };
+      const listaEquipo = Array.isArray(actual[equipoId]) ? [...actual[equipoId]] : [];
+      const item = { ...(listaEquipo[index] || { jugadorId: null, jugadorPartidoId: null, estadisticas: {} }) };
+      const prevVal = Number(item.estadisticas?.[campo] || 0);
+      const nextVal = Math.max(0, prevVal + Number(delta || 0));
+      item.estadisticas = { throws: 0, hits: 0, outs: 0, catches: 0, ...item.estadisticas, [campo]: nextVal };
+      listaEquipo[index] = item;
+      return { ...prev, [setKey]: { ...actual, [equipoId]: listaEquipo } };
+    });
+  }, [numeroSetSeleccionado, setKey]);
+
+  // Copiar SOLO jugadores del set anterior al actual (estadísticas en 0)
+  const copiarJugadoresDeSetAnterior = useCallback(() => {
+    if (!numeroSetSeleccionado) return;
+    const actualNum = parseInt(numeroSetSeleccionado, 10);
+    const previoNum = actualNum - 1;
+    if (!previoNum || previoNum < 1) return;
+    const prevKey = `${previoNum}`;
+    setJugadoresPorSet(prev => {
+      const origen = prev[prevKey];
+      if (!origen) return prev;
+      const destino = {};
+      for (const [equipoId, lista] of Object.entries(origen)) {
+        destino[equipoId] = (lista || []).map(item => ({
+          jugadorId: item.jugadorId || null,
+          jugadorPartidoId: item.jugadorPartidoId || null,
+          estadisticas: { throws: 0, hits: 0, outs: 0, catches: 0 }
+        }));
+      }
+      return { ...prev, [setKey]: destino };
+    });
+  }, [numeroSetSeleccionado, setKey]);
+
+  // Guardar wrapper que toma el estado actual del set seleccionado
+  const guardar = useCallback(async () => {
+    if (!numeroSetSeleccionado || !estadisticasSet?._id) return false;
+    const est = jugadoresPorSet[setKey] || {};
+    return await guardarEstadisticasSet(est, {});
+  }, [numeroSetSeleccionado, estadisticasSet, jugadoresPorSet, setKey, guardarEstadisticasSet]);
+
+  // Confirmación de recalculo (stubs básicos para integrarse con UI actual)
+  const confirmarRecalculo = useCallback(() => {
+    setMostrarConfirmacionManual(false);
+    setSetDataPendiente(null);
+  }, []);
+
+  const cancelarRecalculo = useCallback(() => {
+    setMostrarConfirmacionManual(false);
+    setSetDataPendiente(null);
+  }, []);
 
   // Efectos
   useEffect(() => {
@@ -138,8 +230,13 @@ export function useEstadisticasSet({
     estadisticasManualesDetectadas,
     setMostrarConfirmacionManual,
     setEstadisticasManualesDetectadas,
-    setSetDataPendiente,
-    guardarEstadisticasSet,
-    cargarEstadisticasSet
+    setDataPendiente,
+    guardar,
+    asignarJugador,
+    cambiarEstadistica,
+    copiarJugadoresDeSetAnterior,
+    confirmarRecalculo,
+    cancelarRecalculo,
+    serviciosCargados
   };
 }

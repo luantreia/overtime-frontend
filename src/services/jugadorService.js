@@ -1,4 +1,5 @@
-const API_URL = 'https://overtime-ddyl.onrender.com/api/jugadores';
+const API_BASE = 'https://overtime-ddyl.onrender.com/api';
+const API_URL = `${API_BASE}/jugadores`;
 
 export async function fetchJugadores(token) {
   const res = await fetch(API_URL, {
@@ -50,4 +51,41 @@ export async function eliminarJugador(id, token) {
     throw new Error(errorData.message || 'Error al eliminar jugador');
   }
   return true;
+}
+
+export async function fetchJugadoresPorEquipo(equipoId, token) {
+  if (!equipoId) return [];
+  // 1) Intento endpoint dedicado de jugadores por equipo
+  const res = await fetch(`${API_URL}/por-equipo/${equipoId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  try {
+    if (res.ok) {
+      const lista = await res.json();
+      if (Array.isArray(lista) && lista.length > 0) return lista;
+    }
+  } catch (_) {
+    // ignore, fallback abajo
+  }
+
+  // 2) Fallback: relaciones jugador-equipo pobladas y mapear a jugadores
+  try {
+    const resRel = await fetch(`${API_BASE}/jugador-equipo?equipo=${equipoId}&activo=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resRel.ok) {
+      const t = await resRel.text();
+      throw new Error(t || 'Error al cargar relaciones jugador-equipo');
+    }
+    const relaciones = await resRel.json();
+    if (Array.isArray(relaciones)) {
+      return relaciones
+        .map(r => r?.jugador)
+        .filter(Boolean);
+    }
+    return [];
+  } catch (err) {
+    // 3) Último recurso: vacío
+    return [];
+  }
 }

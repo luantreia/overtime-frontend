@@ -132,8 +132,9 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
   console.log('🔍 numeroSetNum convertido:', numeroSetNum);
   
   const set = sets.find(s => {
-    console.log('🔍 Comparando:', s.numeroSet, '===', numeroSetNum, '?', s.numeroSet === numeroSetNum);
-    return s.numeroSet === numeroSetNum;
+    const sNum = Number(s.numeroSet);
+    console.log('🔍 Comparando:', sNum, '===', numeroSetNum, '?', sNum === numeroSetNum);
+    return sNum === numeroSetNum;
   });
   console.log('🔍 Set encontrado:', set);
   
@@ -207,7 +208,19 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
   return await res.json();
 }
 
-export async function eliminarSet(partidoId, numeroSet, token) {
+export async function eliminarSet(partidoId, numeroSet, token, setId) {
+  // Si tenemos el ID del set, eliminar directamente
+  if (setId) {
+    const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${setId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Error al eliminar set');
+    }
+    return true;
+  }
   // Primero obtenemos el set por partido y numeroSet
   const setsRes = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
     headers: { Authorization: `Bearer ${token}` }
@@ -219,18 +232,45 @@ export async function eliminarSet(partidoId, numeroSet, token) {
   console.log('🗑️ ELIMINAR - Buscando numeroSet:', numeroSet, 'tipo:', typeof numeroSet);
   
   // Convertir numeroSet a número para comparación
-  const numeroSetNum = parseInt(numeroSet);
+  const numeroSetNum = parseInt(numeroSet, 10);
   console.log('🗑️ ELIMINAR - numeroSetNum convertido:', numeroSetNum);
+  if (Number.isNaN(numeroSetNum)) {
+    throw new Error('Número de set inválido');
+  }
   
-  const set = sets.find(s => {
-    console.log('🗑️ ELIMINAR - Comparando:', s.numeroSet, '===', numeroSetNum, '?', s.numeroSet === numeroSetNum);
-    return s.numeroSet === numeroSetNum;
+  let set = sets.find(s => {
+    const sNum = Number(s.numeroSet);
+    console.log('🗑️ ELIMINAR - Comparando:', sNum, '===', numeroSetNum, '?', sNum === numeroSetNum);
+    return sNum === numeroSetNum;
   });
   console.log('🗑️ ELIMINAR - Set encontrado:', set);
   
   if (!set) {
-    console.error('❌ ELIMINAR - Set no encontrado. Sets disponibles:', sets.map(s => ({ id: s._id, numeroSet: s.numeroSet })));
-    throw new Error('Set no encontrado');
+    console.error('❌ ELIMINAR - Set no encontrado. Intentando fallback al último set...');
+    // Fallback: elegir el set con mayor numeroSet
+    const setUltimo = sets.reduce((acc, curr) => {
+      const accNum = Number(acc?.numeroSet ?? -Infinity);
+      const currNum = Number(curr?.numeroSet ?? -Infinity);
+      return currNum > accNum ? curr : acc;
+    }, null);
+
+    if (!setUltimo) {
+      console.error('❌ ELIMINAR - No hay sets disponibles para fallback.');
+      throw new Error('Set no encontrado');
+    }
+
+    const ultimoNum = Number(setUltimo.numeroSet);
+    console.log('🗑️ ELIMINAR - Fallback último set:', { ultimoNum, id: setUltimo._id });
+
+    // Si UI exige borrar el último, aceptamos fallback automáticamente
+    if (ultimoNum === numeroSetNum) {
+      // Reasignar para eliminar el último
+      set = setUltimo;
+    } else {
+      // Si no coincide, mejor abortar con detalle
+      console.error('❌ ELIMINAR - El número solicitado no coincide con el último set.', { solicitado: numeroSetNum, ultimo: ultimoNum });
+      throw new Error('Set no encontrado');
+    }
   }
   
   const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${set._id}`, {

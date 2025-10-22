@@ -52,6 +52,7 @@ const NavBar = () => {
       //  { text: "Agregar Partido", path: "/agregar-partido" },
       //  { text: "Agregar Competencia", path: "/agregar-competencia" },
       //  { text: "Agregar Organizacion", path: "/agregar-organizacion" },
+        { text: "Panel de Gestión", path: "/admin" },
         { text: "Mi perfil", path: "/perfil" },
       ]
     : [

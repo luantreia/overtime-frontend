@@ -15,10 +15,32 @@ export function useOrganizaciones() {
   const cargarOrganizaciones = async () => {
     try {
       setLoading(true);
+      // Intentar cargar organizaciones administrables primero
+      try {
+        const response = await fetch(`https://overtime-ddyl.onrender.com/api/organizaciones/admin`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setOrganizaciones(data);
+          setError(null);
+          return;
+        }
+      } catch (adminError) {
+        console.warn('No se pudieron cargar organizaciones admin, intentando públicas:', adminError.message);
+      }
+
+      // Fallback a organizaciones públicas
       const data = await obtenerOrganizaciones();
       setOrganizaciones(data);
+      setError(null);
     } catch (err) {
       setError(err.message || 'Error al cargar organizaciones');
+      setOrganizaciones([]);
     } finally {
       setLoading(false);
     }

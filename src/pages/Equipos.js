@@ -1,76 +1,31 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import TarjetaEquipo from '../components/modals/ModalEquipo/tarjetaequipo.js';
-import ModalEquipo from '../components/modals/ModalEquipo/ModalEquipo.js';
+import { Card, FilterControls, Spinner } from '../components/ui';
+import { TarjetaEquipo, ModalEquipo } from '../components/features/equipos';
 import TimelineEquipos from '../components/common/timeline/TimelineEquipos.js';
 import { useEquipos } from '../hooks/equipos/useEquipos.js';
 import { useAuth } from '../context/AuthContext.js';
-
-const ITEMS_POR_PAGINA = 20;
+import { ITEMS_PER_PAGE, EQUIPO_TYPES } from '../utils/constants';
+import { formatNumber } from '../utils/formatters';
 
 export default function Equipos() {
   const { token } = useAuth();
   const { equipos, editar, loading, error } = useEquipos(token);
 
-  // Debug logging
-  console.log('🔍 Equipos Debug:', {
-    token: token ? 'Presente' : 'Ausente',
-    equiposLength: equipos?.length || 0,
-    loading,
-    error,
-    equiposSample: equipos?.slice(0, 2) // Solo los primeros 2 para debug
-  });
-
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
   const [mostrarTimeline, setMostrarTimeline] = useState(false);
   const [orden, setOrden] = useState('aleatorio');
-  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroTipo, setFiltroTipo] = useState(EQUIPO_TYPES.TODOS);
   const [paginaActual, setPaginaActual] = useState(1);
-  // Función de diagnóstico para verificar conectividad
-  const diagnosticarAPI = async () => {
-    console.log('🔍 Iniciando diagnóstico de API de equipos...');
 
-    try {
-      // Verificar conectividad básica
-      const testResponse = await fetch('https://overtime-ddyl.onrender.com/api/equipos', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-
-      console.log('📡 Respuesta de API:', {
-        status: testResponse.status,
-        statusText: testResponse.statusText,
-        headers: Object.fromEntries(testResponse.headers.entries())
-      });
-
-      if (!testResponse.ok) {
-        console.error('❌ Error HTTP:', testResponse.status);
-        return;
-      }
-
-      const data = await testResponse.json();
-      console.log('✅ Datos recibidos:', data.length, 'equipos');
-
-      // Verificar estructura de datos
-      if (data.length > 0) {
-        console.log('📋 Estructura del primer equipo:', Object.keys(data[0]));
-      }
-
-    } catch (err) {
-      console.error('❌ Error en diagnóstico:', err);
-    }
-  };
-
-  // Ejecutar diagnóstico al montar
-  useEffect(() => {
-    diagnosticarAPI();
-  }, [token]);
+  // Filtrar equipos usando constantes
   const equiposFiltrados = useMemo(() => {
-    if (filtroTipo === 'selecciones') {
-      return equipos.filter(e => e.esSeleccionNacional);
-    }
-    if (filtroTipo === 'clubes') {
-      return equipos.filter(e => !e.esSeleccionNacional);
-    }
-    return equipos;
+    if (filtroTipo === EQUIPO_TYPES.TODOS) return equipos;
+
+    return equipos.filter(equipo =>
+      filtroTipo === EQUIPO_TYPES.SELECCIONES
+        ? equipo.esSeleccionNacional
+        : !equipo.esSeleccionNacional
+    );
   }, [equipos, filtroTipo]);
 
   // 🔢 Ordenar equipos
@@ -88,141 +43,163 @@ export default function Equipos() {
   }, [equiposFiltrados, orden]);
 
   // 📄 Paginación
-  const totalPaginas = Math.ceil(equiposOrdenados.length / ITEMS_POR_PAGINA);
+  const totalPaginas = Math.ceil(equiposOrdenados.length / ITEMS_PER_PAGE);
   const equiposPagina = equiposOrdenados.slice(
-    (paginaActual - 1) * ITEMS_POR_PAGINA,
-    paginaActual * ITEMS_POR_PAGINA
+    (paginaActual - 1) * ITEMS_PER_PAGE,
+    paginaActual * ITEMS_PER_PAGE
   );
 
-  const renderPaginacion = () => (
-    <nav className="flex flex-wrap justify-center mt-6 gap-2">
-      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numero) => (
-        <button
-          key={numero}
-          onClick={() => setPaginaActual(numero)}
-          disabled={numero === paginaActual}
-          className={`px-3 py-1 rounded-lg border ${
-            numero === paginaActual
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-black border-gray-300 hover:bg-gray-100'
-          }`}
-        >
-          {numero}
-        </button>
-      ))}
-    </nav>
-  );
+  // Estadísticas rápidas
+  const estadisticasEquipos = useMemo(() => {
+    const total = equipos.length;
+    const selecciones = equipos.filter(e => e.esSeleccionNacional).length;
+    const clubes = total - selecciones;
+    const activos = equipos.filter(e => e.estaActivo).length;
 
-  const handleOrdenChange = (e) => {
-    setOrden(e.target.value);
-    setPaginaActual(1);
-  };
+    return { total, selecciones, clubes, activos };
+  }, [equipos]);
 
-  const handleFiltroChange = (e) => {
-    setFiltroTipo(e.target.value);
-    setPaginaActual(1);
-  };
+  // Configuración de filtros usando constantes
+  const filters = [
+    {
+      key: 'tipo',
+      label: 'Tipo de equipo',
+      value: filtroTipo,
+      options: [
+        { value: EQUIPO_TYPES.TODOS, label: 'Todos los equipos' },
+        { value: EQUIPO_TYPES.SELECCIONES, label: 'Selecciones' },
+        { value: EQUIPO_TYPES.CLUBES, label: 'Clubes' }
+      ]
+    }
+  ];
+
+  if (loading) {
+    return <Spinner size="lg" message="Cargando equipos..." />;
+  }
+
+  if (error) {
+    return (
+      <Card variant="danger">
+        <p>Error al cargar equipos: {error}</p>
+      </Card>
+    );
+  }
 
   return (
-    <div className="p-2 sm:p-4">
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {/* Ordenar */}
-        <div className="flex-1 min-w-0">
-          <label htmlFor="orden" className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">Ordenar por:</label>
-          <select
-            id="orden"
-            value={orden}
-            onChange={handleOrdenChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          >
-            <option value="aleatorio">Aleatorio</option>
-            <option value="nombre_asc">Nombre (A-Z)</option>
-            <option value="nombre_desc">Nombre (Z-A)</option>
-          </select>
-        </div>
+    <div className="space-y-6">
+      {/* Header limpio con menú de filtros/orden y acceso a timeline */}
+      <Card>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Equipos ({formatNumber(equiposFiltrados.length)})
+          </h1>
 
-        {/* Filtro tipo */}
-        <div className="flex-1 min-w-0">
-          <label htmlFor="filtroTipo" className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">Filtrar por tipo:</label>
-          <select
-            id="filtroTipo"
-            value={filtroTipo}
-            onChange={handleFiltroChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          >
-            <option value="todos">Todos</option>
-            <option value="selecciones">Selecciones Nacionales</option>
-            <option value="clubes">Clubes / Otros</option>
-          </select>
-        </div>
+          <div className="flex items-center gap-3">
+            <details className="relative">
+              <summary className="cursor-pointer select-none px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700">
+                Filtros y orden
+              </summary>
+              <div className="absolute right-0 mt-2 z-20 w-[min(92vw,560px)] rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:bg-gray-900 dark:border-gray-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <FilterControls
+                      filters={filters}
+                      onFilterChange={(key, value) => {
+                        if (key === 'tipo') setFiltroTipo(value);
+                        setPaginaActual(1);
+                      }}
+                      onClearFilters={() => {
+                        setFiltroTipo(EQUIPO_TYPES.TODOS);
+                        setPaginaActual(1);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="orden" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Ordenar por</label>
+                    <select
+                      id="orden"
+                      value={orden}
+                      onChange={(e) => { setOrden(e.target.value); setPaginaActual(1); }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                    >
+                      <option value="nombre_asc">Nombre A-Z</option>
+                      <option value="nombre_desc">Nombre Z-A</option>
+                      <option value="aleatorio">Orden aleatorio</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setFiltroTipo(EQUIPO_TYPES.TODOS);
+                      setPaginaActual(1);
+                    }}
+                    className="px-3 py-1.5 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </div>
+            </details>
 
-        {/* Botón Timeline */}
-        <div className="flex items-end sm:justify-end">
-          <button
-            onClick={() => setMostrarTimeline(true)}
-            className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <span className="hidden sm:inline">📅 Ver Timeline Histórico</span>
-            <span className="sm:hidden">📅 Timeline</span>
-          </button>
+            <button
+              onClick={() => setMostrarTimeline(true)}
+              className="px-3 py-2 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 transition-colors"
+            >
+              📅 Timeline
+            </button>
+          </div>
         </div>
-      </div>
+      </Card>
 
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Cargando equipos...</p>
-          <p className="text-xs text-gray-500 mt-2">Verifica la consola para más detalles</p>
+      {/* Grid de equipos */}
+      {equiposPagina.length > 0 ? (
+        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 justify-items-center">
+          {equiposPagina.map((equipo) => (
+            <div key={equipo._id} className="w-full max-w-[140px]">
+              <TarjetaEquipo
+                nombre={equipo.nombre}
+                escudo={equipo.escudo}
+                onClick={() => setEquipoSeleccionado(equipo)}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🏆</div>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              No hay equipos disponibles
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              No se encontraron equipos con los filtros aplicados.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {/* Paginación mejorada */}
+      {totalPaginas > 1 && (
+        <div className="flex justify-center space-x-2">
+          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((numero) => (
+            <button
+              key={numero}
+              onClick={() => setPaginaActual(numero)}
+              disabled={numero === paginaActual}
+              className={`px-3 py-2 rounded-lg border transition-colors ${
+                numero === paginaActual
+                  ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-700 dark:border-blue-700'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+              }`}
+            >
+              {numero}
+            </button>
+          ))}
         </div>
       )}
 
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
-          <div className="flex items-center mb-3">
-            <div className="text-red-600 dark:text-red-400 text-xl mr-3">⚠️</div>
-            <h3 className="text-lg font-semibold text-red-800 dark:text-red-200">Error al cargar equipos</h3>
-          </div>
-          <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
-          <div className="text-sm text-red-600 dark:text-red-400 space-y-1">
-            <p>• Verifica tu conexión a internet</p>
-            <p>• Intenta refrescar la página</p>
-            <p>• Si el problema persiste, contacta al administrador</p>
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-          >
-            Recargar página
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && equiposFiltrados.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🏆</div>
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            No hay equipos disponibles
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            No se encontraron equipos con los filtros aplicados.
-          </p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 justify-items-center" aria-live="polite">
-        {equiposPagina.map((equipo) => (
-          <div key={equipo._id} className="w-full max-w-[140px]">
-            <TarjetaEquipo
-              nombre={equipo.nombre}
-              escudo={equipo.escudo}
-              onClick={() => setEquipoSeleccionado(equipo)}
-            />
-          </div>
-        ))}
-      </div>
-
-      {renderPaginacion()}
-
+      {/* Modal de equipo usando nuevo módulo */}
       {equipoSeleccionado && (
         <ModalEquipo
           equipo={equipoSeleccionado}
@@ -231,6 +208,7 @@ export default function Equipos() {
         />
       )}
 
+      {/* Timeline usando componente existente */}
       {mostrarTimeline && (
         <TimelineEquipos
           onClose={() => setMostrarTimeline(false)}
