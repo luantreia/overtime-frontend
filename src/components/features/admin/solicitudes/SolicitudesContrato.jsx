@@ -75,6 +75,25 @@ const SolicitudesContrato = ({
     setSeleccionado('');
   };
 
+  useEffect(() => {
+    const run = async () => {
+      const termino = (filtro || '').trim();
+      const fallbackToken = contextToken || (user?.getIdToken ? await user.getIdToken().catch(() => null) : null) || localStorage.getItem('token');
+      if (!fallbackToken) return;
+      const authHeaders = { Authorization: `Bearer ${fallbackToken}` };
+      const baseQuery = equipoId ? `?equipo=${equipoId}` : jugadorId ? `?jugador=${jugadorId}` : '';
+      const url = termino ? `/api/jugador-equipo/opciones${baseQuery}${baseQuery ? '&' : '?'}q=${encodeURIComponent(termino)}` : `/api/jugador-equipo/opciones${baseQuery}`;
+      try {
+        const opcionesData = await get(url, { headers: authHeaders });
+        setOpciones(Array.isArray(opcionesData) ? opcionesData : []);
+      } catch (e) {
+        // mantener opciones previas si falla
+      }
+    };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtro, jugadorId, equipoId, user, contextToken]);
+
   const opcionesFiltradas = useMemo(() => {
     if (!filtro.trim()) return opciones;
     const termino = filtro.trim().toLowerCase();
