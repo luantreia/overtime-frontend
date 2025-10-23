@@ -40,7 +40,7 @@ export const useApi = () => {
 
     // Configurar headers por defecto
     const defaultHeaders = {
-      'Content-Type': 'application/json',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
       ...headers
     };
 
@@ -53,6 +53,7 @@ export const useApi = () => {
         method,
         headers: defaultHeaders,
         body: body ? JSON.stringify(body) : null,
+        cache: 'no-store',
         signal: controller.signal
       });
 

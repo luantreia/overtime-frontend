@@ -14,7 +14,7 @@ const SolicitudesContrato = ({
   usuarioId,
   className = ''
 }) => {
-  const { user } = useAuth();
+  const { user, token: contextToken } = useAuth();
   const { get, post, put, del, loading } = useApi();
   const [solicitudes, setSolicitudes] = useState([]);
   const [opciones, setOpciones] = useState([]);
@@ -28,38 +28,51 @@ const SolicitudesContrato = ({
   // Cargar datos iniciales
   useEffect(() => {
     cargarDatosIniciales();
-  }, [jugadorId, equipoId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jugadorId, equipoId, user, contextToken]);
 
   const cargarDatosIniciales = async () => {
-    if (!user?.getIdToken) return;
+    const fallbackToken = contextToken || (user?.getIdToken ? await user.getIdToken().catch(() => null) : null) || localStorage.getItem('token');
+    if (!fallbackToken) {
+      console.warn('Token no disponible aún, reintentando cuando user/contextToken cambien');
+      return;
+    }
+
+    const authHeaders = { Authorization: `Bearer ${fallbackToken}` };
+
+    // Construir query
+    const query = equipoId
+      ? `?equipo=${equipoId}`
+      : jugadorId
+      ? `?jugador=${jugadorId}`
+      : '';
+
+    // Intentar cargar ambas fuentes de forma independiente
+    try {
+      const relaciones = await get(`/api/jugador-equipo${query}`, { headers: authHeaders });
+      const lista = Array.isArray(relaciones) ? relaciones : [];
+      const pendientes = lista.filter((r) => r.estado === 'pendiente');
+      const normalizadas = pendientes.map((r) => ({
+        ...r,
+        fechaCreacion: r.createdAt || r.fechaCreacion,
+        fechaRespuesta: r.updatedAt || r.fechaRespuesta,
+      }));
+      setSolicitudes(normalizadas);
+    } catch (err) {
+      console.warn('Error cargando solicitudes, continúo con opciones:', err?.message || err);
+      setSolicitudes([]);
+    }
 
     try {
-      const token = await user.getIdToken();
-      const authHeaders = { Authorization: `Bearer ${token}` };
-
-      // Cargar solicitudes existentes
-      const query = equipoId
-        ? `?equipo=${equipoId}`
-        : jugadorId
-        ? `?jugador=${jugadorId}`
-        : '';
-
-      const solicitudesData = await get(`/api/jugador-equipo/solicitudes${query}`, {
-        headers: authHeaders,
-      });
-      setSolicitudes(solicitudesData || []);
-
-      // Cargar opciones disponibles
-      const opcionesData = await get(`/api/jugador-equipo/opciones${query}`, {
-        headers: authHeaders,
-      });
-      setOpciones(opcionesData || []);
-      setFiltro('');
-      setSeleccionado('');
-
+      const opcionesData = await get(`/api/jugador-equipo/opciones${query}`, { headers: authHeaders });
+      setOpciones(Array.isArray(opcionesData) ? opcionesData : []);
     } catch (err) {
-      console.error('Error cargando datos:', err);
+      console.error('Error cargando opciones:', err?.message || err);
+      setOpciones([]);
     }
+
+    setFiltro('');
+    setSeleccionado('');
   };
 
   const opcionesFiltradas = useMemo(() => {
@@ -73,19 +86,29 @@ const SolicitudesContrato = ({
     });
   }, [filtro, opciones]);
 
+  const selectOptions = useMemo(() => (
+    (opcionesFiltradas || []).map((opcion) => ({
+      value: opcion._id,
+      label: opcion.nombre || opcion.alias || opcion.email || 'Sin nombre'
+    }))
+  ), [opcionesFiltradas]);
+
   const enviarSolicitud = async () => {
     if (!seleccionado) return;
 
     try {
       setMensaje('Enviando solicitud...');
 
-      const datosSolicitud = {
-        ...(esDesdeJugador ? { equipo: seleccionado } : { jugador: seleccionado }),
-        tipo: esDesdeJugador ? 'solicitud_jugador' : 'invitacion_equipo'
-      };
+      const datosSolicitud = esDesdeJugador
+        ? { jugador: jugadorId, equipo: seleccionado }
+        : { jugador: seleccionado, equipo: equipoId };
 
       const token = await user.getIdToken();
-      await post('/api/jugador-equipo/solicitudes', datosSolicitud, {
+      const endpoint = esDesdeJugador
+        ? '/api/jugador-equipo/solicitar-jugador'
+        : '/api/jugador-equipo/solicitar-equipo';
+
+      await post(endpoint, datosSolicitud, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -104,7 +127,8 @@ const SolicitudesContrato = ({
   const gestionarSolicitud = async (solicitudId, accion) => {
     try {
       const token = await user.getIdToken();
-      await put(`/api/jugador-equipo/solicitudes/${solicitudId}`, { accion }, {
+      const estado = accion === 'aceptar' ? 'aceptado' : accion === 'rechazar' ? 'rechazado' : 'cancelado';
+      await put(`/api/jugador-equipo/${solicitudId}`, { estado }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await cargarDatosIniciales();
@@ -113,17 +137,21 @@ const SolicitudesContrato = ({
     }
   };
 
-  const puedeGestionar = (solicitud) => {
-    // Lógica para determinar si el usuario puede gestionar esta solicitud
-    return esDesdeJugador
-      ? solicitud.jugador?._id === jugadorId
-      : solicitud.equipo?._id === equipoId;
+  const soySolicitante = (solicitud) => {
+    // Si estoy en vista jugador y el origen es 'jugador', yo la creé
+    // Si estoy en vista equipo y el origen es 'equipo', yo la creé
+    return (esDesdeJugador && solicitud.origen === 'jugador') || (!esDesdeJugador && solicitud.origen === 'equipo');
   };
 
-  const puedeCancelar = (solicitud) => {
-    // Lógica para determinar si se puede cancelar
-    return solicitud.estado === 'pendiente' && puedeGestionar(solicitud);
+  // Destinatario es el lado opuesto al origen
+  const esDestinatario = (solicitud) => {
+    return (esDesdeJugador && solicitud.origen === 'equipo') || (!esDesdeJugador && solicitud.origen === 'jugador');
   };
+
+  // Aceptar/Rechazar: solo el destinatario y cuando está pendiente
+  const puedeAceptarRechazar = (solicitud) => solicitud.estado === 'pendiente' && esDestinatario(solicitud);
+  // Cancelar: solo el origen (quien inició) y cuando está pendiente
+  const puedeCancelar = (solicitud) => solicitud.estado === 'pendiente' && soySolicitante(solicitud);
 
   return (
     <Card title={titulo} className={className}>
@@ -154,9 +182,9 @@ const SolicitudesContrato = ({
                         </span>
                         <Badge
                           variant={
-                            solicitud.estado === 'aceptada' ? 'success' :
-                            solicitud.estado === 'rechazada' ? 'danger' :
-                            solicitud.estado === 'cancelada' ? 'warning' : 'primary'
+                            solicitud.estado === 'aceptado' ? 'success' :
+                            solicitud.estado === 'rechazado' ? 'danger' :
+                            solicitud.estado === 'cancelado' ? 'warning' : 'primary'
                           }
                         >
                           {solicitud.estado}
@@ -172,40 +200,34 @@ const SolicitudesContrato = ({
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      {puedeGestionar(solicitud) && (
+                      {puedeAceptarRechazar(solicitud) && (
                         <>
-                          {solicitud.estado === 'pendiente' && (
-                            <>
-                              <Button
-                                variant="success"
-                                size="sm"
-                                onClick={() => gestionarSolicitud(solicitud._id, 'aceptar')}
-                              >
-                                Aceptar
-                              </Button>
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={() => gestionarSolicitud(solicitud._id, 'rechazar')}
-                              >
-                                Rechazar
-                              </Button>
-                            </>
-                          )}
-
-                          {puedeCancelar(solicitud) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => gestionarSolicitud(solicitud._id, 'cancelar')}
-                            >
-                              Cancelar
-                            </Button>
-                          )}
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => gestionarSolicitud(solicitud._id, 'aceptar')}
+                          >
+                            Aceptar
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => gestionarSolicitud(solicitud._id, 'rechazar')}
+                          >
+                            Rechazar
+                          </Button>
                         </>
                       )}
-
-                      {!puedeGestionar(solicitud) && (
+                      {puedeCancelar(solicitud) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => gestionarSolicitud(solicitud._id, 'cancelar')}
+                        >
+                          Cancelar
+                        </Button>
+                      )}
+                      {!puedeAceptarRechazar(solicitud) && !puedeCancelar(solicitud) && (
                         <p className="text-gray-500 text-sm italic">Esperando respuesta...</p>
                       )}
                     </div>
@@ -247,14 +269,8 @@ const SolicitudesContrato = ({
                   value={seleccionado}
                   onChange={(e) => setSeleccionado(e.target.value)}
                   placeholder="Seleccionar..."
-                >
-                  <option value="">Seleccionar...</option>
-                  {opcionesFiltradas.map((opcion) => (
-                    <option key={opcion._id} value={opcion._id}>
-                      {opcion.nombre || opcion.alias || opcion.email}
-                    </option>
-                  ))}
-                </Select>
+                  options={selectOptions}
+                />
               </div>
 
               <Button

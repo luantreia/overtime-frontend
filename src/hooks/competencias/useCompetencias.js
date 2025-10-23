@@ -17,11 +17,20 @@ export function useCompetencias() {
   // Cargar competencias automáticamente al montar
   useEffect(() => {
     cargarCompetencias();
-  }, []);
+  }, [token]);
 
   const cargarCompetencias = async () => {
     try {
       setLoading(true);
+      // Si no hay token aún, ir directo a públicas para evitar 401
+      if (!token) {
+        const dataPublica = await obtenerCompetencias();
+        const dataValidaPublica = dataPublica.map(c => ({ nombre: '', ...c }));
+        setCompetencias(dataValidaPublica);
+        setError(null);
+        return;
+      }
+
       // Intentar cargar competencias administrables primero
       try {
         const response = await fetch(`https://overtime-ddyl.onrender.com/api/competencias/admin`, {

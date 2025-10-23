@@ -10,11 +10,20 @@ export function useOrganizaciones() {
 
   useEffect(() => {
     cargarOrganizaciones();
-  }, []);
+    // Reintentar cuando el token cambie
+  }, [token]);
 
   const cargarOrganizaciones = async () => {
     try {
       setLoading(true);
+      // Si no hay token aún, ir directo a públicas para evitar 401
+      if (!token) {
+        const dataPublica = await obtenerOrganizaciones();
+        setOrganizaciones(dataPublica);
+        setError(null);
+        return;
+      }
+
       // Intentar cargar organizaciones administrables primero
       try {
         const response = await fetch(`https://overtime-ddyl.onrender.com/api/organizaciones/admin`, {
