@@ -263,6 +263,8 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
             setContratoEditado={setContratoEditado}
             setEditandoContratoId={setEditandoContratoId}
             guardarContratoEditado={guardarContratoEditado}
+            equipoId={equipoId}
+            usuarioId={usuarioId}
           />
         )}
 

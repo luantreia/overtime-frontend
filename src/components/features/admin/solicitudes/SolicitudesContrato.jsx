@@ -1,5 +1,5 @@
 // src/components/features/admin/solicitudes/SolicitudesContrato.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Button, Select, Spinner } from '../../../ui';
 import { useAuth } from '../../../../context/AuthContext';
 import { useApi } from '../../../../hooks/api/useApi';
@@ -19,6 +19,7 @@ const SolicitudesContrato = ({
   const [solicitudes, setSolicitudes] = useState([]);
   const [opciones, setOpciones] = useState([]);
   const [seleccionado, setSeleccionado] = useState('');
+  const [filtro, setFiltro] = useState('');
   const [mensaje, setMensaje] = useState(null);
 
   const esDesdeJugador = !!jugadorId;
@@ -34,6 +35,7 @@ const SolicitudesContrato = ({
 
     try {
       const token = await user.getIdToken();
+      const authHeaders = { Authorization: `Bearer ${token}` };
 
       // Cargar solicitudes existentes
       const query = equipoId
@@ -42,17 +44,34 @@ const SolicitudesContrato = ({
         ? `?jugador=${jugadorId}`
         : '';
 
-      const solicitudesData = await get(`/api/jugador-equipo/solicitudes${query}`);
+      const solicitudesData = await get(`/api/jugador-equipo/solicitudes${query}`, {
+        headers: authHeaders,
+      });
       setSolicitudes(solicitudesData || []);
 
       // Cargar opciones disponibles
-      const opcionesData = await get(`/api/jugador-equipo/opciones${query}`);
+      const opcionesData = await get(`/api/jugador-equipo/opciones${query}`, {
+        headers: authHeaders,
+      });
       setOpciones(opcionesData || []);
+      setFiltro('');
+      setSeleccionado('');
 
     } catch (err) {
       console.error('Error cargando datos:', err);
     }
   };
+
+  const opcionesFiltradas = useMemo(() => {
+    if (!filtro.trim()) return opciones;
+    const termino = filtro.trim().toLowerCase();
+    return opciones.filter((opcion) => {
+      const campos = [opcion.nombre, opcion.alias, opcion.email]
+        .filter(Boolean)
+        .map((valor) => valor.toLowerCase());
+      return campos.some((campo) => campo.includes(termino));
+    });
+  }, [filtro, opciones]);
 
   const enviarSolicitud = async () => {
     if (!seleccionado) return;
@@ -65,7 +84,10 @@ const SolicitudesContrato = ({
         tipo: esDesdeJugador ? 'solicitud_jugador' : 'invitacion_equipo'
       };
 
-      await post('/api/jugador-equipo/solicitudes', datosSolicitud);
+      const token = await user.getIdToken();
+      await post('/api/jugador-equipo/solicitudes', datosSolicitud, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setMensaje('Solicitud enviada exitosamente');
       setSeleccionado('');
@@ -81,7 +103,10 @@ const SolicitudesContrato = ({
 
   const gestionarSolicitud = async (solicitudId, accion) => {
     try {
-      await put(`/api/jugador-equipo/solicitudes/${solicitudId}`, { accion });
+      const token = await user.getIdToken();
+      await put(`/api/jugador-equipo/solicitudes/${solicitudId}`, { accion }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       await cargarDatosIniciales();
     } catch (err) {
       console.error('Error gestionando solicitud:', err);
@@ -197,30 +222,60 @@ const SolicitudesContrato = ({
             {esDesdeJugador ? 'Solicitar a un equipo' : 'Invitar a un jugador'}
           </h4>
 
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <Select
-                value={seleccionado}
-                onChange={(e) => setSeleccionado(e.target.value)}
-                placeholder="Seleccionar..."
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                className="input flex-1"
+                placeholder="Buscar por nombre, alias o email"
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFiltro('')}
+                disabled={!filtro}
               >
-                <option value="">Seleccionar...</option>
-                {opciones.map((opcion) => (
-                  <option key={opcion._id} value={opcion._id}>
-                    {opcion.nombre || opcion.alias || opcion.email}
-                  </option>
-                ))}
-              </Select>
+                Limpiar
+              </Button>
             </div>
 
-            <Button
-              variant="primary"
-              onClick={enviarSolicitud}
-              disabled={!seleccionado || loading}
-              loading={loading}
-            >
-              Enviar Solicitud
-            </Button>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Select
+                  value={seleccionado}
+                  onChange={(e) => setSeleccionado(e.target.value)}
+                  placeholder="Seleccionar..."
+                >
+                  <option value="">Seleccionar...</option>
+                  {opcionesFiltradas.map((opcion) => (
+                    <option key={opcion._id} value={opcion._id}>
+                      {opcion.nombre || opcion.alias || opcion.email}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <Button
+                variant="primary"
+                onClick={enviarSolicitud}
+                disabled={!seleccionado || loading}
+                loading={loading}
+              >
+                Enviar Solicitud
+              </Button>
+            </div>
+
+            {!loading && opciones.length > 0 && opcionesFiltradas.length === 0 && (
+              <p className="text-sm text-gray-500">No se encontraron opciones que coincidan con "{filtro}".</p>
+            )}
+
+            {!loading && opciones.length === 0 && (
+              <p className="text-sm text-gray-500">
+                No hay opciones disponibles en este momento.
+              </p>
+            )}
           </div>
 
           {mensaje && (

@@ -1,5 +1,6 @@
 // src/components/modals/ModalEstadisticasCaptura/SelectorSet.js
 import React from 'react';
+import Button from '../../../../ui/Button/Button';
 
 export default function SelectorSet({
   sets,
@@ -55,31 +56,27 @@ export default function SelectorSet({
         {/* Botones de acción de Set */}
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {/* Botón Nuevo Set */}
-          <button
+          <Button
             onClick={onAgregarSet}
-            className="w-full sm:w-auto whitespace-nowrap
-                       py-2 px-4 rounded-lg font-semibold transition-colors duration-200
-                       bg-blue-600 text-white hover:bg-blue-700
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            variant="primary"
+            size="sm"
+            className="w-full sm:w-auto whitespace-nowrap"
           >
             Nuevo Set
-          </button>
+          </Button>
 
           {/* Botón para eliminar set */}
-          <button
+          <Button
             onClick={eliminarSet}
             disabled={eliminando || !canEliminate}
-            className={`
-              w-full sm:w-auto whitespace-nowrap
-              py-2 px-4 rounded-lg font-semibold transition-colors duration-200
-              ${canEliminate && !eliminando
-                ? 'bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                : 'bg-gray-300 text-gray-600 cursor-not-allowed opacity-70'}
-            `}
+            loading={eliminando}
+            variant="danger"
+            size="sm"
+            className="w-full sm:w-auto whitespace-nowrap"
             title={canEliminate ? `Eliminar Set ${numeroSetSeleccionado}` : "Solo se puede eliminar el último set."}
           >
             {eliminando ? 'Eliminando...' : `Eliminar Set ${numeroSetSeleccionado || 'Último Set'}`}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -103,18 +100,18 @@ export default function SelectorSet({
               </label>
             ))}
           </div>
-            {estadisticasSet && onGuardarSet && (
-              <div className="mt-6">
-                <button
-                  onClick={onGuardarSet}
-                  className="w-full py-2 px-4 bg-green-600 text-white rounded-lg font-semibold
-                            hover:bg-green-700 transition-colors duration-200
-                            focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Guardar Set
-                </button>
-              </div>
-            )}
+          {estadisticasSet && onGuardarSet && (
+            <div className="mt-6">
+              <Button
+                onClick={onGuardarSet}
+                variant="success"
+                size="md"
+                className="w-full"
+              >
+                Guardar Set
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

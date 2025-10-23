@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import ModalLayout from '../../../../common/ModalLayout';
 import { useJugadorEquipo } from '../../../../../hooks/jugadores/useJugadoresEquipo';
-import { ModalHeader, AutocompletadoInfo, AsignacionJugadores, CapturaEstadisticas } from '../../../../estadisticas';
+import { ModalHeader, AutocompletadoInfo, AsignacionJugadores, CapturaEstadisticas } from '../../../estadisticas/components';
 import { useEstadisticasModal } from '../../../../../hooks/estadisticas/useEstadisticasModal';
 import { useJugadoresSeleccion } from '../../../../../hooks/estadisticas/useJugadoresSeleccion';
 import { useAsignacionJugadores } from '../../../../../hooks/estadisticas/useAsignacionJugadores';

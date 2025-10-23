@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ModalBase from '../../components/ModalBase';
 import { useAuth } from '../../../../../context/AuthContext';
+import { API_CONFIG } from '../../../../../utils/constants';
 import SeccionDatosJugador from './SeccionDatosJugador';
 import SeccionAdministradoresJugador from './SeccionAdministradoresJugador';
 import SeccionContratosJugador from './SeccionContratosJugadorEquipos';
-import SolicitudesContrato from '../../solicitudes/SolicitudesContrato';
 
 const SECCIONES = [
   { key: 'datos', label: 'Datos' },
@@ -33,11 +33,13 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
     setLoading(true);
     setError(null);
     try {
+      const baseUrl = API_CONFIG.BASE_URL;
+
       const [resJugador, resContratos] = await Promise.all([
-        fetch(`/api/jugadores/${jugadorId}`, {
+        fetch(`${baseUrl}/api/jugadores/${jugadorId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`/api/jugador-equipo?jugador=${jugadorId}`, {
+        fetch(`${baseUrl}/api/jugador-equipo?jugador=${jugadorId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -53,7 +55,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
 
       // Cargar administradores del jugador si existe endpoint
       try {
-        const resAdmins = await fetch(`/api/jugadores/${jugadorId}/administradores`, {
+        const resAdmins = await fetch(`${baseUrl}/api/jugadores/${jugadorId}/administradores`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (resAdmins.ok) {
@@ -222,7 +224,7 @@ export default function ModalJugadorAdmin({ jugadorId, token, onClose }) {
           <SeccionContratosJugador
             contratos={contratos}
             jugadorId={jugadorId}
-            token={token}
+            usuarioId={usuarioId}
           />
         )}
       </div>

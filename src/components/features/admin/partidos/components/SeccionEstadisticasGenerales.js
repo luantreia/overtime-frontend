@@ -1,5 +1,5 @@
 import React from 'react';
-import EstadisticasGeneralesPartido from './EstadisticasGeneralesPartido';
+import EstadisticasGeneralesPartido from '../../../estadisticas/components/EstadisticasGeneralesPartido';
 
 export function SeccionEstadisticasGenerales({
   partido,

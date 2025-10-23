@@ -1,4 +1,5 @@
 import React from 'react';
+import SolicitudesContrato from '../../solicitudes/SolicitudesContrato';
 
 function calcularEdad(fechaNacimiento) {
   if (!fechaNacimiento) return 'N/A';
@@ -18,6 +19,8 @@ export default function SeccionContratosJugadorEquipo({
   setContratoEditado,
   setEditandoContratoId,
   guardarContratoEditado,
+  equipoId,
+  usuarioId,
 }) {
   return (
     <section className="mb-6">
@@ -139,6 +142,10 @@ export default function SeccionContratosJugadorEquipo({
           </table>
         </div>
       )}
+
+      <div className="mt-6">
+        <SolicitudesContrato equipoId={equipoId} usuarioId={usuarioId} />
+      </div>
     </section>
   );
 }

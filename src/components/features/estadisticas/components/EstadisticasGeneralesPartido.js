@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '../../../../../context/AuthContext';
+import { useAuth } from '../../../../context/AuthContext';
 import { renderEstadisticasGenerales } from './EstadisticasGenerales';
 import { renderEstadisticasEquipos } from './EstadisticasEquipos';
 import { renderEstadisticasJugadores } from './EstadisticasJugadores';

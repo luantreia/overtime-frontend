@@ -22,7 +22,21 @@ export const useApi = () => {
     } = options;
 
     // Construir URL completa
-    const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url.startsWith('/api/') ? url.slice(4) : url}`;
+    let fullUrl = url;
+
+    if (!url.startsWith('http')) {
+      let normalizedPath = url;
+
+      if (!normalizedPath.startsWith('/')) {
+        normalizedPath = normalizedPath.startsWith('api/')
+          ? `/${normalizedPath}`
+          : `/api/${normalizedPath.replace(/^\/?/, '')}`;
+      } else if (!normalizedPath.startsWith('/api/')) {
+        normalizedPath = `/api${normalizedPath}`;
+      }
+
+      fullUrl = `${API_CONFIG.BASE_URL}${normalizedPath}`;
+    }
 
     // Configurar headers por defecto
     const defaultHeaders = {

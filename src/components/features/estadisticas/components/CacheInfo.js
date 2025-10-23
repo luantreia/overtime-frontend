@@ -1,6 +1,6 @@
 // src/components/estadisticas/CacheInfo.js
 import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../../../context/ThemeContext';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 /**

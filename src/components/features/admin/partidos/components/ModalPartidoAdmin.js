@@ -3,7 +3,7 @@ import ModalBase from '../../components/ModalBase';
 import ModalEstadisticas from './ModalEstadisticas';
 import ModalEstadisticasGeneralesCaptura from './ModalEstadisticasGeneralesCaptura';
 import GraficoEstadisticasSet from './GraficoEstadisticasSet';
-import EstadisticasGeneralesPartido from './EstadisticasGeneralesPartido';
+import EstadisticasGeneralesPartido from '../../../estadisticas/components/EstadisticasGeneralesPartido';
 import { SeccionEstadisticasGenerales } from './SeccionEstadisticasGenerales';
 import { SeccionEstadisticasSetASet } from './SeccionEstadisticasSetASet';
 import { SeccionEstadisticasDirectas } from './SeccionEstadisticasDirectas';

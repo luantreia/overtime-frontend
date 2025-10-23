@@ -1,6 +1,7 @@
 import React from 'react';
+import SolicitudesContrato from '../../solicitudes/SolicitudesContrato';
 
-export default function SeccionContratosJugador({ contratos }) {
+export default function SeccionContratosJugador({ contratos, jugadorId }) {
   return (
     <section className="mb-6">
       <h3 className="text-xl font-semibold mb-2">Relaciones jugador-equipo</h3>
@@ -34,6 +35,10 @@ export default function SeccionContratosJugador({ contratos }) {
           </table>
         </div>
       )}
+
+      <div className="mt-6">
+        <SolicitudesContrato jugadorId={jugadorId} />
+      </div>
     </section>
   );
 }
