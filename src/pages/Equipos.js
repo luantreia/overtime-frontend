@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, FilterControls, Spinner } from '../components/ui';
-import { TarjetaEquipo, ModalEquipo } from '../components/features/equipos';
+import { EquipoCard, ModalEquipo } from '../components/features/equipos';
 import TimelineEquipos from '../components/common/timeline/TimelineEquipos.js';
 import { useEquipos } from '../hooks/equipos/useEquipos.js';
 import { useAuth } from '../context/AuthContext.js';
+import ModalEquipoAdmin from '../components/features/admin/equipos/components/ModalEquipoAdmin.jsx';
 import { ITEMS_PER_PAGE, EQUIPO_TYPES } from '../utils/constants';
 import { formatNumber } from '../utils/formatters';
 
 export default function Equipos() {
-  const { token } = useAuth();
+  const { token, user, rol } = useAuth();
   const { equipos, editar, loading, error } = useEquipos(token);
 
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
@@ -16,6 +17,7 @@ export default function Equipos() {
   const [orden, setOrden] = useState('aleatorio');
   const [filtroTipo, setFiltroTipo] = useState(EQUIPO_TYPES.TODOS);
   const [paginaActual, setPaginaActual] = useState(1);
+  const [equipoAdminSeleccionado, setEquipoAdminSeleccionado] = useState(null);
 
   // Filtrar equipos usando constantes
   const equiposFiltrados = useMemo(() => {
@@ -157,10 +159,14 @@ export default function Equipos() {
         <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 justify-items-center">
           {equiposPagina.map((equipo) => (
             <div key={equipo._id} className="w-full max-w-[140px]">
-              <TarjetaEquipo
+              <EquipoCard
                 nombre={equipo.nombre}
                 escudo={equipo.escudo}
                 onClick={() => setEquipoSeleccionado(equipo)}
+                equipo={equipo}
+                onAdminClick={() => setEquipoAdminSeleccionado(equipo)}
+                user={user}
+                rol={rol}
               />
             </div>
           ))}
@@ -205,6 +211,14 @@ export default function Equipos() {
           equipo={equipoSeleccionado}
           onClose={() => setEquipoSeleccionado(null)}
           onEditarEquipo={editar}
+        />
+      )}
+
+      {equipoAdminSeleccionado && (
+        <ModalEquipoAdmin
+          equipoId={equipoAdminSeleccionado._id}
+          token={token}
+          onClose={() => setEquipoAdminSeleccionado(null)}
         />
       )}
 

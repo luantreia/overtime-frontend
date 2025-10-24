@@ -1,4 +1,4 @@
-// src/components/features/admin/partidos/GestionPartidosAdmin.jsx
+// src/components/features/admin/partidos/PartidoAdminPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, FilterControls, Spinner } from '../../../ui';
 import PartidoCard from '../../partidos/components/PartidoCard';
@@ -10,7 +10,7 @@ import { ModalPartidoAdmin } from './components';
 /**
  * Componente para gestión de partidos en administración
  */
-const GestionPartidosAdmin = () => {
+const PartidoAdminPage = () => {
   const { user } = useAuth();
   const { get, del, loading } = useApi();
   const [partidos, setPartidos] = useState([]);
@@ -254,4 +254,4 @@ const GestionPartidosAdmin = () => {
   );
 };
 
-export default GestionPartidosAdmin;
+export default PartidoAdminPage;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import ModalBase from '../../components/ModalBase';
+import ModalBase from '../../shared/ModalBase';
 import SolicitudesContrato from '../../solicitudes/SolicitudesContrato';
 import SolicitudesContratoEquipoCompetencia from '../../solicitudes/SolicitudesContratoEquipoCompetencia';
 import { useAuth } from '../../../../../context/AuthContext'; 

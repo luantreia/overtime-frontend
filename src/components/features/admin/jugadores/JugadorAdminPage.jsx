@@ -1,4 +1,4 @@
-// src/components/features/admin/jugadores/GestionJugadoresAdmin.jsx
+// src/components/features/admin/jugadores/JugadorAdminPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Button, FilterControls, Spinner } from '../../../ui';
 import UsuarioCard from '../../usuarios/components/UsuarioCard';
@@ -11,7 +11,7 @@ import { ModalJugadorAdmin } from './components'; // Added import for ModalJugad
 /**
  * Componente para gestión de jugadores en administración
  */
-const GestionJugadoresAdmin = () => {
+const JugadorAdminPage = () => {
   const { user, rol, token } = useAuth();
   const { get, del, loading } = useApi();
   const [jugadores, setJugadores] = useState([]);
@@ -255,4 +255,4 @@ const GestionJugadoresAdmin = () => {
   );
 };
 
-export default GestionJugadoresAdmin;
+export default JugadorAdminPage;

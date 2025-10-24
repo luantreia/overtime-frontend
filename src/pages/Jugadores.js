@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Spinner, FilterControls } from '../components/ui';
 import { JugadorCard, ModalJugador } from '../components/features/jugadores';
+import ModalJugadorAdmin from '../components/features/admin/jugadores/components/ModalJugadorAdmin.jsx';
 import useJugadores from '../hooks/jugadores/useJugadores';
 import { useAuth } from '../context/AuthContext';
 import { ITEMS_PER_PAGE } from '../utils/constants';
@@ -10,7 +11,7 @@ import { fetchEquipos } from '../services/equipoService';
 import { fetchJugadoresPorEquipo } from '../services/jugadorService';
 
 export default function Jugadores() {
-  const { token } = useAuth();
+  const { token, user, rol } = useAuth();
   const { jugadores, loading, error } = useJugadores(token);
 
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState(null);
@@ -20,6 +21,7 @@ export default function Jugadores() {
   const [equiposLista, setEquiposLista] = useState([]);
   const [jugadoresFuente, setJugadoresFuente] = useState([]);
   const [loadingFiltro, setLoadingFiltro] = useState(false);
+  const [jugadorAdminSeleccionado, setJugadorAdminSeleccionado] = useState(null);
 
   // Cargar equipos para el filtro
   useEffect(() => {
@@ -209,6 +211,9 @@ export default function Jugadores() {
                 jugador={jugador}
                 onClick={() => setJugadorSeleccionado(jugador)}
                 showStats={true}
+                onAdminClick={() => setJugadorAdminSeleccionado(jugador)}
+                user={user}
+                rol={rol}
               />
             </div>
           ))}
@@ -252,6 +257,14 @@ export default function Jugadores() {
         <ModalJugador
           jugador={jugadorSeleccionado}
           onClose={() => setJugadorSeleccionado(null)}
+        />
+      )}
+
+      {jugadorAdminSeleccionado && (
+        <ModalJugadorAdmin
+          jugadorId={jugadorAdminSeleccionado._id}
+          token={token}
+          onClose={() => setJugadorAdminSeleccionado(null)}
         />
       )}
     </div>

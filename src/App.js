@@ -18,7 +18,7 @@ const Partidos = lazy(() => import('./pages/Partidos'));
 const Organizaciones = lazy(() => import('./pages/Organizaciones'));
 const Competencias = lazy(() => import('./pages/Competencias'));
 // Nota: Los componentes de agregar se eliminaron porque ya no se usan
-const PanelAdmin = lazy(() => import('./components/features/admin/AdminDashboard'));
+const AdminDashboard = lazy(() => import('./components/features/admin/AdminDashboard'));
 const OpcionesAvanzadas = lazy(() => import('./pages/admin/OpcionesAvanzadas'));
 
 // Loading fallback component
@@ -44,7 +44,7 @@ function App() {
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
-          <Route path="/admin" element={<PanelAdmin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/opciones" element={<OpcionesAvanzadas />} />
 
           {/* Agrega más rutas según lo que necesites */}

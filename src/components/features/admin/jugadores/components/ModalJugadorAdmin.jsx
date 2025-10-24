@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import ModalBase from '../../components/ModalBase';
+import ModalBase from '../../shared/ModalBase';
 import { useAuth } from '../../../../../context/AuthContext';
 import { API_CONFIG } from '../../../../../utils/constants';
 import SeccionDatosJugador from './SeccionDatosJugador';

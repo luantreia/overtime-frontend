@@ -1,7 +1,7 @@
 // src/components/features/competencias/components/CompetenciaCard.jsx
 import React from 'react';
-import { Card, Badge } from '../../../ui';
-import { formatDate } from '../../../utils';
+import { Card, Badge, Button } from '../../../ui';
+import { formatDate } from '../../../../utils';
 
 /**
  * Componente CompetenciaCard para mostrar información de competencia en tarjetas
@@ -11,7 +11,9 @@ const CompetenciaCard = ({
   onClick,
   showStats = true,
   compact = false,
-  className = ''
+  className = '',
+  isAdmin = false,
+  onAdminClick
 }) => {
   const {
     nombre,
@@ -20,8 +22,7 @@ const CompetenciaCard = ({
     fechaFin,
     estado,
     tipo,
-    equipos = [],
-    partidos = []
+    temporadas = []
   } = competencia;
 
   const estadoVariant = {
@@ -46,9 +47,24 @@ const CompetenciaCard = ({
            estado === 'finalizada' ? 'Finalizada' :
            estado === 'cancelada' ? 'Cancelada' : 'Programada'}
         </Badge>
-        <div className={`text-right ${compact ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-gray-400`}>
-          <div>{fechaInicioFormateada}</div>
-          {fechaFin && <div>hasta {fechaFinFormateada}</div>}
+        <div className="flex items-center gap-2">
+          <div className={`${compact ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-gray-400 text-right`}>
+            <div>{fechaInicioFormateada}</div>
+            {fechaFin && <div>hasta {fechaFinFormateada}</div>}
+          </div>
+          {isAdmin && (
+            <Button
+              variant="danger"
+              size="xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAdminClick && onAdminClick();
+              }}
+              title="Administrar competencia"
+            >
+              ⚙️ Admin
+            </Button>
+          )}
         </div>
       </div>
 
@@ -73,36 +89,29 @@ const CompetenciaCard = ({
         )}
 
         {/* Estadísticas */}
-        {showStats && (equipos.length > 0 || partidos.length > 0) && (
-          <div className={`flex space-x-4 ${compact ? 'text-xs' : 'text-sm'}`}>
-            {equipos.length > 0 && (
-              <span className="text-blue-600 dark:text-blue-400">
-                {equipos.length} equipos
-              </span>
-            )}
-            {partidos.length > 0 && (
-              <span className="text-green-600 dark:text-green-400">
-                {partidos.length} partidos
-              </span>
-            )}
+        {showStats && (temporadas.length > 0) && (
+          <div className={`${compact ? 'text-xs' : 'text-sm'}`}>
+            <span className="text-amber-600 dark:text-amber-400">
+              {temporadas.length} temporadas
+            </span>
           </div>
         )}
 
         {/* Información de fases (si aplica) */}
-        {competencia.fases && competencia.fases.length > 0 && (
+        {competencia.temporadas && competencia.temporadas.length > 0 && (
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Fases: {competencia.fases.length}
+              Temporadas: {competencia.temporadas.length}
             </p>
             <div className="flex flex-wrap gap-1">
-              {competencia.fases.slice(0, 3).map((fase, index) => (
+              {competencia.temporadas.slice(0, 3).map((temp, index) => (
                 <Badge key={index} variant="outline" size="xs">
-                  {fase.nombre || `Fase ${index + 1}`}
+                  {temp.nombre || temp.anio || `Temporada ${index + 1}`}
                 </Badge>
               ))}
-              {competencia.fases.length > 3 && (
+              {competencia.temporadas.length > 3 && (
                 <Badge variant="outline" size="xs">
-                  +{competencia.fases.length - 3} más
+                  +{competencia.temporadas.length - 3} más
                 </Badge>
               )}
             </div>

@@ -1,7 +1,7 @@
 // src/components/features/competencias/components/TablaPosiciones.jsx
 import React from 'react';
 import { Card, Badge, Table } from '../../../ui';
-import { formatNumber } from '../../../utils';
+import { formatNumber } from '../../../../utils';
 
 /**
  * Componente TablaPosiciones para mostrar tabla de posiciones de competencia

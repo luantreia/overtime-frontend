@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import ModalBase from '../../components/ModalBase.jsx';
+import ModalBase from '../../shared/ModalBase.jsx';
 import SeccionDatosCompetencia from './AdminCompetencia/SeccionDatosCompetencia';
 import SeccionAdministradoresCompetencia from './AdminCompetencia/SeccionAdministradoresCompetencia';
 import SeccionTemporadasCompetencia from './AdminCompetencia/SeccionTemporadasCompetencia';

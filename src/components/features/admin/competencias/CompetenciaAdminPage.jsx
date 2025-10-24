@@ -1,4 +1,4 @@
-// src/components/features/admin/competencias/GestionCompetencias.jsx
+// src/components/features/admin/competencias/CompetenciaAdminPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, FilterControls, Spinner } from '../../../ui';
 import CompetenciaAdminCard from './CompetenciaAdminCard';
@@ -9,7 +9,7 @@ import { formatNumber } from '../../../../utils/formatters';
 /**
  * Componente para gestión de competencias en administración
  */
-const GestionCompetencias = () => {
+const CompetenciaAdminPage = () => {
   const { user, rol, token } = useAuth();
   const { get, del, loading } = useApi();
   const [competencias, setCompetencias] = useState([]);
@@ -207,4 +207,4 @@ const GestionCompetencias = () => {
   );
 };
 
-export default GestionCompetencias;
+export default CompetenciaAdminPage;

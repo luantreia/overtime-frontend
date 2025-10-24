@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, FilterControls, Spinner, Badge } from '../components/ui';
+import { Card, FilterControls, Spinner } from '../components/ui';
 import { useCompetencias } from '../hooks/competencias/useCompetencias';
 import { useAuth } from '../context/AuthContext';
 import { ITEMS_PER_PAGE } from '../utils/constants';
 import { formatNumber } from '../utils/formatters';
+import { CompetenciaCard, ModalCompetencia } from '../components/features/competencias';
+import ModalCompetenciaAdmin from '../components/features/admin/competencias/components/ModalCompetenciaAdmin';
 
 export default function Competencias() {
-  const { token } = useAuth();
+  const { token, user, rol } = useAuth();
   const {
     competencias,
     loading,
@@ -21,6 +23,7 @@ export default function Competencias() {
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [paginaActual, setPaginaActual] = useState(1);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState(null);
+  const [competenciaAdminId, setCompetenciaAdminId] = useState(null);
 
   // Filtrar competencias
   const competenciasFiltradas = useMemo(() => {
@@ -63,9 +66,9 @@ export default function Competencias() {
     const total = competencias.length;
     const activas = competencias.filter(c => c.estado === 'activa').length;
     const finalizadas = competencias.filter(c => c.estado === 'finalizada').length;
-    const equiposTotal = competencias.reduce((acc, c) => acc + (c.equipos?.length || 0), 0);
+    const temporadasTotal = competencias.reduce((acc, c) => acc + (c.temporadas?.length || 0), 0);
 
-    return { total, activas, finalizadas, equiposTotal };
+    return { total, activas, finalizadas, temporadasTotal };
   }, [competencias]);
 
   // Configuración de filtros
@@ -172,101 +175,17 @@ export default function Competencias() {
       {competenciasPagina.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {competenciasPagina.map((competencia) => (
-            <Card key={competencia._id} className="cursor-pointer hover:shadow-lg transition-all duration-200">
-              <div className="space-y-4">
-                {/* Header con nombre y estado */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                    {competencia.nombre}
-                  </h3>
-                  <Badge variant={
-                    competencia.estado === 'activa' ? 'success' :
-                    competencia.estado === 'finalizada' ? 'primary' :
-                    competencia.estado === 'cancelada' ? 'danger' : 'secondary'
-                  }>
-                    {competencia.estado === 'activa' ? 'Activa' :
-                     competencia.estado === 'finalizada' ? 'Finalizada' :
-                     competencia.estado === 'cancelada' ? 'Cancelada' : 'Programada'}
-                  </Badge>
-                </div>
-
-                {/* Descripción */}
-                {competencia.descripcion && (
-                  <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
-                    {competencia.descripcion}
-                  </p>
-                )}
-
-                {/* Información básica */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Tipo:</span>
-                    <p className="font-medium capitalize">
-                      {competencia.tipo || 'No especificado'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Equipos:</span>
-                    <p className="font-medium">{competencia.equipos?.length || 0}</p>
-                  </div>
-                </div>
-
-                {/* Estadísticas */}
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="text-lg font-semibold text-blue-700 dark:text-blue-300">
-                      {competencia.equipos?.length || 0}
-                    </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400">Equipos</div>
-                  </div>
-                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="text-lg font-semibold text-green-700 dark:text-green-300">
-                      {competencia.fases?.length || 0}
-                    </div>
-                    <div className="text-xs text-green-600 dark:text-green-400">Fases</div>
-                  </div>
-                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <div className="text-lg font-semibold text-purple-700 dark:text-purple-300">
-                      {competencia.partidos?.length || 0}
-                    </div>
-                    <div className="text-xs text-purple-600 dark:text-purple-400">Partidos</div>
-                  </div>
-                </div>
-
-                {/* Información adicional */}
-                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Creada: {new Date(competencia.fechaCreacion).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    {/* Acciones */}
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setCompetenciaSeleccionada(competencia)}
-                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                      >
-                        Ver Detalles
-                      </button>
-                      <button
-                        onClick={() => {/* Editar competencia */}}
-                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => {/* Eliminar competencia */}}
-                        className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <CompetenciaCard
+              key={competencia._id}
+              competencia={competencia}
+              onClick={() => setCompetenciaSeleccionada(competencia)}
+              isAdmin={user && (
+                competencia.creadoPor === user.uid ||
+                (competencia.administradores && competencia.administradores.includes(user.uid)) ||
+                rol === 'admin'
+              )}
+              onAdminClick={() => setCompetenciaAdminId(competencia._id)}
+            />
           ))}
         </div>
       ) : (
@@ -303,27 +222,21 @@ export default function Competencias() {
         </div>
       )}
 
-      {/* Modal de competencia usando nuevo módulo */}
+      {/* Modal de competencia (vista) */}
       {competenciaSeleccionada && (
-        <div>
-          {/* Aquí se implementaría el modal usando el módulo de competencias */}
-          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md mx-4">
-              <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Competencia Seleccionada</h3>
-              <p className="mb-4 text-gray-700 dark:text-gray-300">
-                {competenciaSeleccionada.nombre}
-              </p>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => setCompetenciaSeleccionada(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ModalCompetencia
+          competencia={competenciaSeleccionada}
+          onClose={() => setCompetenciaSeleccionada(null)}
+        />
+      )}
+
+      {/* Modal de administración de competencia */}
+      {competenciaAdminId && (
+        <ModalCompetenciaAdmin
+          competenciaId={competenciaAdminId}
+          token={token}
+          onClose={() => setCompetenciaAdminId(null)}
+        />
       )}
     </div>
   );

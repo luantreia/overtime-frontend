@@ -1,8 +1,8 @@
 // src/components/features/admin/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import AdminPanel from './components/AdminPanel';
-import AdminStats from './components/AdminStats';
-import AdminSeccionEntidades from './components/AdminSeccionEntidades';
+import AdminPanel from './shared/AdminPanel';
+import AdminStats from './shared/AdminStats';
+import AdminSeccionEntidades from './shared/AdminSeccionEntidades';
 import { Card } from '../../ui';
 import { useEquipos } from '../../../hooks/equipos/useEquipos';
 import useJugadores from '../../../hooks/jugadores/useJugadores';
@@ -141,13 +141,13 @@ const AdminDashboard = () => {
     {
       id: 'equipos',
       label: 'Equipos',
-      icon: '🏆',
+      icon: '🛡️',
       badge: { text: equiposVisibles.length, variant: 'primary' }
     },
     {
       id: 'jugadores',
       label: 'Jugadores',
-      icon: '⚽',
+      icon: '👟',
       badge: { text: jugadoresVisibles.length, variant: 'success' }
     },
     {
@@ -167,19 +167,24 @@ const AdminDashboard = () => {
       label: 'Organizaciones',
       icon: '🏢',
       badge: { text: organizacionesVisibles.length, variant: 'warning' }
-    },
-    {
-      id: 'usuarios',
-      label: 'Usuarios',
-      icon: '👥',
-      badge: { text: stats.usuariosRegistrados || 0, variant: 'secondary' }
-    },
-    {
-      id: 'diagnostic',
-      label: 'Diagnóstico',
-      icon: '🩺'
     }
   ];
+
+  if (esAdminGlobal) {
+    sections.push(
+      {
+        id: 'usuarios',
+        label: 'Usuarios',
+        icon: '👥',
+        badge: { text: stats.usuariosRegistrados || 0, variant: 'secondary' }
+      },
+      {
+        id: 'diagnostic',
+        label: 'Diagnóstico',
+        icon: '🩺'
+      }
+    );
+  }
 
   const renderContent = () => {
     switch (activeSection) {

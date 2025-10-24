@@ -1,7 +1,7 @@
-// src/components/features/admin/equipos/GestionEquiposAdmin.jsx
+// src/components/features/admin/equipos/EquipoAdminPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Button, FilterControls, Spinner } from '../../../ui';
-import EquipoAdminCard from '../components/EquipoAdminCard';
+import EquipoAdminCard from '../shared/EquipoAdminCard';
 import { useAuth } from '../../../../context/AuthContext';
 import { useApi } from '../../../../hooks/api/useApi';
 import { formatNumber } from '../../../../utils/formatters';
@@ -10,7 +10,7 @@ import { ModalEquipoAdmin } from './components';
 /**
  * Componente para gestión de equipos en administración
  */
-const GestionEquiposAdmin = () => {
+const EquipoAdminPage = () => {
   const { user, rol, token } = useAuth();
   const { get, del, loading } = useApi();
 
@@ -263,4 +263,4 @@ const GestionEquiposAdmin = () => {
   );
 };
 
-export default GestionEquiposAdmin;
+export default EquipoAdminPage;

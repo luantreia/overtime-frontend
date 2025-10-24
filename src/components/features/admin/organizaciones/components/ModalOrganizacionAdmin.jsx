@@ -1,6 +1,6 @@
 // ModalOrganizacionAdmin.js
 import React, { useEffect, useState, useCallback } from 'react';
-import ModalBase from '../../components/ModalBase';
+import ModalBase from '../../shared/ModalBase';
 import SeccionDatos from './SeccionDatos';
 import SeccionAdministradores from './SeccionAdministradores';
 import SeccionCompetencias from './SeccionCompetencias';

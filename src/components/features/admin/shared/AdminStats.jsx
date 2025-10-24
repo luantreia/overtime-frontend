@@ -53,14 +53,14 @@ const AdminStats = ({
       total: totalEquipos,
       active: equiposActivos,
       variant: 'blue',
-      icon: '🏆'
+      icon: '🛡️'
     },
     {
       title: 'Jugadores',
       total: totalJugadores,
       active: jugadoresActivos,
       variant: 'green',
-      icon: '⚽'
+      icon: '👟'
     },
     {
       title: 'Partidos',
