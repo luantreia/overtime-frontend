@@ -75,7 +75,12 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
         tipo: equipoData.tipo || '',
         colores: equipoData.colores || [],
         escudo: equipoData.escudo || '',
+        foto: equipoData.foto || '',
         federacion: equipoData.federacion || '',
+        sitioWeb: equipoData.sitioWeb || '',
+        descripcion: equipoData.descripcion || '',
+        fechaFormacion: equipoData.fechaFormacion || '',
+        fechaDisolucion: equipoData.fechaDisolucion || '',
         esSeleccionNacional: equipoData.esSeleccionNacional || false,
       });
       setError(null);
@@ -100,9 +105,17 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
 
   const handleGuardar = async () => {
     try {
+      const fmtDate = (val) => {
+        if (!val) return undefined;
+        const s = String(val).slice(0, 10);
+        return s && s.length === 10 ? `${s}T00:00:00.000Z` : undefined;
+      };
+
       const payload = {
         ...formData,
         colores: Array.isArray(formData.colores) ? formData.colores : formData.colores.split(',').map(c => c.trim()),
+        fechaFormacion: fmtDate(formData.fechaFormacion),
+        fechaDisolucion: fmtDate(formData.fechaDisolucion),
       };
 
       const response = await fetch(`https://overtime-ddyl.onrender.com/api/equipos/${equipoId}`, {
@@ -131,7 +144,12 @@ export default function ModalEquipoAdmin({ equipoId, token, onClose }) {
       tipo: equipo.tipo || '',
       colores: equipo.colores || [],
       escudo: equipo.escudo || '',
+      foto: equipo.foto || '',
       federacion: equipo.federacion || '',
+      sitioWeb: equipo.sitioWeb || '',
+      descripcion: equipo.descripcion || '',
+      fechaFormacion: equipo.fechaFormacion || '',
+      fechaDisolucion: equipo.fechaDisolucion || '',
       esSeleccionNacional: equipo.esSeleccionNacional || false,
     });
   };

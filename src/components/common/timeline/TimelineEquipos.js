@@ -4,6 +4,14 @@ import { useAuth } from '../../../context/AuthContext.js';
 import { fetchEquiposCompetenciaPorEquipo } from '../../../services/equipoService.js';
 import { fetchPartidosPorEquipo } from '../../../services/partidoService.js';
 
+const VIEW_WIDTH = 2000;
+const X_START = 50;
+const X_END = VIEW_WIDTH - 50;
+const TIME_AXIS_WIDTH = X_END - X_START;
+const TEAM_ROW_HEIGHT = 40;
+const PADDING_Y = 20;
+const REGION_TITLE_EXTRA = 50;
+
 export default function TimelineEquipos({ onClose }) {
   const { token } = useAuth();
   const [equipos, setEquipos] = useState([]);
@@ -14,6 +22,26 @@ export default function TimelineEquipos({ onClose }) {
   const [filtroAnio, setFiltroAnio] = useState('todos');
   const [filtroMes, setFiltroMes] = useState('todos');
   const timelineRef = useRef(null);
+  const [zoom, setZoom] = useState(1);
+  const zoomMin = 0.5;
+  const zoomMax = 4;
+  const zoomStep = 0.25;
+  const [pivotX, setPivotX] = useState(X_START);
+  const [soloActivos, setSoloActivos] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStartX, setPanStartX] = useState(0);
+  const [panScrollLeft, setPanScrollLeft] = useState(0);
+  const [isSmall, setIsSmall] = useState(false);
+  const initializedZoomRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    const handler = (e) => setIsSmall(e.matches);
+    setIsSmall(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     const cargarEquiposTimeline = async () => {
@@ -54,24 +82,18 @@ export default function TimelineEquipos({ onClose }) {
               const fechaLimiteActividad = new Date();
               fechaLimiteActividad.setMonth(fechaLimiteActividad.getMonth() - 6); // 6 meses atrás
 
-              const diasDesdeCreacion = (fechaActual - equipo.fechaCreacion) / (1000 * 60 * 60 * 24);
-              const esNuevo = diasDesdeCreacion < 180; // Menos de 6 meses
+              const fechaFormacionEq = equipo.fechaFormacion ? new Date(equipo.fechaFormacion) : null;
+              const fechaDisolucionEq = equipo.fechaDisolucion ? new Date(equipo.fechaDisolucion) : null;
+              const diasDesdeCreacion = fechaFormacionEq ? ((fechaActual - fechaFormacionEq) / (1000 * 60 * 60 * 24)) : 0;
 
-              const partidosRecientes = partidos.filter(p => {
-                const fechaPartido = new Date(p.fecha);
-                return fechaPartido >= fechaLimiteActividad;
-              });
-
-              const competenciasRecientes = competencias.filter(c => {
-                // Asumiendo que las competencias tienen fechas, si no, usar fecha de creación del equipoCompetencia
-                return true; // Por ahora, considerar todas las competencias como recientes
-              });
-
-              const estaActivo = partidosRecientes.length > 0 || competenciasRecientes.length > 0 || (esNuevo && totalPartidos === 0);
+              let estaActivo = true;
+              if (fechaDisolucionEq && fechaDisolucionEq <= fechaActual) {
+                estaActivo = false;
+              }
 
               return {
                 ...equipo,
-                fechaCreacion: new Date(equipo.createdAt),
+                fechaCreacion: (fechaFormacionEq && !isNaN(fechaFormacionEq)) ? fechaFormacionEq : null,
                 estadisticas: {
                   totalPartidos,
                   partidosGanados,
@@ -80,13 +102,13 @@ export default function TimelineEquipos({ onClose }) {
                   ratioVictoria: totalPartidos > 0 ? (partidosGanados / totalPartidos * 100).toFixed(1) : 0
                 },
                 estaActivo,
-                ultimoPartido: partidos.length > 0 ? new Date(Math.max(...partidos.map(p => new Date(p.fecha)))) : null
+                fechaDisolucion: fechaDisolucionEq
               };
             } catch (error) {
               console.error(`Error procesando equipo ${equipo.nombre}:`, error);
               return {
                 ...equipo,
-                fechaCreacion: new Date(equipo.createdAt),
+                fechaCreacion: equipo.fechaFormacion ? new Date(equipo.fechaFormacion) : null,
                 estadisticas: {
                   totalPartidos: 0,
                   partidosGanados: 0,
@@ -94,14 +116,15 @@ export default function TimelineEquipos({ onClose }) {
                   totalCompetencias: 0,
                   ratioVictoria: 0
                 },
-                estaActivo: true, // Asumir activo si hay error
-                ultimoPartido: null
+                estaActivo: !equipo.fechaDisolucion,
+                fechaDisolucion: equipo.fechaDisolucion ? new Date(equipo.fechaDisolucion) : null
               };
             }
           })
         );
 
-        setEquipos(equiposConDatos);
+        const equiposValidos = equiposConDatos.filter(e => e.fechaCreacion);
+        setEquipos(equiposValidos);
         setError(null);
       } catch (err) {
         console.error('Error cargando timeline:', err);
@@ -114,7 +137,75 @@ export default function TimelineEquipos({ onClose }) {
     cargarEquiposTimeline();
   }, [token]);
 
+  useEffect(() => {
+    try {
+      const z = parseFloat(localStorage.getItem('timelineZoom'));
+      if (!isNaN(z)) setZoom(Math.max(zoomMin, Math.min(zoomMax, z)));
+      const px = parseFloat(localStorage.getItem('timelinePivotX'));
+      if (!isNaN(px)) setPivotX(px);
+      const sa = localStorage.getItem('timelineSoloActivos');
+      if (sa === 'true' || sa === 'false') setSoloActivos(sa === 'true');
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    if (initializedZoomRef.current) return;
+    try {
+      const hasStored = localStorage.getItem('timelineZoom');
+      if (!hasStored && isSmall) {
+        setPivotX(X_START);
+        setZoom(2.5);
+      }
+    } catch (_) {}
+    initializedZoomRef.current = true;
+  }, [isSmall]);
+
+  useEffect(() => { try { localStorage.setItem('timelineZoom', String(zoom)); } catch (_) {} }, [zoom]);
+  useEffect(() => { try { localStorage.setItem('timelinePivotX', String(pivotX)); } catch (_) {} }, [pivotX]);
+  useEffect(() => { try { localStorage.setItem('timelineSoloActivos', String(soloActivos)); } catch (_) {} }, [soloActivos]);
+
+  const handleZoomIn = () => setZoom(z => Math.min(zoomMax, parseFloat((z + zoomStep).toFixed(2))))
+  const handleZoomOut = () => setZoom(z => Math.max(zoomMin, parseFloat((z - zoomStep).toFixed(2))))
+  const handleResetZoom = () => setZoom(1)
+  const handleFitToContent = () => {
+    const container = timelineRef.current;
+    if (!container) return;
+    const width = container.clientWidth || VIEW_WIDTH;
+    const factor = width / TIME_AXIS_WIDTH;
+    setPivotX(X_START);
+    setZoom(Math.max(zoomMin, Math.min(zoomMax, parseFloat(factor.toFixed(2)))));
+  }
+
+  const handleWheel = (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    const svgEl = e.currentTarget;
+    const rect = svgEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    setPivotX(mouseX);
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else if (e.deltaY > 0) {
+      handleZoomOut();
+    }
+  }
+
+  const handleDoubleClick = (e) => {
+    const svgEl = e.currentTarget;
+    const rect = svgEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    setPivotX(mouseX);
+    if (e.shiftKey) {
+      handleZoomOut();
+    } else {
+      handleZoomIn();
+    }
+  }
+
   // Filtrar equipos
+  const rowHeight = isSmall ? 28 : TEAM_ROW_HEIGHT;
+  const paddingYResponsive = isSmall ? 12 : PADDING_Y;
+
   const equiposFiltrados = useMemo(() => {
     let filtered = [...equipos];
     
@@ -125,11 +216,15 @@ export default function TimelineEquipos({ onClose }) {
       filtered = filtered.filter(e => !e.esSeleccionNacional);
     }
 
+    if (soloActivos) {
+      filtered = filtered.filter(e => e.estaActivo);
+    }
+
     // Filtrar por año
     if (filtroAnio !== 'todos') {
       filtered = filtered.filter(equipo => {
         const fechaCreacion = new Date(equipo.fechaCreacion);
-        const fechaFin = equipo.ultimoPartido ? new Date(equipo.ultimoPartido) : new Date();
+        const fechaFin = equipo.fechaDisolucion ? new Date(equipo.fechaDisolucion) : new Date();
         return fechaCreacion.getFullYear() <= parseInt(filtroAnio) && 
                (fechaFin.getFullYear() >= parseInt(filtroAnio) || equipo.estaActivo);
       });
@@ -197,7 +292,7 @@ export default function TimelineEquipos({ onClose }) {
       // Si no hay filtro de año, usar el rango completo de fechas
       const fechas = equiposFiltrados.flatMap(e => [
         e.fechaCreacion,
-        e.ultimoPartido || new Date()
+        e.fechaDisolucion || new Date()
       ]);
       minDate = new Date(Math.min(...fechas));
       maxDate = new Date(Math.max(...fechas));
@@ -224,8 +319,8 @@ export default function TimelineEquipos({ onClose }) {
     // Calcular posiciones para cada región y equipo
     const eventos = [];
     const regionHeight = 100; // Altura de cada región
-    const teamRowHeight = 40; // Altura de cada fila de equipo
-    const paddingY = 20; // Espaciado vertical
+    const teamRowHeight = rowHeight; // Altura de cada fila de equipo
+    const paddingY = paddingYResponsive; // Espaciado vertical
     
     // Calcular posición Y para cada región
     let currentY = paddingY;
@@ -246,16 +341,15 @@ export default function TimelineEquipos({ onClose }) {
       // Procesar cada equipo en la región
       region.equipos.forEach((equipo, equipoIndex) => {
         const startDate = new Date(equipo.fechaCreacion);
-        const endDate = equipo.ultimoPartido ? new Date(equipo.ultimoPartido) : new Date();
+        const endDate = equipo.fechaDisolucion ? new Date(equipo.fechaDisolucion) : new Date();
         
         // Calcular posición X y ancho del tile
         const totalDuration = rangeEnd - rangeStart;
         const startPos = (startDate - rangeStart) / totalDuration;
         const endPos = (endDate - rangeStart) / totalDuration;
         
-        const viewWidth = Math.max(2000, 2000); // Ancho fijo para mejor visualización
-        const startX = 50 + (startPos * (viewWidth - 100));
-        const width = Math.max(5, (endPos - startPos) * (viewWidth - 100));
+        const startX = X_START + (startPos * TIME_AXIS_WIDTH);
+        const width = Math.max(5, (endPos - startPos) * TIME_AXIS_WIDTH);
         
         // Posición Y basada en el índice del equipo
         const y = region.y + 50 + (equipoIndex * teamRowHeight);
@@ -271,6 +365,7 @@ export default function TimelineEquipos({ onClose }) {
           escudo: equipo.escudo,
           estaActivo: equipo.estaActivo,
           ultimoPartido: equipo.ultimoPartido,
+          fechaDisolucion: equipo.fechaDisolucion,
           region: region.nombre,
           regionIndex: region.equipos[0].esSeleccionNacional ? 0 : 1,
           equipoIndex: equipoIndex,
@@ -286,6 +381,23 @@ export default function TimelineEquipos({ onClose }) {
 
     return { minDate: rangeStart, maxDate: rangeEnd, regiones, eventos };
   }, [equiposFiltrados]);
+
+  const zoomTransform = `translate(${pivotX},0) scale(${zoom},1) translate(${-pivotX},0)`;
+
+  const handlePanMouseDown = (e) => {
+    if (!timelineRef.current) return;
+    setIsPanning(true);
+    setPanStartX(e.clientX);
+    setPanScrollLeft(timelineRef.current.scrollLeft);
+  };
+
+  const handlePanMouseMove = (e) => {
+    if (!isPanning || !timelineRef.current) return;
+    const dx = e.clientX - panStartX;
+    timelineRef.current.scrollLeft = panScrollLeft - dx;
+  };
+
+  const handlePanMouseUp = () => setIsPanning(false);
 
   const formatearFecha = (fecha) => {
     return fecha.toLocaleDateString('es-ES', {
@@ -361,10 +473,21 @@ export default function TimelineEquipos({ onClose }) {
           >
             ×
           </button>
+          <div className="ml-2 sm:ml-4 flex flex-col items-end gap-2">
+            <div className="inline-flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
+              <button onClick={handleZoomOut} className="px-2 py-1 hover:bg-white hover:bg-opacity-20">−</button>
+              <div className="px-2 py-1 text-xs">{Math.round(zoom * 100)}%</div>
+              <button onClick={handleZoomIn} className="px-2 py-1 hover:bg-white hover:bg-opacity-20">+</button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleResetZoom} className="text-xs bg-white bg-opacity-10 hover:bg-opacity-20 rounded px-2 py-1">Reset</button>
+              <button onClick={handleFitToContent} className="text-xs bg-white bg-opacity-10 hover:bg-opacity-20 rounded px-2 py-1">Fit</button>
+            </div>
+          </div>
         </div>
 
           {/* Controles de filtro mejorados */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
             <div className="bg-white bg-opacity-10 rounded-lg p-3">
               <label className="block text-xs font-medium text-blue-100 mb-1">Tipo de equipo:</label>
               <select
@@ -377,51 +500,20 @@ export default function TimelineEquipos({ onClose }) {
                 <option value="clubes">🏟️ Clubes</option>
               </select>
             </div>
-
             <div className="bg-white bg-opacity-10 rounded-lg p-3">
-              <label className="block text-xs font-medium text-blue-100 mb-1">Año:</label>
-              <select
-                value={filtroAnio}
-                onChange={(e) => {
-                  setFiltroAnio(e.target.value);
-                  setFiltroMes('todos'); // Resetear mes al cambiar año
-                }}
-                className="w-full text-sm bg-white text-gray-800 rounded px-3 py-2 border-0 focus:ring-2 focus:ring-blue-300"
-              >
-                <option value="todos">Todos los años</option>
-                {aniosUnicos.map((anio) => (
-                  <option key={anio} value={anio}>
-                    {anio}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-xs font-medium text-blue-100 mb-1">Estado:</label>
+              <label className="inline-flex items-center gap-2 text-sm text-white">
+                <input type="checkbox" checked={soloActivos} onChange={(e) => setSoloActivos(e.target.checked)} />
+                <span>Solo activos</span>
+              </label>
             </div>
-
-            <div className="bg-white bg-opacity-10 rounded-lg p-3">
-              <label className="block text-xs font-medium text-blue-100 mb-1">Mes:</label>
-              <select
-                value={filtroMes}
-                onChange={(e) => setFiltroMes(e.target.value)}
-                disabled={filtroAnio === 'todos'}
-                className={`w-full text-sm rounded px-3 py-2 border-0 focus:ring-2 focus:ring-blue-300 ${
-                  filtroAnio === 'todos' ? 'bg-gray-200 text-gray-500' : 'bg-white text-gray-800'
-                }`}
-              >
-                <option value="todos">Todos los meses</option>
-                {meses.map((mes) => (
-                  <option key={mes.valor} value={mes.valor}>
-                    {mes.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="flex items-end">
               <button
                 onClick={() => {
                   setFiltroTipo('todos');
                   setFiltroAnio('todos');
                   setFiltroMes('todos');
+                  setSoloActivos(false);
                 }}
                 className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium py-2 px-4 rounded-lg transition-all duration-200"
               >
@@ -433,21 +525,31 @@ export default function TimelineEquipos({ onClose }) {
 
         {/* Timeline Container mejorado */}
         <div className="flex-1 bg-gradient-to-b from-gray-50 to-white overflow-hidden relative">
-          <div ref={timelineRef} className="h-full overflow-x-auto overflow-y-auto p-8">
+          <div
+            ref={timelineRef}
+            className={`h-full overflow-x-auto overflow-y-auto p-8 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onMouseDown={handlePanMouseDown}
+            onMouseMove={handlePanMouseMove}
+            onMouseUp={handlePanMouseUp}
+            onMouseLeave={handlePanMouseUp}
+          >
             {/* Timeline SVG inspirado en ObservableHQ */}
             <svg
               width="100%"
               height="100%"
-              viewBox={`0 0 ${Math.max(2000, 2000)} ${Math.max(1000, timelineData.regiones.reduce((acc, r) => 
-                Math.max(acc, r.y + (r.equipos?.length * 50) + 100), 0))}`}
+              viewBox={`0 0 ${VIEW_WIDTH} ${Math.max(1000, timelineData.regiones.reduce((acc, r) => 
+                Math.max(acc, r.y + (r.equipos?.length * TEAM_ROW_HEIGHT) + PADDING_Y + REGION_TITLE_EXTRA), 0))}`}
               className="w-full h-full"
               preserveAspectRatio="xMinYMin meet"
+            onWheel={handleWheel}
+            onDoubleClick={handleDoubleClick}
             >
+              <g transform={zoomTransform}>
               {/* Eje de tiempo en la parte superior */}
               <line
-                x1="50"
+                x1={X_START}
                 y1="30"
-                x2="1950"
+                x2={X_END}
                 y2="30"
                 stroke="#4B5563"
                 strokeWidth="2"
@@ -464,7 +566,8 @@ export default function TimelineEquipos({ onClose }) {
                 }
                 
                 return years.map((year, i) => {
-                  const x = 50 + ((year - startYear) / (endYear - startYear)) * 1900;
+                  const span = Math.max(1, endYear - startYear);
+                  const x = X_START + ((year - startYear) / span) * TIME_AXIS_WIDTH;
                   return (
                     <g key={`year-${year}`}>
                       <line
@@ -512,9 +615,9 @@ export default function TimelineEquipos({ onClose }) {
 
                   {/* Línea de tiempo de la región */}
                   <line
-                    x1="50"
+                    x1={X_START}
                     y1={region.y}
-                    x2="1950"
+                    x2={X_END}
                     y2={region.y}
                     stroke={region.color}
                     strokeWidth="2"
@@ -574,6 +677,19 @@ export default function TimelineEquipos({ onClose }) {
                       </text>
                     )}
                     
+                    {/* Indicador de disolución */}
+                    {equipo.fechaDisolucion && (
+                      <line
+                        x1={endX}
+                        y1={y - 6}
+                        x2={endX}
+                        y2={y + 6}
+                        stroke="#EF4444"
+                        strokeWidth="2"
+                        pointerEvents="none"
+                      />
+                    )}
+
                     {/* Indicador de hover */}
                     {isHovered && (
                       <>
@@ -598,13 +714,13 @@ export default function TimelineEquipos({ onClose }) {
                           strokeWidth="2"
                           pointerEvents="none"
                         />
-                        {!equipo.estaActivo && (
+                        {equipo.fechaDisolucion && (
                           <circle
                             cx={endX}
                             cy={y}
                             r="4"
                             fill="white"
-                            stroke={equipo.color}
+                            stroke="#EF4444"
                             strokeWidth="2"
                             pointerEvents="none"
                           />
@@ -618,16 +734,17 @@ export default function TimelineEquipos({ onClose }) {
               {/* Línea del tiempo actual */}
               {filtroAnio === 'todos' && (
                 <line
-                  x1={50 + ((new Date() - timelineData.minDate) / (timelineData.maxDate - timelineData.minDate)) * 1900}
+                  x1={X_START + ((new Date() - timelineData.minDate) / Math.max(1, (timelineData.maxDate - timelineData.minDate))) * TIME_AXIS_WIDTH}
                   y1="30"
-                  x2={50 + ((new Date() - timelineData.minDate) / (timelineData.maxDate - timelineData.minDate)) * 1900}
+                  x2={X_START + ((new Date() - timelineData.minDate) / Math.max(1, (timelineData.maxDate - timelineData.minDate))) * TIME_AXIS_WIDTH}
                   y2={Math.max(1000, timelineData.regiones.reduce((acc, r) => 
-                    Math.max(acc, r.y + (r.equipos?.length * 50) + 100), 0))}
+                    Math.max(acc, r.y + (r.equipos?.length * TEAM_ROW_HEIGHT) + PADDING_Y + REGION_TITLE_EXTRA), 0))}
                   stroke="#EF4444"
                   strokeWidth="1.5"
                   strokeDasharray="5,3"
                 />
               )}
+              </g>
             </svg>
 
             {/* Tooltip mejorado */}
@@ -668,9 +785,15 @@ export default function TimelineEquipos({ onClose }) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-600">Creado:</span>
+                    <span className="text-sm font-medium text-gray-600">Formado:</span>
                     <span className="text-sm font-semibold text-gray-800">{formatearFecha(hoveredEquipo.fecha)}</span>
                   </div>
+                  {hoveredEquipo.fechaDisolucion && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">Disuelto:</span>
+                      <span className="text-sm font-semibold text-gray-800">{formatearFecha(new Date(hoveredEquipo.fechaDisolucion))}</span>
+                    </div>
+                  )}
 
                   {/* Estado de actividad */}
                   <div className={`p-3 rounded-lg ${
