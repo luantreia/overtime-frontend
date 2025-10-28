@@ -3,11 +3,11 @@ import { Card, Badge, Button, Spinner } from '../components/ui';
 import { PerfilUsuario } from '../components/features/usuarios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../config/firebase';
 import { motion } from 'framer-motion';
+import { fetchWithAuth } from '../utils/apiClient';
 
 export default function Perfil() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -21,25 +21,17 @@ export default function Perfil() {
 
     const obtenerDatos = async () => {
       try {
-        const token = await user.getIdToken();
-        const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/mi-perfil', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            alert('Sesión expirada. Por favor, inicia sesión de nuevo.');
-            auth.signOut();
-            navigate('/login');
-            return;
-          }
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-
+        const res = await fetchWithAuth('/api/usuarios/mi-perfil');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setDatos(data);
       } catch (err) {
         console.error('Error al cargar el perfil:', err);
+        if (String(err.message).includes('UNAUTHORIZED')) {
+          alert('Sesión expirada. Por favor, inicia sesión de nuevo.');
+          logout();
+          navigate('/login');
+        }
       } finally {
         setCargando(false);
       }
@@ -52,16 +44,12 @@ export default function Perfil() {
     if (!window.confirm('¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) return;
 
     try {
-      const token = await user.getIdToken();
-      const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/eliminar', {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetchWithAuth('/api/usuarios/eliminar', { method: 'DELETE' });
 
       if (!res.ok) throw new Error(`Error en backend: ${res.status}`);
 
-      await auth.currentUser.delete();
       alert('Tu cuenta ha sido eliminada exitosamente.');
+      logout();
       navigate('/');
     } catch (error) {
       console.error('Error al eliminar la cuenta:', error);
@@ -71,10 +59,9 @@ export default function Perfil() {
 
   const handleGuardar = async (nuevosDatos) => {
     try {
-      const token = await user.getIdToken();
-      const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios/actualizar', {
+      const res = await fetchWithAuth('/api/usuarios/actualizar', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevosDatos),
       });
 

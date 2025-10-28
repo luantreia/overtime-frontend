@@ -41,12 +41,10 @@ export default function SeccionContratosJugadorEquipo({
         setSolicitudesPorContrato({});
         return;
       }
-      const token = await user.getIdToken();
-      const headers = { Authorization: `Bearer ${token}` };
       const results = await Promise.all(
         lista.map(async (c) => {
           try {
-            const lista = await get(`/api/solicitudes-edicion?tipo=contratoJugadorEquipo&estado=pendiente&entidad=${c._id}`, { headers });
+            const lista = await get(`/api/solicitudes-edicion?tipo=contratoJugadorEquipo&estado=pendiente&entidad=${c._id}`);
             return { id: c._id, solicitudes: Array.isArray(lista) ? lista : [] };
           } catch (e) {
             return { id: c._id, solicitudes: [] };
@@ -62,7 +60,6 @@ export default function SeccionContratosJugadorEquipo({
 
   const guardarContratoEditado = async (contratoId) => {
     try {
-      const token = await user.getIdToken();
       await post('/api/solicitudes-edicion', {
         tipo: 'contratoJugadorEquipo',
         entidad: contratoId,
@@ -73,8 +70,6 @@ export default function SeccionContratosJugadorEquipo({
           desde: contratoEditado.desde,
           hasta: contratoEditado.hasta,
         },
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       setEditandoContratoId(null);
       setContratoEditado({});
@@ -86,11 +81,8 @@ export default function SeccionContratosJugadorEquipo({
 
   const aceptarSolicitud = async (solicitudId, contratoId) => {
     try {
-      const token = await user.getIdToken();
-      await put(`/api/solicitudes-edicion/${solicitudId}`, { estado: 'aceptado' }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const actualizado = await get(`/api/jugador-equipo/${contratoId}`, { headers: { Authorization: `Bearer ${token}` } });
+      await put(`/api/solicitudes-edicion/${solicitudId}`, { estado: 'aceptado' });
+      const actualizado = await get(`/api/jugador-equipo/${contratoId}`);
       if (actualizado && actualizado._id) {
         setLista(prev => prev.map(x => x._id === actualizado._id ? actualizado : x));
       }
@@ -103,10 +95,7 @@ export default function SeccionContratosJugadorEquipo({
   const rechazarSolicitud = async (solicitudId) => {
     try {
       const motivoRechazo = window.prompt('Motivo de rechazo (opcional):') || '';
-      const token = await user.getIdToken();
-      await put(`/api/solicitudes-edicion/${solicitudId}`, { estado: 'rechazado', motivoRechazo }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await put(`/api/solicitudes-edicion/${solicitudId}`, { estado: 'rechazado', motivoRechazo });
       await cargarSolicitudesEdicion();
     } catch (err) {
       alert(err?.message || 'No se pudo rechazar la solicitud');
@@ -116,10 +105,7 @@ export default function SeccionContratosJugadorEquipo({
   const cancelarSolicitud = async (solicitudId) => {
     try {
       if (!window.confirm('¿Cancelar esta solicitud?')) return;
-      const token = await user.getIdToken();
-      await del(`/api/solicitudes-edicion/${solicitudId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await del(`/api/solicitudes-edicion/${solicitudId}`);
       await cargarSolicitudesEdicion();
     } catch (err) {
       alert(err?.message || 'No se pudo cancelar la solicitud');
@@ -134,8 +120,6 @@ export default function SeccionContratosJugadorEquipo({
 
   const eliminarContrato = async (c) => {
     try {
-      const token = await user.getIdToken();
-      const headers = { Authorization: `Bearer ${token}` };
       if (c.estado === 'aceptado') {
         const confirmar = window.confirm('Este contrato está activo. Se marcará como finalizado y luego se eliminará. ¿Continuar?');
         if (!confirmar) return;
@@ -144,15 +128,15 @@ export default function SeccionContratosJugadorEquipo({
           tipo: 'contratoJugadorEquipo',
           entidad: c._id,
           datosPropuestos: { estado: 'baja', hasta: hoy }
-        }, { headers });
+        });
         if (sol && sol._id) {
-          await put(`/api/solicitudes-edicion/${sol._id}`, { estado: 'aceptado' }, { headers });
+          await put(`/api/solicitudes-edicion/${sol._id}`, { estado: 'aceptado' });
         }
       } else {
         const confirmar = window.confirm('Esta acción eliminará permanentemente el contrato. ¿Continuar?');
         if (!confirmar) return;
       }
-      await del(`/api/jugador-equipo/${c._id}`, { headers });
+      await del(`/api/jugador-equipo/${c._id}`);
       setLista(prev => prev.filter(x => x._id !== c._id));
       setEditandoContratoId(null);
       setContratoEditado({});

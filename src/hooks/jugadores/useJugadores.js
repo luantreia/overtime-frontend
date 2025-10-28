@@ -53,7 +53,7 @@ export default function useJugadores(token) {
   };
 
   useEffect(() => {
-    if (token) cargarJugadores();
+    cargarJugadores();
   }, [token]);
 
   return {

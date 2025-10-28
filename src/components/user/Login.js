@@ -1,7 +1,6 @@
 // src/components/auth/Login.js
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
 import ErrorMessage from '../ui/FormComponents/ErrorMessage';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,23 +10,19 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setMensaje('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(email, password);
       setMensaje('✅ Inicio de sesión exitoso');
       setTimeout(() => navigate('/'), 1000);
     } catch (error) {
       let errorMessage = 'Ocurrió un error al iniciar sesión.';
-      if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'].includes(error.code)) {
-        errorMessage = '❌ Correo electrónico o contraseña incorrectos.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = '❌ El formato del correo electrónico no es válido.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = '❌ Demasiados intentos fallidos. Por favor, inténtalo más tarde.';
-      }
+      if (error?.message?.toLowerCase().includes('credenciales')) errorMessage = '❌ Correo electrónico o contraseña incorrectos.';
+      if (error?.message?.toLowerCase().includes('intentar')) errorMessage = '❌ Inténtalo nuevamente en unos segundos.';
       setMensaje(errorMessage);
     }
   };

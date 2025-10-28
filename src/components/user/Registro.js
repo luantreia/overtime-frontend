@@ -1,7 +1,6 @@
 // src/components/auth/Registro.js
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, getIdToken } from 'firebase/auth';
-import { auth } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
 import ErrorMessage from '../ui/FormComponents/ErrorMessage';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -14,6 +13,7 @@ const Registro = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -21,28 +21,7 @@ const Registro = () => {
     setError('');
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      const token = await getIdToken(user);
-
-      const res = await fetch('https://overtime-ddyl.onrender.com/api/usuarios', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          email: user.email,
-          rol: 'lector',
-          nombre: nombre.trim(),
-          _id: user.uid
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al guardar el usuario en la base de datos.');
-      }
+      await register(nombre.trim(), email, password);
 
       setMensaje('¡Registro exitoso! Redirigiendo...');
       setNombre('');
@@ -51,15 +30,10 @@ const Registro = () => {
       setTimeout(() => navigate('/'), 1500);
     } catch (err) {
       let displayError = 'Error al registrar la cuenta.';
-      if (err.code === 'auth/email-already-in-use') {
-        displayError = '❌ El correo electrónico ya está registrado.';
-      } else if (err.code === 'auth/invalid-email') {
-        displayError = '❌ El formato del correo electrónico no es válido.';
-      } else if (err.code === 'auth/weak-password') {
-        displayError = '❌ La contraseña debe tener al menos 6 caracteres.';
-      } else {
-        displayError = `❌ ${err.message}`;
-      }
+      const msg = (err?.message || '').toLowerCase();
+      if (msg.includes('registrado')) displayError = '❌ El correo electrónico ya está registrado.';
+      else if (msg.includes('password')) displayError = '❌ La contraseña debe tener al menos 6 caracteres.';
+      else displayError = `❌ ${err.message}`;
       setError(displayError);
     } finally {
       setLoading(false);

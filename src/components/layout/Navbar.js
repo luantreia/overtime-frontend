@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import logo from "../../assets/logo.png";
-import { signOut } from "firebase/auth";
-import { auth } from "../../config/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SkipLinks } from "../common/SkipLink";
@@ -10,7 +8,7 @@ import ThemeToggle from "../common/ThemeToggle";
 import { usePing } from "../../hooks/usePing";
 
 const NavBar = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,8 +19,7 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      console.log("User signed out successfully.");
+      logout();
       navigate("/login");
     } catch (error) {
       console.error("Error signing out:", error);

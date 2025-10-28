@@ -1,13 +1,10 @@
 // src/services/estadisticasService.js
-const API_URL = 'https://overtime-ddyl.onrender.com/api';
+import { fetchWithAuth } from '../utils/apiClient';
+const API_URL = '/api';
 
 // Obtener todos los sets (y estadísticas) de un partido
-export async function fetchEstadisticasDePartido(partidoId, token) {
-  const res = await fetch(`${API_URL}/partidos/${partidoId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function fetchEstadisticasDePartido(partidoId, _token) {
+  const res = await fetchWithAuth(`${API_URL}/partidos/${partidoId}`);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || 'Error al obtener estadísticas');
@@ -16,13 +13,10 @@ export async function fetchEstadisticasDePartido(partidoId, token) {
 }
 
 // Crear estadísticas de un jugador por partido
-export async function crearEstadisticasJugadorPartido(jugadorPartido, estadisticas, token) {
-  const res = await fetch(`${API_URL}/estadisticas/jugador-partido`, {
+export async function crearEstadisticasJugadorPartido(jugadorPartido, estadisticas, _token) {
+  const res = await fetchWithAuth(`${API_URL}/estadisticas/jugador-partido`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       jugadorPartido,
       ...estadisticas
@@ -36,13 +30,10 @@ export async function crearEstadisticasJugadorPartido(jugadorPartido, estadistic
 }
 
 // Actualizar estadísticas de un jugador por partido
-export async function actualizarEstadisticasJugadorPartido(estadisticaId, estadisticas, token) {
-  const res = await fetch(`${API_URL}/estadisticas/jugador-partido/${estadisticaId}`, {
+export async function actualizarEstadisticasJugadorPartido(estadisticaId, estadisticas, _token) {
+  const res = await fetchWithAuth(`${API_URL}/estadisticas/jugador-partido/${estadisticaId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(estadisticas),
   });
   if (!res.ok) {
@@ -53,13 +44,10 @@ export async function actualizarEstadisticasJugadorPartido(estadisticaId, estadi
 }
 
 // Crear estadísticas de un jugador por set
-export async function crearEstadisticasJugadorSet(setId, jugadorPartido, jugador, equipo, estadisticas, token) {
-  const res = await fetch(`${API_URL}/estadisticas/jugador-set`, {
+export async function crearEstadisticasJugadorSet(setId, jugadorPartido, jugador, equipo, estadisticas, _token) {
+  const res = await fetchWithAuth(`${API_URL}/estadisticas/jugador-set`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       set: setId,
       jugadorPartido,
@@ -76,13 +64,10 @@ export async function crearEstadisticasJugadorSet(setId, jugadorPartido, jugador
 }
 
 // Actualizar estadísticas de un jugador por set
-export async function actualizarEstadisticasJugadorSet(estadisticaId, estadisticas, token) {
-  const res = await fetch(`${API_URL}/estadisticas/jugador-set/${estadisticaId}`, {
+export async function actualizarEstadisticasJugadorSet(estadisticaId, estadisticas, _token) {
+  const res = await fetchWithAuth(`${API_URL}/estadisticas/jugador-set/${estadisticaId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(estadisticas),
   });
   if (!res.ok) {
@@ -93,7 +78,7 @@ export async function actualizarEstadisticasJugadorSet(estadisticaId, estadistic
 }
 
 // Función legacy para compatibilidad
-export async function guardarEstadistica(partidoId, numeroSet, jugadorId, estadistica, token) {
+export async function guardarEstadistica(partidoId, numeroSet, jugadorId, estadistica, _token) {
   console.warn('guardarEstadistica está deprecated, usar las nuevas funciones específicas');
   // Esta función se mantiene por compatibilidad pero se recomienda usar las nuevas
   return { message: 'Usar las nuevas funciones de estadísticas' };

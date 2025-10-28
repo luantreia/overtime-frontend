@@ -1,30 +1,27 @@
-const API_URL = 'https://overtime-ddyl.onrender.com/api/competencias';
+import { fetchWithAuth } from '../utils/apiClient';
+
+const API_URL = '/api/competencias';
 
 // Obtener todas las competencias (público)
 export async function obtenerCompetencias() {
-  const res = await fetch(API_URL);
+  const res = await fetchWithAuth(API_URL);
   if (!res.ok) throw new Error('Error al obtener competencias');
   return res.json();
 }
 
 // Obtener una competencia por ID (puede requerir token si es privada)
-export async function obtenerCompetenciaPorId(id, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function obtenerCompetenciaPorId(id, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`);
   if (!res.ok) throw new Error('Error al cargar comp');
   return await res.json();
 }
 
 
 // Crear una competencia (requiere token)
-export async function crearCompetencia(data, token) {
-  const res = await fetch(API_URL, {
+export async function crearCompetencia(data, _token) {
+  const res = await fetchWithAuth(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -35,13 +32,10 @@ export async function crearCompetencia(data, token) {
 }
 
 // Actualizar una competencia (requiere token)
-export async function actualizarCompetencia(id, data, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
+export async function actualizarCompetencia(id, data, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -52,13 +46,8 @@ export async function actualizarCompetencia(id, data, token) {
 }
 
 // Eliminar una competencia (requiere token)
-export async function eliminarCompetencia(id, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function eliminarCompetencia(id, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`, { method: 'DELETE' });
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || 'Error al eliminar competencia');

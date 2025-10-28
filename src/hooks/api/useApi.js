@@ -1,6 +1,7 @@
 // src/hooks/api/useApi.js
 import { useState, useCallback } from 'react';
 import { API_CONFIG } from '../../utils/constants';
+import { fetchWithAuth } from '../../utils/apiClient';
 
 /**
  * Hook personalizado para llamadas a la API
@@ -21,12 +22,12 @@ export const useApi = () => {
       retries = API_CONFIG.RETRY_ATTEMPTS
     } = options;
 
-    // Construir URL completa
+    // Construir URL completa o path normalizado para API
     let fullUrl = url;
-
-    if (!url.startsWith('http')) {
-      let normalizedPath = url;
-
+    let normalizedPath = null;
+    const isRelative = !url.startsWith('http');
+    if (isRelative) {
+      normalizedPath = url;
       if (!normalizedPath.startsWith('/')) {
         normalizedPath = normalizedPath.startsWith('api/')
           ? `/${normalizedPath}`
@@ -34,7 +35,6 @@ export const useApi = () => {
       } else if (!normalizedPath.startsWith('/api/')) {
         normalizedPath = `/api${normalizedPath}`;
       }
-
       fullUrl = `${API_CONFIG.BASE_URL}${normalizedPath}`;
     }
 
@@ -49,13 +49,24 @@ export const useApi = () => {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-      const response = await fetch(fullUrl, {
-        method,
-        headers: defaultHeaders,
-        body: body ? JSON.stringify(body) : null,
-        cache: 'no-store',
-        signal: controller.signal
-      });
+      const exec = async () => {
+        if (isRelative) {
+          return fetchWithAuth(normalizedPath, {
+            method,
+            headers: defaultHeaders,
+            body: body ? JSON.stringify(body) : null,
+          });
+        }
+        return fetch(fullUrl, {
+          method,
+          headers: defaultHeaders,
+          body: body ? JSON.stringify(body) : null,
+          cache: 'no-store',
+          signal: controller.signal
+        });
+      };
+
+      const response = await exec();
 
       clearTimeout(timeoutId);
 

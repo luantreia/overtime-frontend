@@ -32,14 +32,6 @@ const SolicitudesContrato = ({
   }, [jugadorId, equipoId, user, contextToken]);
 
   const cargarDatosIniciales = async () => {
-    const fallbackToken = contextToken || (user?.getIdToken ? await user.getIdToken().catch(() => null) : null) || localStorage.getItem('token');
-    if (!fallbackToken) {
-      console.warn('Token no disponible aún, reintentando cuando user/contextToken cambien');
-      return;
-    }
-
-    const authHeaders = { Authorization: `Bearer ${fallbackToken}` };
-
     // Construir query
     const query = equipoId
       ? `?equipo=${equipoId}`
@@ -49,7 +41,7 @@ const SolicitudesContrato = ({
 
     // Intentar cargar ambas fuentes de forma independiente
     try {
-      const relaciones = await get(`/api/jugador-equipo${query}`, { headers: authHeaders });
+      const relaciones = await get(`/api/jugador-equipo${query}`);
       const lista = Array.isArray(relaciones) ? relaciones : [];
       const pendientes = lista.filter((r) => r.estado === 'pendiente');
       const normalizadas = pendientes.map((r) => ({
@@ -64,7 +56,7 @@ const SolicitudesContrato = ({
     }
 
     try {
-      const opcionesData = await get(`/api/jugador-equipo/opciones${query}`, { headers: authHeaders });
+      const opcionesData = await get(`/api/jugador-equipo/opciones${query}`);
       setOpciones(Array.isArray(opcionesData) ? opcionesData : []);
     } catch (err) {
       console.error('Error cargando opciones:', err?.message || err);
@@ -78,13 +70,10 @@ const SolicitudesContrato = ({
   useEffect(() => {
     const run = async () => {
       const termino = (filtro || '').trim();
-      const fallbackToken = contextToken || (user?.getIdToken ? await user.getIdToken().catch(() => null) : null) || localStorage.getItem('token');
-      if (!fallbackToken) return;
-      const authHeaders = { Authorization: `Bearer ${fallbackToken}` };
       const baseQuery = equipoId ? `?equipo=${equipoId}` : jugadorId ? `?jugador=${jugadorId}` : '';
       const url = termino ? `/api/jugador-equipo/opciones${baseQuery}${baseQuery ? '&' : '?'}q=${encodeURIComponent(termino)}` : `/api/jugador-equipo/opciones${baseQuery}`;
       try {
-        const opcionesData = await get(url, { headers: authHeaders });
+        const opcionesData = await get(url);
         setOpciones(Array.isArray(opcionesData) ? opcionesData : []);
       } catch (e) {
         // mantener opciones previas si falla
@@ -122,14 +111,11 @@ const SolicitudesContrato = ({
         ? { jugador: jugadorId, equipo: seleccionado }
         : { jugador: seleccionado, equipo: equipoId };
 
-      const token = await user.getIdToken();
       const endpoint = esDesdeJugador
         ? '/api/jugador-equipo/solicitar-jugador'
         : '/api/jugador-equipo/solicitar-equipo';
 
-      await post(endpoint, datosSolicitud, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await post(endpoint, datosSolicitud);
 
       setMensaje('Solicitud enviada exitosamente');
       setSeleccionado('');
@@ -145,11 +131,8 @@ const SolicitudesContrato = ({
 
   const gestionarSolicitud = async (solicitudId, accion) => {
     try {
-      const token = await user.getIdToken();
       const estado = accion === 'aceptar' ? 'aceptado' : accion === 'rechazar' ? 'rechazado' : 'cancelado';
-      await put(`/api/jugador-equipo/${solicitudId}`, { estado }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await put(`/api/jugador-equipo/${solicitudId}`, { estado });
       await cargarDatosIniciales();
     } catch (err) {
       console.error('Error gestionando solicitud:', err);

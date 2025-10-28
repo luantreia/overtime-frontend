@@ -1,57 +1,37 @@
 // src/services/partidoService.js
+import { fetchWithAuth } from '../utils/apiClient';
 
-const API_URL = 'https://overtime-ddyl.onrender.com/api/partidos';
+const API_BASE = '/api';
+const API_URL = `${API_BASE}/partidos`;
 
-export async function fetchPartidos(token) {
+export async function fetchPartidos(_token) {
   try {
-    console.log('🔍 Debug fetchPartidos:');
-    console.log('- Token presente:', !!token);
-    console.log('- Token length:', token?.length);
-    console.log('- URL:', `${API_URL}`);
-
-    const res = await fetch(`${API_URL}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log('- Response status:', res.status);
-    console.log('- Response ok:', res.ok);
+    const res = await fetchWithAuth(`${API_URL}`);
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.log('- Error response:', errorText);
       throw new Error(`Error al cargar partidos: ${res.status} - ${errorText}`);
     }
 
     const data = await res.json();
-    console.log('- Data received:', data.length, 'partidos');
     return data;
   } catch (error) {
-    console.error('❌ Error fetchPartidos:', error);
     throw error;
   }
 }
 
-export async function fetchPartidoById(id, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchPartidoById(id, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`);
   if (!res.ok) throw new Error('Error al cargar partido');
   return await res.json();
 }
 
-export async function agregarPartido(partido, token) {
-  const res = await fetch(API_URL, {
+export async function agregarPartido(partido, _token) {
+  const res = await fetchWithAuth(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(partido),
   });
-  console.log('Token obtenido:', token);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || 'Error al agregar partido');
@@ -59,13 +39,10 @@ export async function agregarPartido(partido, token) {
   return await res.json();
 }
 
-export async function editarPartido(id, partido, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
+export async function editarPartido(id, partido, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(partido),
   });
   if (!res.ok) {
@@ -75,11 +52,8 @@ export async function editarPartido(id, partido, token) {
   return await res.json();
 }
 
-export async function eliminarPartido(id, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function eliminarPartido(id, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`, { method: 'DELETE' });
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || 'Error al eliminar partido');
@@ -87,9 +61,8 @@ export async function eliminarPartido(id, token) {
   return true;
 }
 
-export async function agregarSet(partidoId, setData, token) {
+export async function agregarSet(partidoId, setData, _token) {
   console.log('Enviando a la API:', JSON.stringify(setData, null, 2));
-  console.log('Token enviado:', token);
   console.log('🟡 Datos desde el hook:', setData);
   console.log('🟡 ENVIANDO A BACKEND setData:', JSON.stringify(setData, null, 2));
   
@@ -98,12 +71,9 @@ export async function agregarSet(partidoId, setData, token) {
     ...setData
   };
   
-  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido`, {
+  const res = await fetchWithAuth(`/api/set-partido`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
@@ -115,11 +85,9 @@ export async function agregarSet(partidoId, setData, token) {
   return await res.json();
 }
 
-export async function actualizarSet(partidoId, numeroSet, setData, token) {
+export async function actualizarSet(partidoId, numeroSet, setData, _token) {
   // Primero obtenemos el set por partido y numeroSet
-  const setsRes = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const setsRes = await fetchWithAuth(`/api/set-partido?partido=${partidoId}`);
   if (!setsRes.ok) throw new Error('Error al obtener sets');
   
   const sets = await setsRes.json();
@@ -149,12 +117,9 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
     }
     
     console.log('🔄 Actualizando set fallback:', setFallback._id);
-    const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${setFallback._id}`, {
+    const res = await fetchWithAuth(`/api/set-partido/${setFallback._id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(setData),
     });
     
@@ -182,12 +147,9 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
     throw new Error(`ID de set inválido: ${set._id}`);
   }
   
-  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${set._id}`, {
+  const res = await fetchWithAuth(`/api/set-partido/${set._id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(setData),
   });
   
@@ -208,13 +170,10 @@ export async function actualizarSet(partidoId, numeroSet, setData, token) {
   return await res.json();
 }
 
-export async function eliminarSet(partidoId, numeroSet, token, setId) {
+export async function eliminarSet(partidoId, numeroSet, _token, setId) {
   // Si tenemos el ID del set, eliminar directamente
   if (setId) {
-    const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${setId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetchWithAuth(`/api/set-partido/${setId}`, { method: 'DELETE' });
     if (!res.ok) {
       const errorData = await res.json();
       throw new Error(errorData.error || 'Error al eliminar set');
@@ -222,9 +181,7 @@ export async function eliminarSet(partidoId, numeroSet, token, setId) {
     return true;
   }
   // Primero obtenemos el set por partido y numeroSet
-  const setsRes = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const setsRes = await fetchWithAuth(`/api/set-partido?partido=${partidoId}`);
   if (!setsRes.ok) throw new Error('Error al obtener sets');
   
   const sets = await setsRes.json();
@@ -273,12 +230,7 @@ export async function eliminarSet(partidoId, numeroSet, token, setId) {
     }
   }
   
-  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido/${set._id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const res = await fetchWithAuth(`/api/set-partido/${set._id}`, { method: 'DELETE' });
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.error || 'Error al eliminar set');
@@ -287,10 +239,8 @@ export async function eliminarSet(partidoId, numeroSet, token, setId) {
 }
 
 // Obtener sets de un partido
-export async function obtenerSetsDePartido(partidoId, token) {
-  const res = await fetch(`https://overtime-ddyl.onrender.com/api/set-partido?partido=${partidoId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+export async function obtenerSetsDePartido(partidoId, _token) {
+  const res = await fetchWithAuth(`/api/set-partido?partido=${partidoId}`);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.error || 'Error al obtener sets');
@@ -298,21 +248,17 @@ export async function obtenerSetsDePartido(partidoId, token) {
   return await res.json();
 }
 
-export async function actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet, token) {
+export async function actualizarStatsSet(partidoId, numeroSet, statsJugadoresSet, _token) {
   // Esta función ahora se maneja a través de las nuevas APIs de estadísticas
   // Se mantiene por compatibilidad pero se recomienda usar las nuevas funciones
   console.warn('actualizarStatsSet está deprecated, usar las nuevas APIs de estadísticas');
   
   // Por ahora, actualizamos el set con la información básica
-  return await actualizarSet(partidoId, numeroSet, { statsJugadoresSet }, token);
+  return await actualizarSet(partidoId, numeroSet, { statsJugadoresSet });
 }
 
-export async function fetchPartidosPorEquipo(equipoId, token) {
-  const res = await fetch(`${API_URL}?equipo=${equipoId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function fetchPartidosPorEquipo(equipoId, _token) {
+  const res = await fetchWithAuth(`${API_URL}?equipo=${equipoId}`);
   if (!res.ok) throw new Error('Error al cargar partidos del equipo');
   return await res.json();
 }

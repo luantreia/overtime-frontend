@@ -1,21 +1,17 @@
-const API_BASE = 'https://overtime-ddyl.onrender.com/api';
+import { fetchWithAuth } from '../utils/apiClient';
+const API_BASE = '/api';
 const API_URL = `${API_BASE}/jugadores`;
 
-export async function fetchJugadores(token) {
-  const res = await fetch(API_URL, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchJugadores(_token) {
+  const res = await fetchWithAuth(API_URL);
   if (!res.ok) throw new Error('Error al cargar jugadores');
   return await res.json();
 }
 
-export async function agregarJugador(jugador, token) {
-  const res = await fetch(API_URL, {
+export async function agregarJugador(jugador, _token) {
+  const res = await fetchWithAuth(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(jugador),
   });
   if (!res.ok) {
@@ -25,13 +21,10 @@ export async function agregarJugador(jugador, token) {
   return await res.json();
 }
 
-export async function editarJugador(id, jugador, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
+export async function editarJugador(id, jugador, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(jugador),
   });
   if (!res.ok) {
@@ -41,11 +34,8 @@ export async function editarJugador(id, jugador, token) {
   return await res.json();
 }
 
-export async function eliminarJugador(id, token) {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function eliminarJugador(id, _token) {
+  const res = await fetchWithAuth(`${API_URL}/${id}`, { method: 'DELETE' });
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || 'Error al eliminar jugador');
@@ -53,12 +43,10 @@ export async function eliminarJugador(id, token) {
   return true;
 }
 
-export async function fetchJugadoresPorEquipo(equipoId, token) {
+export async function fetchJugadoresPorEquipo(equipoId, _token) {
   if (!equipoId) return [];
   // 1) Intento endpoint dedicado de jugadores por equipo
-  const res = await fetch(`${API_URL}/por-equipo/${equipoId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await fetchWithAuth(`${API_URL}/por-equipo/${equipoId}`);
   try {
     if (res.ok) {
       const lista = await res.json();
@@ -70,9 +58,7 @@ export async function fetchJugadoresPorEquipo(equipoId, token) {
 
   // 2) Fallback: relaciones jugador-equipo pobladas y mapear a jugadores
   try {
-    const resRel = await fetch(`${API_BASE}/jugador-equipo?equipo=${equipoId}&activo=true`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const resRel = await fetchWithAuth(`${API_BASE}/jugador-equipo?equipo=${equipoId}&activo=true`);
     if (!resRel.ok) {
       const t = await resRel.text();
       throw new Error(t || 'Error al cargar relaciones jugador-equipo');

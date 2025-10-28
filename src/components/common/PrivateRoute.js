@@ -1,24 +1,12 @@
-// ./src/components/PrivateRoute.js
+// ./src/components/common/PrivateRoute.js
 import React from 'react';
-import { Route, Redirect } from 'react-router-dom';
-import { auth } from '../firebase';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
-const PrivateRoute = ({ component: Component, ...rest }) => {
-  const [user, setUser] = React.useState(null);
-
-  React.useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(setUser);
-    return () => unsubscribe();
-  }, []);
-
-  return (
-    <Route
-      {...rest}
-      render={(props) =>
-        user ? <Component {...props} /> : <Redirect to="/login" />
-      }
-    />
-  );
+const PrivateRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 };
 
 export default PrivateRoute;
